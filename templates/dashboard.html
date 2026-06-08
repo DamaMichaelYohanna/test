@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div class="p-6 bg-white rounded-lg shadow">
+    <h2 class="text-lg font-semibold text-gray-700">Total Spent</h2>
+    <p class="mt-2 text-2xl font-bold text-indigo-600">${{ total_spent }}</p>
+  </div>
+  <div class="p-6 bg-white rounded-lg shadow">
+    <h2 class="text-lg font-semibold text-gray-700">Active Requests</h2>
+    <p class="mt-2 text-2xl font-bold text-green-600">{{ active_requests }}</p>
+  </div>
+  <div class="p-6 bg-white rounded-lg shadow">
+    <h2 class="text-lg font-semibold text-gray-700">Low Stock Items</h2>
+    <p class="mt-2 text-2xl font-bold text-red-600">{{ low_stock|length }}</p>
+  </div>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6">
+  <h2 class="text-xl font-semibold mb-4">Spending by Project</h2>
+  <canvas id="spendChart" height="100"></canvas>
+</div>
+
+{{ wallet_balances|json_script:"walletData" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('spendChart').getContext('2d');
+  const data = JSON.parse(document.getElementById('walletData').textContent);
+  const labels = Object.keys(data);
+  const values = Object.values(data);
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Balance',
+        data: values,
+        backgroundColor: 'rgba(59,130,246,0.6)',
+        borderColor: 'rgba(59,130,246,1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+</script>
+{% endblock %}
