@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>Subcontractor List</h1>
+    <a href="{% url 'contractors:add_subcontractor' %}" class="btn btn-primary">Add Subcontractor</a>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Company Type</th>
+                <th>Contact Person</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for subcontractor in subcontractors %}
+            <tr>
+                <td>{{ subcontractor.name }}</td>
+                <td>{{ subcontractor.company_type }}</td>
+                <td>{{ subcontractor.contact_person }}</td>
+                <td>{{ subcontractor.phone_number }}</td>
+                <td>{{ subcontractor.email }}</td>
+                <td>
+                    <a href="{% url 'contractors:edit_subcontractor' subcontractor.subcontractor_id %}"
+                        class="btn btn-warning">Edit</a>
+                    <a href="{% url 'contractors:delete_subcontractor' subcontractor.subcontractor_id %}"
+                        class="btn btn-danger">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
