@@ -19,11 +19,15 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Add New Requirement Form -->
+        <!-- Requirement Form Card -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-fit space-y-6">
             <div>
-                <h2 class="text-lg font-bold text-gray-900">Add Requirement</h2>
-                <p class="text-xs text-gray-500 mt-0.5">Define a new compliance document check.</p>
+                <h2 class="text-lg font-bold text-gray-900">
+                    {% if is_editing %}Edit Requirement{% else %}Add Requirement{% endif %}
+                </h2>
+                <p class="text-xs text-gray-500 mt-0.5">
+                    {% if is_editing %}Modify the properties of this document criteria.{% else %}Define a new compliance document check.{% endif %}
+                </p>
             </div>
 
             <form method="POST" class="space-y-4">
@@ -34,7 +38,7 @@
                     <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700">Requirement Name *</label>
                     {{ form.name }}
                     {% if form.name.errors %}
-                    <p class="text-xs text-red-600 mt-1">{{ form.name.errors.0 }}</p>
+                    <p class="text-xs text-red-650 mt-1">{{ form.name.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -43,7 +47,7 @@
                     <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-gray-700">Description</label>
                     {{ form.description }}
                     {% if form.description.errors %}
-                    <p class="text-xs text-red-600 mt-1">{{ form.description.errors.0 }}</p>
+                    <p class="text-xs text-red-650 mt-1">{{ form.description.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -58,13 +62,21 @@
                     </div>
                 </div>
 
-                <!-- Action Button -->
-                <div class="pt-4">
+                <!-- Action Buttons -->
+                <div class="pt-4 flex flex-col gap-2">
                     <button type="submit"
                             class="w-full flex justify-center items-center px-4 py-2 rounded-lg shadow-md text-sm font-semibold text-white gold-bg gold-bg-hover transition duration-150">
-                        <span class="material-symbols-outlined mr-1.5 text-white text-lg">add</span>
-                        Add Requirement
+                        <span class="material-symbols-outlined mr-1.5 text-white text-lg">
+                            {% if is_editing %}save{% else %}add{% endif %}
+                        </span>
+                        {% if is_editing %}Save Changes{% else %}Add Requirement{% endif %}
                     </button>
+                    {% if is_editing %}
+                    <a href="{% url 'contractors:manage_compliance_requirements' %}"
+                       class="w-full text-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
+                        Cancel Edit
+                    </a>
+                    {% endif %}
                 </div>
             </form>
         </div>
@@ -78,9 +90,9 @@
 
             <div class="divide-y divide-gray-150">
                 {% for req in requirements %}
-                <div class="p-6 flex items-start justify-between hover:bg-gray-50/50 transition duration-150">
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
+                <div class="p-6 flex items-start justify-between gap-4 hover:bg-gray-50/50 transition duration-150">
+                    <div class="space-y-1 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <h3 class="font-bold text-gray-900 text-base">{{ req.name }}</h3>
                             {% if req.is_mandatory %}
                             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
@@ -93,6 +105,15 @@
                             {% endif %}
                         </div>
                         <p class="text-sm text-gray-500">{{ req.description|default:"No description provided." }}</p>
+                    </div>
+                    
+                    <!-- Edit Action -->
+                    <div class="shrink-0">
+                        <a href="?edit={{ req.id }}" 
+                           class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:text-[#bfa12c] transition duration-150">
+                            <span class="material-symbols-outlined text-sm mr-1">edit</span>
+                            Edit
+                        </a>
                     </div>
                 </div>
                 {% empty %}
