@@ -3,8 +3,11 @@ from . import views
 
 app_name='contractors'
 urlpatterns = [
-    path('contractors/', views.SubcontractorListView.as_view(), name='contractor_list'),
-    path('contractors/add/', views.add_subcontractor, name='add_subcontractor'),
-    path('contractors/edit/<int:subcontractor_id>/', views.edit_subcontractor, name='edit_subcontractor'),
-    path('contractors/delete/<int:subcontractor_id>/', views.delete_subcontractor, name='delete_subcontractor'),
+    path('', views.SubcontractorListView.as_view(), name='contractor_list'),
+    path('add/', views.add_subcontractor, name='add_subcontractor'),
+    path('edit/<int:pk>/', views.edit_subcontractor, name='edit_subcontractor'),
+    path('delete/<int:pk>/', views.delete_subcontractor, name='delete_subcontractor'),
+    path('compliance/', views.ComplianceMatrixView.as_view(), name='compliance_matrix'),
+    path('compliance/manage/', views.ManageComplianceView.as_view(), name='manage_compliance'),
+    path('compliance/requirements/', views.manage_compliance_requirements, name='manage_compliance_requirements'),
 ]   
