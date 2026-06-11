@@ -210,19 +210,29 @@ class ManageComplianceView(View):
         return render(request, self.template_name, context)
 
 def manage_compliance_requirements(request):
+    edit_id = request.GET.get('edit')
+    req_instance = None
+    if edit_id:
+        req_instance = get_object_or_404(ComplianceRequirement, pk=edit_id)
+        
     if request.method == 'POST':
-        form = ComplianceRequirementForm(request.POST)
+        form = ComplianceRequirementForm(request.POST, instance=req_instance)
         if form.is_valid():
             form.save()
-            messages.success(request, "New compliance requirement added successfully.")
+            if req_instance:
+                messages.success(request, "Compliance requirement updated successfully.")
+            else:
+                messages.success(request, "New compliance requirement added successfully.")
             return redirect('contractors:manage_compliance_requirements')
     else:
-        form = ComplianceRequirementForm()
+        form = ComplianceRequirementForm(instance=req_instance)
     
     requirements = ComplianceRequirement.objects.all()
     context = {
         'page_title': 'Manage Compliance Requirements',
         'requirements': requirements,
         'form': form,
+        'is_editing': req_instance is not None,
+        'edit_instance': req_instance,
     }
     return render(request, 'contractors/manage_requirements.html', context)
