@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Compliance Requirements - Logistics{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-7xl mx-auto">
+    <!-- Breadcrumb & Header -->
+    <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+        <a href="{% url 'contractors:contractor_list' %}" class="hover:text-[#bfa12c] transition duration-150">Subcontractors</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <a href="{% url 'contractors:compliance_matrix' %}" class="hover:text-[#bfa12c] transition duration-150">Compliance Matrix</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="text-gray-900">Manage Requirements</span>
+    </div>
+
+    <div class="pb-5 border-b border-gray-200">
+        <h1 class="text-3xl font-bold tracking-tight text-gray-900">Compliance Requirements</h1>
+        <p class="text-sm text-gray-500 mt-1">Configure and define global document requirements that subcontractors must submit.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Add New Requirement Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-fit space-y-6">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">Add Requirement</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Define a new compliance document check.</p>
+            </div>
+
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                
+                <!-- Name -->
+                <div class="space-y-1">
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700">Requirement Name *</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <p class="text-xs text-red-600 mt-1">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-1">
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-gray-700">Description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <p class="text-xs text-red-600 mt-1">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Mandatory Checkbox -->
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        {{ form.is_mandatory }}
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="{{ form.is_mandatory.id_for_label }}" class="font-semibold text-gray-700">Mandatory requirement</label>
+                        <p class="text-xs text-gray-500">Checking this will mark subcontractors failing this audit as Deficient.</p>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="pt-4">
+                    <button type="submit"
+                            class="w-full flex justify-center items-center px-4 py-2 rounded-lg shadow-md text-sm font-semibold text-white gold-bg gold-bg-hover transition duration-150">
+                        <span class="material-symbols-outlined mr-1.5 text-white text-lg">add</span>
+                        Add Requirement
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Requirements Directory List -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900">Configured Requirements</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Active criteria being tracked on the compliance matrix.</p>
+            </div>
+
+            <div class="divide-y divide-gray-150">
+                {% for req in requirements %}
+                <div class="p-6 flex items-start justify-between hover:bg-gray-50/50 transition duration-150">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-gray-900 text-base">{{ req.name }}</h3>
+                            {% if req.is_mandatory %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                Mandatory
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-50 text-gray-650 border border-gray-200">
+                                Optional
+                            </span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-gray-500">{{ req.description|default:"No description provided." }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="p-12 text-center text-gray-500 italic">
+                    No compliance requirements are configured yet. Use the form on the left to add one.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
