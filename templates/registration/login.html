@@ -1,77 +1,251 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Logistics</title>
+  <title>Login - Azani Group Logistics</title>
 
-  <!-- Tailwind CDN (if you're using Tailwind already) -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Material Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
   <style>
     body {
-      background: linear-gradient(135deg, #eef2ff, #f8fafc);
+      font-family: 'Outfit', sans-serif;
+      background: linear-gradient(135deg, #f8f6f1 0%, #f0ede6 50%, #ebe7df 100%);
+      min-height: 100vh;
+    }
+
+    .gold-accent {
+      color: #bfa12c;
+    }
+
+    .gold-bg {
+      background-color: #bfa12c;
+    }
+
+    .gold-border {
+      border-color: #bfa12c;
+    }
+
+    .gold-bg-hover:hover {
+      background-color: #a88d25;
+    }
+
+    .logo-box {
+      width: 60px;
+      height: 60px;
+      border: 3px solid #bfa12c;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #bfa12c;
+      box-shadow: 0 0 0 3px rgba(191, 161, 44, 0.1);
+    }
+
+    .form-input::placeholder {
+      color: #9ca3af;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      background-color: #bfa12c;
+      color: white;
+      font-weight: 600;
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      box-shadow: 0 4px 15px rgba(191, 161, 44, 0.3);
+    }
+
+    .submit-btn:hover {
+      background-color: #a88d25;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(191, 161, 44, 0.4);
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+
+    .error-alert {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border-left: 4px solid #dc2626;
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-size: 14px;
     }
   </style>
 </head>
 
-<body class="min-h-screen flex items-center justify-center font-sans">
+<body>
+  <!-- Main Container -->
+  <div class="min-h-screen flex items-center justify-center px-4 py-8">
+    <div class="w-full max-w-md">
+      
+      <!-- Card with subtle shadow -->
+      <div class="bg-white rounded-xl shadow-2xl overflow-hidden">
+        
+        <!-- Top Gold Strip -->
+        <div class="h-1.5 gold-bg"></div>
 
-  <div class="w-full max-w-md">
+        <!-- Card Content -->
+        <div class="px-8 py-12">
 
-    <!-- Card -->
-    <div class="bg-white shadow-2xl rounded-2xl px-8 py-10">
+          <!-- Logo / Brand Section -->
+          <div class="text-center mb-8">
+            <!-- Logo Box (Placeholder for actual logo) -->
+            <div class="logo-box mb-4">
+              <div class="flex flex-col items-center justify-center">
+                <span class="text-3xl font-bold gold-accent leading-none">A</span>
+                <span class="text-[10px] font-bold gold-accent leading-none border-t gold-border pt-0.5 w-full text-center">Z</span>
+              </div>
+            </div>
 
-      <!-- Header -->
-      <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">Welcome Back</h1>
-        <p class="text-sm text-gray-500 mt-2">Sign in to access your dashboard</p>
-      </div>
+            <!-- Company Name -->
+            <h1 class="text-2xl font-extrabold text-gray-900 mt-4">Azani Group</h1>
+            <p class="text-xs font-semibold tracking-widest gold-accent uppercase mt-1">Logistics Platform</p>
+            
+            <!-- Tagline -->
+            <p class="text-sm text-gray-600 mt-4 leading-relaxed">
+              Streamlined project and materials management
+            </p>
+          </div>
 
-      <!-- Error message -->
-      {% if form.errors %}
-      <div class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded-lg">
-        Invalid username or password. Please try again.
-      </div>
-      {% endif %}
-
-      <!-- Form -->
-      <form method="post" class="space-y-5">
-        {% csrf_token %}
-
-        <!-- Username -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Username
-          </label>
-          {{ form.username }}
-          {% if form.username.errors %}
-          <p class="text-sm text-red-500 mt-1">{{ form.username.errors }}</p>
+          <!-- Error Message -->
+          {% if form.errors %}
+          <div class="mb-6 error-alert">
+            <div class="flex items-start">
+              <span class="material-symbols-outlined text-lg mr-2 flex-shrink-0">error</span>
+              <div>
+                <strong>Login Failed</strong>
+                <p class="mt-1">Invalid username or password. Please try again.</p>
+              </div>
+            </div>
+          </div>
           {% endif %}
+
+          <!-- Login Form -->
+          <form method="post" class="space-y-5">
+            {% csrf_token %}
+
+            <!-- Username Field -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                <span class="material-symbols-outlined text-base mr-2 text-gray-500">person</span>
+                Username
+              </label>
+              <input 
+                type="text" 
+                name="username" 
+                class="form-input" 
+                placeholder="Enter your username"
+                required
+                autofocus
+              >
+              {% if form.username.errors %}
+              <p class="text-sm text-red-600 mt-2">{{ form.username.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <!-- Password Field -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                <span class="material-symbols-outlined text-base mr-2 text-gray-500">lock</span>
+                Password
+              </label>
+              <input 
+                type="password" 
+                name="password" 
+                class="form-input" 
+                placeholder="Enter your password"
+                required
+              >
+              {% if form.password.errors %}
+              <p class="text-sm text-red-600 mt-2">{{ form.password.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <!-- Remember Me Checkbox -->
+            <div class="flex items-center pt-2">
+              <input 
+                type="checkbox" 
+                id="remember-me" 
+                name="remember-me"
+                class="w-4 h-4 rounded border-gray-300 gold-accent focus:gold-accent cursor-pointer"
+              >
+              <label for="remember-me" class="ml-2 text-sm text-gray-600 cursor-pointer">
+                Remember me
+              </label>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="submit-btn mt-6 flex items-center justify-center">
+              <span class="material-symbols-outlined text-lg mr-2">login</span>
+              Sign In
+            </button>
+          </form>
+
+          <!-- Divider -->
+          <div class="my-6 flex items-center">
+            <div class="flex-grow border-t border-gray-200"></div>
+            <span class="px-3 text-xs text-gray-500 font-medium">Secure Login</span>
+            <div class="flex-grow border-t border-gray-200"></div>
+          </div>
+
+          <!-- Footer Info -->
+          <div class="text-center">
+            <p class="text-xs text-gray-500">
+              <span class="inline-flex items-center">
+                <span class="material-symbols-outlined text-sm mr-1">shield</span>
+                Secured by industry-standard encryption
+              </span>
+            </p>
+          </div>
+
         </div>
 
-        <!-- Password -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Password
-          </label>
-          {{ form.password }}
-          {% if form.password.errors %}
-          <p class="text-sm text-red-500 mt-1">{{ form.password.errors }}</p>
-          {% endif %}
+        <!-- Bottom Footer -->
+        <div class="px-8 py-4 bg-gray-50 border-t border-gray-100">
+          <p class="text-center text-xs text-gray-600">
+            © {{ now|date:"Y" }} Azani Group. All rights reserved.
+          </p>
         </div>
 
-        <!-- Submit -->
-        <button type="submit" class="w-full py-3 px-4 rounded-xl bg-indigo-600 text-white font-semibold
-                 hover:bg-indigo-700 transition duration-200 shadow-md">
-          Sign In
-        </button>
-      </form>
+      </div>
 
-      <!-- Footer -->
-      <div class="mt-6 text-center text-sm text-gray-500">
-        © {{ now|date:"Y" }} Logistics System
+      <!-- Additional Help Text (optional) -->
+      <div class="text-center mt-6 text-sm text-gray-600">
+        <p>Need help? <a href="#" class="font-semibold gold-accent hover:underline">Contact Support</a></p>
       </div>
 
     </div>
