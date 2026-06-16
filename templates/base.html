@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" class="bg-gray-50 min-h-screen">
 
@@ -55,13 +56,9 @@
         <span class="material-symbols-outlined text-2xl">menu</span>
       </button>
 
-      <!-- M & W Resources Logo Representation -->
-      <div class="flex items-center space-x-2">
-        <div
-          class="flex flex-col items-center justify-center font-bold text-xl md:text-2xl border-2 border-[#bfa12c] rounded-md px-1 py-0.5 md:px-1.5 text-[#5c6b73]">
-          <span class="leading-none text-[#bfa12c]">A</span>
-          <span class="leading-none text-[10px] border-t border-[#bfa12c] pt-0.5 w-full text-center">Z</span>
-        </div>
+      <!-- Azani Group Logo -->
+      <div class="flex items-center space-x-3">
+        <img src="{% static 'core/logo.png' %}" alt="Azani Group Logo" class="h-10 w-10 md:h-12 md:w-12 object-contain">
         <div>
           <div class="font-extrabold text-base md:text-lg tracking-wider text-[#5c6b73] leading-none">Azani</div>
           <div class="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-[#bfa12c] leading-none mt-0.5">
