@@ -42,11 +42,7 @@ urlpatterns = [
     path('usage/<int:pk>/delete/', views.UsageDeleteView.as_view(), name='usage_delete'),
     # Budget routes
     path('budget/', views.BudgetView.as_view(), name='budget_summary'),
-    # Project routes
-    path('projects/', views.ProjectListView.as_view(), name='project_list'),
-    path('projects/create/', views.ProjectCreateView.as_view(), name='project_create'),
-    path('projects/<int:pk>/update/', views.ProjectUpdateView.as_view(), name='project_update'),
-    path('projects/<int:pk>/delete/', views.ProjectDeleteView.as_view(), name='project_delete'),
+
     # Export routes
     path('records/export/excel/', views.ExportRecordsExcelView.as_view(), name='records_export_excel'),
     path('requests/export/excel/', views.ExportRequestsExcelView.as_view(), name='requests_export_excel'),

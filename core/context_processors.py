@@ -1,5 +1,5 @@
 def projects_context(request):
-    from core.models import Project
+    from projects.models import Project
     return {
         'all_projects': Project.objects.all()
     }

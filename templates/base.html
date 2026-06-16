@@ -91,7 +91,7 @@
             class="absolute inset-0 opacity-0 cursor-pointer">
             <option value="">-- Choose Project --</option>
             {% for p in all_projects %}
-            <option value="{{ p.id }}">{{ p.name }}</option>
+            <option value="{{ p.pk }}">[{{ p.project_code }}] {{ p.project_name }}</option>
             {% endfor %}
           </select>
         </form>
@@ -169,10 +169,15 @@
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">savings</span>
             Budget
           </a>
-          <a href="{% url 'core:project_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'projects' in request.path %}active-nav-item{% endif %}">
+          <a href="{% url 'projects:project_list' %}"
+            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'projects' in request.path and 'compliance' not in request.path %}active-nav-item{% endif %}">
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">workspaces</span>
             Projects
+          </a>
+          <a href="{% url 'contractors:compliance_matrix' %}"
+            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'compliance' in request.path %}active-nav-item{% endif %}">
+            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">fact_check</span>
+            Compliance Matrix
           </a>
           <a href="{% url 'contractors:contractor_list' %}"
             class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'contractors' in request.path %}active-nav-item{% endif %}">

@@ -55,9 +55,7 @@ def edit_subcontractor(request, pk):
     if request.method == 'POST':
         sub.name = request.POST.get('name', sub.name)
         sub.company_type = request.POST.get('company_type', sub.company_type)
-        sub.contact_person = request.POST.get('contact_person', sub.contact_person)
         sub.phone_number = request.POST.get('phone', sub.phone_number)
-        sub.email = request.POST.get('email', sub.email)
         sub.save()
         return redirect('contractors:contractor_list')
 

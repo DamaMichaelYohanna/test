@@ -1,12 +1,6 @@
 from django.contrib import admin
 from .models import Project, Account, Material, Request, Record, Store, Usage
 
-@admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('name', 'location', 'start_date', 'status')
-    search_fields = ('name', 'location')
-    list_filter = ('status',)
-
 @admin.register(Account)
 class AccountAdmin(admin.ModelAdmin):
     list_display = ('name', 'project', 'balance', 'currency')

@@ -5,15 +5,13 @@ from .models import Subcontractor, SubcontractorCompliance, ComplianceRequiremen
 class SubcontractorForm(forms.ModelForm):
     class Meta:
         model = Subcontractor
-        fields = ['name', 'company_type', 'contact_person', 'phone_number', 'email']
+        fields = ['name', 'company_type','phone_number',]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['name'].widget = TextInput(attrs={'class': 'form-control', 'placeholder': 'Subcontractor Name'})
         self.fields['company_type'].widget = Select(attrs={'class': 'form-control', 'placeholder': 'Company Type'})
-        self.fields['contact_person'].widget = TextInput(attrs={'class': 'form-control', 'placeholder': 'Contact Person'})
         self.fields['phone_number'].widget = TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number'})
-        self.fields['email'].widget = EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'})
 
 class ComplianceUpdateForm(forms.ModelForm):
     class Meta:

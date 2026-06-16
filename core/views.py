@@ -48,9 +48,9 @@ class ProjectSwitcherView(LoginRequiredMixin, View):
     def get(self, request, pk):
         # Validate the project exists.
         project = get_object_or_404(Project, pk=pk)
-        request.session["project_id"] = project.id
+        request.session["project_id"] = project.sn
         # Optional: store a friendly name for display.
-        request.session["project_name"] = project.name
+        request.session["project_name"] = project.project_name
         # Redirect back.
         next_url = request.META.get("HTTP_REFERER") or reverse_lazy("core:dashboard")
         return redirect(next_url)
@@ -62,20 +62,29 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # If a project is selected, filter data; otherwise show aggregate for all.
+        from projects.models import Project, ProjectLifecycleStage
+        from contractors.models import Subcontractor
+
         if self.project:
+            stages = ProjectLifecycleStage.objects.filter(project=self.project)
             records = Record.objects.filter(project=self.project)
             requests_qs = Request.objects.filter(project=self.project)
             stores = Store.objects.filter(project=self.project)
         else:
+            stages = ProjectLifecycleStage.objects.all()
             records = Record.objects.all()
             requests_qs = Request.objects.all()
             stores = Store.objects.all()
 
-        total_spent = records.aggregate(total=Sum("total_cost"))["total"] or 0
+        total_spent = stages.aggregate(total=Sum("incurred_cost"))["total"] or 0
         active_requests = requests_qs.filter(status="pending").count()
         low_stock = stores.filter(current_stock__lt=F("reorder_level"))
         wallets = Account.objects.filter(project=self.project) if self.project else Account.objects.all()
         wallet_balances = {w.name: w.balance for w in wallets}
+
+        total_projects = Project.objects.count()
+        internal_contractors = Subcontractor.objects.filter(company_type='INTERNAL').count()
+        external_contractors = Subcontractor.objects.filter(company_type='EXTERNAL').count()
 
         context.update(
             {
@@ -84,6 +93,9 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
                 "low_stock": low_stock,
                 "wallet_balances": wallet_balances,
                 "project": self.project,
+                "total_projects": total_projects,
+                "internal_contractors": internal_contractors,
+                "external_contractors": external_contractors,
             }
         )
         return context
@@ -339,7 +351,7 @@ class ExportRecordsExcelView(ProjectRequiredMixin, View):
         for idx, r in enumerate(qs, 1):
             ws.append([idx, r.created_on.strftime("%Y-%m-%d") if r.created_on else "", r.material.name, float(r.amount), r.quantity, float(r.total_cost), r.bank_name, r.account_number])
         response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        pname = self.project.name if self.project else "All_Projects"
+        pname = self.project.project_name if self.project else "All_Projects"
         response["Content-Disposition"] = f'attachment; filename="Records_{pname}.xlsx"'
         wb.save(response)
         return response
@@ -355,7 +367,7 @@ class ExportRequestsExcelView(ProjectRequiredMixin, View):
         for idx, r in enumerate(qs, 1):
             ws.append([idx, r.date_requested.strftime("%Y-%m-%d") if r.date_requested else "", r.material.name, r.quantity, r.requested_by.username if r.requested_by else "-", r.status])
         response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        pname = self.project.name if self.project else "All_Projects"
+        pname = self.project.project_name if self.project else "All_Projects"
         response["Content-Disposition"] = f'attachment; filename="Requests_{pname}.xlsx"'
         wb.save(response)
         return response
@@ -371,7 +383,7 @@ class ExportAccountsExcelView(ProjectRequiredMixin, View):
         for idx, a in enumerate(qs, 1):
             ws.append([idx, a.name, a.currency, float(a.balance), a.last_updated.strftime("%Y-%m-%d %H:%M") if a.last_updated else ""])
         response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        pname = self.project.name if self.project else "All_Projects"
+        pname = self.project.project_name if self.project else "All_Projects"
         response["Content-Disposition"] = f'attachment; filename="Accounts_{pname}.xlsx"'
         wb.save(response)
         return response
@@ -388,7 +400,7 @@ class ExportStoreExcelView(ProjectRequiredMixin, View):
             status = "Low Stock" if s.current_stock <= s.reorder_level else "Good"
             ws.append([idx, s.material.name, s.material.unit, s.current_stock, s.reorder_level, status, s.warehouse_location or "-"])
         response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        pname = self.project.name if self.project else "All_Projects"
+        pname = self.project.project_name if self.project else "All_Projects"
         response["Content-Disposition"] = f'attachment; filename="Store_{pname}.xlsx"'
         wb.save(response)
         return response
@@ -404,7 +416,7 @@ class ExportUsageExcelView(ProjectRequiredMixin, View):
         for idx, u in enumerate(qs, 1):
             ws.append([idx, u.date.strftime("%Y-%m-%d") if u.date else "", u.material.name, u.quantity, u.material.unit, u.purpose or "-"])
         response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        pname = self.project.name if self.project else "All_Projects"
+        pname = self.project.project_name if self.project else "All_Projects"
         response["Content-Disposition"] = f'attachment; filename="Usage_{pname}.xlsx"'
         wb.save(response)
         return response

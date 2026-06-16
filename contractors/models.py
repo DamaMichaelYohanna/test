@@ -18,21 +18,12 @@ class Subcontractor(models.Model):
         default='EXTERNAL',
         help_text="Is this an internal company or an outside sub-contractor?"
     )
-    contact_person = models.CharField(
-        max_length=255, 
-        blank=True, 
-        null=True,
-        help_text="Primary contact person name."
-    )
     phone_number = models.CharField(
         max_length=20, 
         blank=True, 
         null=True
     )
-    email = models.EmailField(
-        blank=True, 
-        null=True
-    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
