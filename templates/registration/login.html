@@ -212,7 +212,7 @@
         <!-- Bottom Footer -->
         <div class="px-8 py-4 bg-gray-50 border-t border-gray-100">
           <p class="text-center text-xs text-gray-600">
-            © {{ now|date:"Y" }} Azani Group. All rights reserved.
+            © <span id="year"></span> Azani Group. All rights reserved.
           </p>
         </div>
 
@@ -220,11 +220,16 @@
 
       <!-- Additional Help Text (optional) -->
       <div class="text-center mt-6 text-sm text-gray-600">
-        <p>Need help? <a href="#" class="font-semibold gold-accent hover:underline">Contact Support</a></p>
+        <p>Need help? <a href="mailto:dama@azanigroup.com.ng" class="font-semibold gold-accent hover:underline">Contact Support</a></p>
       </div>
 
     </div>
   </div>
+
+  <!-- JavaScript to set current year in copyright -->
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
 
 </body>
 
