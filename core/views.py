@@ -15,6 +15,15 @@ from django.http import HttpResponse
 import openpyxl
 
 
+def logout_view(request):
+    """Log out the user and redirect to login page.
+    Accepts GET requests to avoid 405 errors.
+    """
+    from django.contrib.auth import logout
+    logout(request)
+    return redirect('core:login')
+
+
 
 class ProjectRequiredMixin(LoginRequiredMixin):
     """Mixin to filter querysets by the project selected in the session.
