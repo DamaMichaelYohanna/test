@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 
@@ -126,19 +127,11 @@
             <!-- Logo Box (Placeholder for actual logo) -->
             <div class="logo-box mb-4">
               <div class="flex flex-col items-center justify-center">
-                <span class="text-3xl font-bold gold-accent leading-none">A</span>
-                <span class="text-[10px] font-bold gold-accent leading-none border-t gold-border pt-0.5 w-full text-center">Z</span>
-              </div>
+                <img src="{% static 'core/logo.png' %}" alt=""></div>
             </div>
 
             <!-- Company Name -->
-            <h1 class="text-2xl font-extrabold text-gray-900 mt-4">Azani Group</h1>
-            <p class="text-xs font-semibold tracking-widest gold-accent uppercase mt-1">Logistics Platform</p>
-            
-            <!-- Tagline -->
-            <p class="text-sm text-gray-600 mt-4 leading-relaxed">
-              Streamlined project and materials management
-            </p>
+            <h1 class="text-2xl font-extrabold text-gray-900 mt-4">Azani Group</h1>            
           </div>
 
           <!-- Error Message -->
@@ -214,24 +207,6 @@
               Sign In
             </button>
           </form>
-
-          <!-- Divider -->
-          <div class="my-6 flex items-center">
-            <div class="flex-grow border-t border-gray-200"></div>
-            <span class="px-3 text-xs text-gray-500 font-medium">Secure Login</span>
-            <div class="flex-grow border-t border-gray-200"></div>
-          </div>
-
-          <!-- Footer Info -->
-          <div class="text-center">
-            <p class="text-xs text-gray-500">
-              <span class="inline-flex items-center">
-                <span class="material-symbols-outlined text-sm mr-1">shield</span>
-                Secured by industry-standard encryption
-              </span>
-            </p>
-          </div>
-
         </div>
 
         <!-- Bottom Footer -->
