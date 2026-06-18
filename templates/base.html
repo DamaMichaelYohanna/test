@@ -62,7 +62,7 @@
         <div>
           <div class="font-extrabold text-base md:text-lg tracking-wider text-[#5c6b73] leading-none">Azani</div>
           <div class="text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-[#bfa12c] leading-none mt-0.5">
-            Group</div>
+            Group LTD</div>
         </div>
       </div>
     </div>
@@ -180,10 +180,22 @@
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">workspaces</span>
             Projects
           </a>
+          <a href="{% url 'users:profile' %}"
+            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'profile' in request.path %}active-nav-item{% endif %}">
+            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">person</span>
+            My Profile
+          </a>
+          {% if can_manage_users %}
+          <a href="{% url 'users:user_list' %}"
+            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'users' in request.path %}active-nav-item{% endif %}">
+            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">group</span>
+            Users
+          </a>
+          {% endif %}
           <a href="{% url 'contractors:compliance_matrix' %}"
             class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'compliance' in request.path %}active-nav-item{% endif %}">
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">fact_check</span>
-            Compliance Matrix
+            Compliance Documents
           </a>
           <a href="{% url 'contractors:contractor_list' %}"
             class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'contractors' in request.path %}active-nav-item{% endif %}">
