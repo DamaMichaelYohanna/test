@@ -8,7 +8,7 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-5 border-b border-gray-200">
         <div>
             <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                <a href="{% url 'contractors:contractor_list' %}" class="hover:text-[#bfa12c] transition duration-150">Subcontractors</a>
+                <a href="{% url 'contractors:company_list' %}" class="hover:text-[#bfa12c] transition duration-150">Companies</a>
                 <span class="material-symbols-outlined text-sm">chevron_right</span>
                 <a href="{% url 'contractors:compliance_matrix' %}?year={{ selected_year }}" class="hover:text-[#bfa12c] transition duration-150">Compliance Matrix</a>
                 <span class="material-symbols-outlined text-sm">chevron_right</span>
@@ -39,7 +39,7 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 border-b border-gray-200 text-xs font-bold uppercase tracking-wider text-gray-500">
-                            <th class="py-4 px-6 sticky left-0 bg-gray-50 z-10 min-w-[220px]">Subcontractor</th>
+                            <th class="py-4 px-6 sticky left-0 bg-gray-50 z-10 min-w-[220px]">Company</th>
                             {% for req in requirements %}
                             <th class="py-4 px-4 text-center min-w-[200px] border-l border-gray-150">
                                 {{ req.name }}
@@ -48,16 +48,16 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-150 text-xs text-gray-700">
-                        {% for contractor in subcontractors %}
+                        {% for company in companies %}
                         <tr class="hover:bg-gray-50/50 transition duration-150">
-                            <!-- Contractor Name Column -->
+                            <!-- Company Name Column -->
                             <td class="py-4 px-6 font-semibold text-gray-900 sticky left-0 bg-white shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
-                                {{ contractor.name }}
+                                {{ company.name }}
                             </td>
 
                             <!-- Compliance Inputs Matrix -->
                             {% for form in formset %}
-                            {% if form.instance.subcontractor_id == contractor.id %}
+                            {% if form.instance.company_id == company.id %}
                             <td class="p-3 text-center border-l border-gray-150 bg-gray-50/30">
                                 {{ form.id }} 
                                 <div class="space-y-2">

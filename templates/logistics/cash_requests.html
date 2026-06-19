@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}Cash Requests Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-6 bg-white rounded-xl shadow-lg space-y-6">
+  <h1 class="text-3xl font-bold text-gray-800">Cash Requests Dashboard</h1>
+  <!-- Flash Messages -->
+  {% if messages %}
+  <div class="space-y-2">
+    {% for message in messages %}
+    <div class="px-4 py-3 rounded-lg text-sm font-medium
+      {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200
+      {% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200
+      {% else %}bg-amber-50 text-amber-800 border border-amber-200{% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if is_manager %}
+  <!-- Manager view: global & per‑project totals -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-700 mb-2">Global Total Approved</h2>
+      <p class="text-2xl font-bold text-green-600">₦{{ global_total|intcomma }}</p>
+    </div>
+    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 overflow-x-auto">
+      <h2 class="text-xl font-semibold text-gray-700 mb-2">Approved per Project</h2>
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2 font-medium text-gray-600">Project</th>
+            <th class="px-4 py-2 font-medium text-gray-600">Total Approved</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in per_project %}
+          <tr class="border-b border-gray-200">
+            <td class="px-4 py-2">{{ item.project__project_name }}</td>
+            <td class="px-4 py-2 text-green-600">₦{{ item.total_given|intcomma }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="2" class="px-4 py-2 text-gray-500">No approved requests yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pending requests -->
+  <div class="mt-6">
+    <h2 class="text-2xl font-semibold text-gray-700 mb-3">Pending Requests</h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white border border-gray-200 rounded">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2 text-left">Project</th>
+            <th class="px-4 py-2 text-left">Milestone & Details</th>
+            <th class="px-4 py-2 text-left">Amount</th>
+            <th class="px-4 py-2 text-left">Requested By</th>
+            <th class="px-4 py-2 text-left">Date</th>
+            <th class="px-4 py-2 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req in pending_requests %}
+          <tr class="border-b" x-data="{ reviewOpen: false }">
+            <td class="px-4 py-2">{{ req.project.project_name }}</td>
+            <td class="px-4 py-2">
+              <span class="font-semibold text-gray-900">{{ req.milestone_title }}</span>
+              {% if req.justification_notes %}
+              <div
+                class="text-xs text-gray-500 font-mono mt-1 whitespace-pre-wrap bg-gray-50 p-2 rounded border border-gray-100">
+                {{ req.justification_notes }}</div>
+              {% endif %}
+            </td>
+            <td class="px-4 py-2 text-green-600">₦{{ req.amount_requested|intcomma }}</td>
+            <td class="px-4 py-2">{{ req.requested_by.get_full_name|default:req.requested_by.username }}</td>
+            <td class="px-4 py-2">{{ req.date_requested|date:"M d, Y" }}</td>
+            <td class="px-4 py-2 text-right">
+              <div>
+                <button @click="reviewOpen = !reviewOpen"
+                  class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-white bg-slate-600 hover:bg-slate-700 rounded-lg transition shadow-sm">
+                  <span class="material-symbols-outlined text-sm mr-1">rate_review</span> Review
+                </button>
+              </div>
+              <div x-show="reviewOpen" x-collapse style="display:none;"
+                class="mt-2 text-left bg-gray-50 p-3 rounded-lg border border-gray-200 w-80 ml-auto">
+                <form method="POST" action="{% url 'logistic:process_cash_request' req.pk %}" class="space-y-2">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{% url 'logistic:cash_requests_dashboard' %}" />
+                  <textarea name="management_comment" rows="2" placeholder="Optional management comment..."
+                    class="block w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-[#bfa12c]"></textarea>
+                  <div class="flex gap-1.5">
+                    <button type="submit" name="action" value="APPROVE"
+                      class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition">
+                      ✓ Approve
+                    </button>
+                    <button type="submit" name="action" value="REJECT"
+                      class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition">
+                      ✗ Reject
+                    </button>
+                    <button type="submit" name="action" value="CANCEL"
+                      class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-700 text-white transition">
+                      ✗ Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-4 py-2 text-gray-500 text-center">No pending requests.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- All requests (optional) -->
+  <div class="mt-6">
+    <h2 class="text-2xl font-semibold text-gray-700 mb-3">All Requests</h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white border border-gray-200 rounded">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2">Project</th>
+            <th class="px-4 py-2">Milestone</th>
+            <th class="px-4 py-2">Amount</th>
+            <th class="px-4 py-2">Status</th>
+            <th class="px-4 py-2">Requested By</th>
+            <th class="px-4 py-2">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req in all_requests %}
+          <tr class="border-b">
+            <td class="px-4 py-2">{{ req.project.project_name }}</td>
+            <td class="px-4 py-2">{{ req.milestone_title }}</td>
+            <td class="px-4 py-2 text-green-600">₦{{ req.amount_requested|intcomma }}</td>
+            <td class="px-4 py-2">
+              {% if req.status == 'APPROVED' %}
+              <span class="text-green-600 font-medium">Approved</span>
+              {% elif req.status == 'REJECTED' %}
+              <span class="text-red-600 font-medium">Rejected</span>
+              {% elif req.status == 'CANCELLED' %}
+              <span class="text-gray-500 font-medium">Cancelled</span>
+              {% else %}
+              <span class="text-yellow-600 font-medium">Pending</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-2">{{ req.requested_by.get_full_name|default:req.requested_by.username }}</td>
+            <td class="px-4 py-2">{{ req.date_requested|date:"M d, Y" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-4 py-2 text-gray-500">No requests recorded.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% else %}
+  <!-- Staff view: project selector & request form -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-700 mb-3">Create Cash Request</h2>
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Project</label>
+          <select name="project_id"
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gold-bg focus:border-gold-bg">
+            <option value="">-- Choose Project --</option>
+            {% for p in projects %}
+            <option value="{{ p.pk }}">{{ p.project_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Milestone Title / Activity <span
+              class="text-red-500">*</span></label>
+          <input type="text" name="milestone_title" placeholder="e.g. Foundation Pouring, Blockwork Level 1"
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gold-bg focus:border-gold-bg"
+            required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Amount Requested (₦)</label>
+          <input type="number" name="amount_requested" step="0.01"
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gold-bg focus:border-gold-bg"
+            required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Justification (optional)</label>
+          <textarea name="justification" rows="3"
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gold-bg focus:border-gold-bg"></textarea>
+        </div>
+        <button type="submit"
+          class="w-full hover:bg-gold-bg-hover text-white font-semibold py-2 px-4 rounded transition"
+          style="background-color: #8A795D;">Submit Request</button>
+      </form>
+    </div>
+
+    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 overflow-x-auto">
+      <h2 class="text-xl font-semibold text-gray-700 mb-3">My Requests</h2>
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2">Project</th>
+            <th class="px-4 py-2">Milestone</th>
+            <th class="px-4 py-2">Amount</th>
+            <th class="px-4 py-2">Status</th>
+            <th class="px-4 py-2">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req in user_requests %}
+          <tr class="border-b">
+            <td class="px-4 py-2">{{ req.project.project_name }}</td>
+            <td class="px-4 py-2">{{ req.milestone_title }}</td>
+            <td class="px-4 py-2 text-green-600">₦{{ req.amount_requested|intcomma }}</td>
+            <td class="px-4 py-2">
+              {% if req.status == 'APPROVED' %}
+              <span class="text-green-600 font-medium">Approved</span>
+              {% elif req.status == 'REJECTED' %}
+              <span class="text-red-600 font-medium">Rejected</span>
+              {% elif req.status == 'CANCELLED' %}
+              <span class="text-gray-500 font-medium">Cancelled</span>
+              {% else %}
+              <span class="text-yellow-600 font-medium">Pending</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-2">{{ req.date_requested|date:"M d, Y" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-4 py-2 text-gray-500">No requests submitted yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

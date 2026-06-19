@@ -1,28 +1,29 @@
 from django.db import models
 
-from django.db import models
+
+class Company(models.Model):
+    name = models.CharField(max_length=255, unique=True, help_text='Company name')
+    contact = models.CharField(max_length=255, help_text='Primary contact person or contact detail')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Company'
+        verbose_name_plural = 'Companies'
+
+    def __str__(self):
+        return f"{self.name} ({self.contact})"
 
 class Subcontractor(models.Model):
     COMPANY_TYPE_CHOICES = [
-        ('INTERNAL', 'Our Company (Internal Team)'),
-        ('EXTERNAL', 'Outside Subcontractor'),
+        ('INTERNAL', 'Internal'),
+        ('EXTERNAL', 'External'),
     ]
-    name = models.CharField(
-        max_length=255, 
-        unique=True,
-        help_text="Name of the subcontracting company or internal department."
-    )
-    company_type = models.CharField(
-        max_length=10,
-        choices=COMPANY_TYPE_CHOICES,
-        default='EXTERNAL',
-        help_text="Is this an internal company or an outside sub-contractor?"
-    )
-    phone_number = models.CharField(
-        max_length=20, 
-        blank=True, 
-        null=True
-    )
+
+    name = models.CharField(max_length=255, unique=True, help_text='Name of the subcontractor')
+    company_type = models.CharField(max_length=10, choices=COMPANY_TYPE_CHOICES, default='EXTERNAL')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -53,9 +54,9 @@ class ComplianceRequirement(models.Model):
         return self.name
 
 
-class SubcontractorCompliance(models.Model):
+class CompanyCompliance(models.Model):
     """
-    The main tracking matrix. Links a Subcontractor to a specific requirement, 
+    The main tracking matrix. Links a Company to a specific requirement, 
     for a specific calendar year.
     """
     STATUS_CHOICES = [
@@ -65,8 +66,8 @@ class SubcontractorCompliance(models.Model):
         ('EXPIRED', 'Expired / Needs Renewal'),
     ]
 
-    subcontractor = models.ForeignKey(
-        Subcontractor, 
+    company = models.ForeignKey(
+        Company,
         on_delete=models.CASCADE, 
         related_name='compliance_records'
     )
@@ -89,8 +90,8 @@ class SubcontractorCompliance(models.Model):
 
     class Meta:
         # Crucial safety constraint: Prevents duplicate tracking entries for the same doc, company, and year.
-        unique_together = ('subcontractor', 'requirement', 'year')
+        unique_together = ('company', 'requirement', 'year')
         ordering = ['-year', 'requirement__name']
 
     def __str__(self):
-        return f"{self.subcontractor.name} - {self.requirement.name} ({self.year}) - {self.get_status_display()}"
+        return f"{self.company.name} - {self.requirement.name} ({self.year}) - {self.get_status_display()}"

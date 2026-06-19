@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - Logistics{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+  <!-- Breadcrumb -->
+  <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+    <a href="{% url 'projects:project_list' %}" class="hover:text-[#bfa12c] transition">Projects</a>
+    <span class="material-symbols-outlined text-sm">chevron_right</span>
+    <a href="{% url 'projects:project_detail' project.pk %}" class="hover:text-[#bfa12c] transition">{{ project.project_code }}</a>
+    <span class="material-symbols-outlined text-sm">chevron_right</span>
+    <a href="{% url 'logistic:project_logistics_hub' project.pk %}" class="hover:text-[#bfa12c] transition">Site Logistics</a>
+    <span class="material-symbols-outlined text-sm">chevron_right</span>
+    <span class="text-gray-900">Add / Restock Material</span>
+  </div>
+
+  <div class="pb-4 border-b border-gray-200">
+    <h1 class="text-2xl font-bold tracking-tight text-gray-900">Add / Restock Material</h1>
+    <p class="text-sm text-gray-500 mt-1">
+      <span class="font-semibold text-gray-700">Project:</span> {{ project.project_name }}
+    </p>
+    <p class="text-sm text-gray-500 mt-0.5">Add a new material to the site store or top up an existing one by entering the same name.</p>
+  </div>
+
+  <!-- Existing inventory quick-reference -->
+  {% if existing_items %}
+  <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+    <p class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-2">Current Inventory on Site</p>
+    <div class="flex flex-wrap gap-2">
+      {% for item in existing_items %}
+      <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-white border border-amber-200 text-amber-900 cursor-pointer"
+            onclick="document.getElementById('id_material_name').value='{{ item.material_name }}'; document.getElementById('id_unit_of_measurement').value='{{ item.unit_of_measurement }}';"
+            title="Click to restock {{ item.material_name }}">
+        <span class="material-symbols-outlined text-xs">inventory_2</span>
+        {{ item.material_name }} — {{ item.quantity_on_site }} {{ item.unit_of_measurement }}
+      </span>
+      {% endfor %}
+    </div>
+    <p class="text-[10px] text-amber-700 mt-2">💡 Click a badge above to autofill and restock that material.</p>
+  </div>
+  {% endif %}
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <form method="POST" class="p-6 space-y-5">
+      {% csrf_token %}
+
+      <!-- Material Name -->
+      <div class="space-y-1">
+        <label for="id_material_name" class="block text-sm font-semibold text-gray-700">
+          Material Name <span class="text-red-500">*</span>
+        </label>
+        <input type="text" name="material_name" id="id_material_name"
+               placeholder="e.g. Cement, 16mm Rebar, Screeding Paint" required
+               class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 placeholder-gray-400
+                      focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] text-sm text-gray-900 transition">
+        <p class="text-xs text-gray-400">Enter an existing material name to add stock, or a new name to create a new line.</p>
+      </div>
+
+      <!-- Quantity -->
+      <div class="space-y-1">
+        <label for="id_quantity_to_add" class="block text-sm font-semibold text-gray-700">
+          Quantity to Add <span class="text-red-500">*</span>
+        </label>
+        <input type="number" name="quantity_to_add" id="id_quantity_to_add"
+               placeholder="0.00" step="0.01" min="0.01" required
+               class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 placeholder-gray-400
+                      focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] text-sm text-gray-900 transition">
+      </div>
+
+      <!-- Unit of Measurement -->
+      <div class="space-y-1">
+        <label for="id_unit_of_measurement" class="block text-sm font-semibold text-gray-700">
+          Unit of Measurement <span class="text-red-500">*</span>
+        </label>
+        <input type="text" name="unit_of_measurement" id="id_unit_of_measurement"
+               placeholder="e.g. Bags, Tons, Meters, Litres, Sheets" required
+               class="block w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 placeholder-gray-400
+                      focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] text-sm text-gray-900 transition">
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+        <a href="{% url 'logistic:project_logistics_hub' project.pk %}"
+           class="px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition">
+          Cancel
+        </a>
+        <button type="submit"
+                class="px-6 py-2.5 rounded-lg shadow-md text-sm font-semibold text-white gold-bg gold-bg-hover transition">
+          <span class="material-symbols-outlined text-sm mr-1 align-middle">add_box</span>
+          Save to Site Store
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

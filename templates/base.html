@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}M & W Resources - Logistics{% endblock %}</title>
+  <title>{% block title %}Azanigroup - Project Management{% endblock %}</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Outfit -->
@@ -110,10 +110,10 @@
 
       <!-- User Menu / Logout Button -->
       <div class="flex items-center ml-2 md:ml-4 pl-2 md:pl-4 border-l border-gray-200">
-        <a href="{% url 'core:logout' %}" 
+        <a href="{% url 'core:logout' %}"
           class="flex items-center px-3 md:px-4 py-2 rounded-lg text-red-600 font-medium text-xs md:text-sm hover:bg-red-50 transition">
           <span class="material-symbols-outlined text-lg mr-1 md:mr-2">logout</span>
-          <span class="hidden md:inline">Logout</span>
+          <span class="hidden md:inline">Logout {{user}}</span>
         </a>
       </div>
       {% endif %}
@@ -139,26 +139,11 @@
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">dashboard</span>
             Dashboard
           </a>
-          <a href="{% url 'core:request_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'request' in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">demography</span>
-            Requests
-          </a>
-          <a href="{% url 'core:account_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'account' in request.path %}active-nav-item{% endif %}">
-            <span
-              class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">account_balance_wallet</span>
-            Account
-          </a>
-          <a href="{% url 'core:material_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'inventory' in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">inventory_2</span>
-            Inventory
-          </a>
-          <a href="{% url 'core:store_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'store' in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">store</span>
-            Store
+
+          <a href="{% url 'logistic:cash_requests_dashboard' %}"
+            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if request.resolver_match.url_name == 'cash_requests_dashboard' %}active-nav-item{% endif %}">
+            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">payments</span>
+            Cash Requests
           </a>
           <a href="{% url 'core:usage_list' %}"
             class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'usage' in request.path %}active-nav-item{% endif %}">
@@ -180,6 +165,13 @@
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">workspaces</span>
             Projects
           </a>
+          {% if request.session.project_id %}
+          <a href="{% url 'logistic:project_logistics_hub' request.session.project_id %}"
+            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'logistics' in request.path %}active-nav-item{% endif %}">
+            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">warehouse</span>
+            Site Logistics
+          </a>
+          {% endif %}
           <a href="{% url 'users:profile' %}"
             class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'profile' in request.path %}active-nav-item{% endif %}">
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">person</span>
@@ -189,7 +181,7 @@
           <a href="{% url 'users:user_list' %}"
             class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'users' in request.path %}active-nav-item{% endif %}">
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">group</span>
-            Users
+            Staff Management
           </a>
           {% endif %}
           <a href="{% url 'contractors:compliance_matrix' %}"
@@ -197,8 +189,13 @@
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">fact_check</span>
             Compliance Documents
           </a>
+          <a href="{% url 'contractors:company_list' %}"
+            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'companies' in request.path %}active-nav-item{% endif %}">
+            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">business</span>
+            Companies
+          </a>
           <a href="{% url 'contractors:contractor_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'contractors' in request.path %}active-nav-item{% endif %}">
+            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'contractors' in request.path and 'companies' not in request.path and 'compliance' not in request.path %}active-nav-item{% endif %}">
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">people</span>
             Sub-Contractors
           </a>

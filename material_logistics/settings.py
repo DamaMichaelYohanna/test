@@ -43,8 +43,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core',
     'contractors',
+    'logistic',
     'projects',
-    'users.apps.UsersConfig'
+    'users.apps.UsersConfig',
+    "django.contrib.humanize"
 ]
 
 MIDDLEWARE = [

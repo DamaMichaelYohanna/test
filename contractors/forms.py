@@ -1,21 +1,32 @@
 from django import forms
-from django.forms.widgets import TextInput, Select, EmailInput
-from .models import Subcontractor, SubcontractorCompliance, ComplianceRequirement
+from django.forms.widgets import TextInput, Select
+
+from .models import Company, CompanyCompliance, ComplianceRequirement, Subcontractor
+
+
+class CompanyForm(forms.ModelForm):
+    class Meta:
+        model = Company
+        fields = ['name', 'contact']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget = TextInput(attrs={'class': 'form-control', 'placeholder': 'Company Name'})
+        self.fields['contact'].widget = TextInput(attrs={'class': 'form-control', 'placeholder': 'Primary Contact'})
 
 class SubcontractorForm(forms.ModelForm):
     class Meta:
         model = Subcontractor
-        fields = ['name', 'company_type','phone_number',]
+        fields = ['name', 'company_type']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['name'].widget = TextInput(attrs={'class': 'form-control', 'placeholder': 'Subcontractor Name'})
-        self.fields['company_type'].widget = Select(attrs={'class': 'form-control', 'placeholder': 'Company Type'})
-        self.fields['phone_number'].widget = TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number'})
+        self.fields['company_type'].widget = Select(attrs={'class': 'form-control'})
 
 class ComplianceUpdateForm(forms.ModelForm):
     class Meta:
-        model = SubcontractorCompliance
+        model = CompanyCompliance
         fields = ['status', 'expiry_date']
         widgets = {
             'status': forms.Select(attrs={

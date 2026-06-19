@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load group_tags %}
+
+{% block title %}{{ page_title }} - Logistics{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-7xl mx-auto">
+
+  <!-- Header -->
+  <div
+    class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-5 border-b border-gray-200">
+    <div>
+      <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+        <a href="{% url 'projects:project_list' %}" class="hover:text-[#bfa12c] transition">Projects</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <a href="{% url 'projects:project_detail' project.pk %}" class="hover:text-[#bfa12c] transition">{{
+          project.project_code }}</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="text-gray-900">Site Logistics</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900">{{ project.project_name }}</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Site Logistics Hub &mdash; Inventory, Cash Requests &amp; Usage Logs</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <a href="{% url 'logistic:add_inventory' project.pk %}"
+        class="inline-flex items-center px-4 py-2 rounded-lg shadow-sm text-sm font-semibold text-white gold-bg gold-bg-hover transition">
+        <span class="material-symbols-outlined mr-1.5 text-lg">add_box</span> Add / Restock Material
+      </a>
+      
+      <a href="{% url 'logistic:log_usage' project.pk %}"
+        class="inline-flex items-center px-4 py-2 rounded-lg shadow-sm text-sm font-semibold border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition">
+        <span class="material-symbols-outlined mr-1.5 text-lg">construction</span> Log Material Usage
+      </a>
+    </div>
+  </div>
+
+  <!-- Flash Messages -->
+  {% if messages %}
+  <div class="space-y-2">
+    {% for message in messages %}
+    <div class="px-4 py-3 rounded-lg text-sm font-medium
+      {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200
+      {% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200
+      {% else %}bg-amber-50 text-amber-800 border border-amber-200{% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Summary Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
+      <div class="p-3 bg-amber-50 rounded-lg"><span
+          class="material-symbols-outlined text-2xl text-[#bfa12c]">inventory_2</span></div>
+      <div>
+        <div class="text-xs font-bold text-gray-500 uppercase">Material Types On Site</div>
+        <div class="text-2xl font-bold text-gray-900 mt-0.5">{{ inventory_items.count }}</div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
+      <div class="p-3 bg-blue-50 rounded-lg"><span
+          class="material-symbols-outlined text-2xl text-blue-600">pending_actions</span></div>
+      <div>
+        <div class="text-xs font-bold text-gray-500 uppercase">Pending Cash Requests</div>
+        <div class="text-2xl font-bold text-gray-900 mt-0.5">{{ cash_requests|length }}</div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
+      <div class="p-3 bg-green-50 rounded-lg"><span
+          class="material-symbols-outlined text-2xl text-green-600">checklist</span></div>
+      <div>
+        <div class="text-xs font-bold text-gray-500 uppercase">Recent Usage Entries</div>
+        <div class="text-2xl font-bold text-gray-900 mt-0.5">{{ recent_usage|length }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- LEFT: Inventory + Usage -->
+    <div class="lg:col-span-2 space-y-6">
+
+      <!-- Site Store Inventory -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between">
+          <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center">
+            <span class="material-symbols-outlined mr-2 text-gray-500">warehouse</span> Site Store Inventory
+          </h2>
+          <a href="{% url 'logistic:add_inventory' project.pk %}"
+            class="inline-flex items-center text-xs font-semibold text-[#bfa12c] hover:underline">
+            <span class="material-symbols-outlined text-sm mr-0.5">add</span> Add Material
+          </a>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr
+                class="bg-gray-50 border-b border-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <th class="py-3 px-6">Material</th>
+                <th class="py-3 px-6 text-right">Qty On Site</th>
+                <th class="py-3 px-6">Unit</th>
+                <th class="py-3 px-6 text-right">Last Updated</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 text-gray-700">
+              {% for item in inventory_items %}
+              <tr class="hover:bg-gray-50/60 transition">
+                <td class="py-3 px-6 font-semibold text-gray-900">{{ item.material_name }}</td>
+                <td
+                  class="py-3 px-6 text-right font-bold
+                  {% if item.quantity_on_site <= 5 %}text-red-600{% elif item.quantity_on_site <= 20 %}text-amber-600{% else %}text-gray-900{% endif %}">
+                  {{ item.quantity_on_site }}
+                </td>
+                <td class="py-3 px-6 text-gray-500">{{ item.unit_of_measurement }}</td>
+                <td class="py-3 px-6 text-right text-gray-400 text-xs">{{ item.last_restocked|date:"j N Y, P" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="py-10 text-center text-gray-400 italic">
+                  No materials logged on site yet.
+                  <a href="{% url 'logistic:add_inventory' project.pk %}"
+                    class="text-[#bfa12c] hover:underline ml-1">Add the first item →</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Usage Logs -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between">
+          <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center">
+            <span class="material-symbols-outlined mr-2 text-gray-500">construction</span> Recent Material Usage
+          </h2>
+          <a href="{% url 'logistic:log_usage' project.pk %}"
+            class="inline-flex items-center text-xs font-semibold text-[#bfa12c] hover:underline">
+            <span class="material-symbols-outlined text-sm mr-0.5">add</span> Log Usage
+          </a>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr
+                class="bg-gray-50 border-b border-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <th class="py-3 px-6">Date</th>
+                <th class="py-3 px-6">Material</th>
+                <th class="py-3 px-6 text-right">Qty Used</th>
+                <th class="py-3 px-6">Activity</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 text-gray-700">
+              {% for log in recent_usage %}
+              <tr class="hover:bg-gray-50/60 transition">
+                <td class="py-3 px-6 text-gray-500 whitespace-nowrap">{{ log.date_used|date:"j N Y" }}</td>
+                <td class="py-3 px-6 font-semibold text-gray-900">{{ log.site_store.material_name }}</td>
+                <td class="py-3 px-6 text-right font-bold text-red-600">-{{ log.quantity_used }} {{
+                  log.site_store.unit_of_measurement }}</td>
+                <td class="py-3 px-6 text-gray-600 text-xs italic">{{ log.activity_details }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="py-10 text-center text-gray-400 italic">No usage entries logged yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Cash Requests -->
+    <div class="lg:col-span-1 space-y-4">
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="border-b border-gray-200 bg-[#3e5052] text-white px-6 py-4 flex items-center justify-between">
+          <h2 class="font-bold text-sm uppercase tracking-wider flex items-center">
+            <span class="material-symbols-outlined mr-2">payments</span> Milestone Cash Requests
+          </h2>
+          {% if not request.user.is_superuser and not request.user|has_group:'Level 3' and not request.user|has_group:'Level 4' %}
+            <a href="{% url 'logistic:cash_requests_dashboard' %}" class="text-[#bfa12c] hover:text-yellow-300 transition"
+              title="New Request">
+              <span class="material-symbols-outlined text-xl">add_circle</span>
+            </a>
+          {% endif %}
+        </div>
+
+        <div class="divide-y divide-gray-100 max-h-[70vh] overflow-y-auto">
+          {% for req in cash_requests %}
+          <div class="p-4 hover:bg-gray-50/60 transition" x-data="{ open: false }">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-gray-900 text-sm truncate">{{ req.milestone_title }}</p>
+                <p class="text-lg font-bold text-gray-800 mt-0.5">₦{{ req.amount_requested|floatformat:2 }}</p>
+                <p class="text-xs text-gray-400 mt-1">{{
+                  req.requested_by.get_full_name|default:req.requested_by.username }} &bull; {{
+                  req.date_requested|date:"j N Y" }}</p>
+              </div>
+              <div>
+                {% if req.status == 'PENDING' %}
+                <span
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
+                </span>
+                {% elif req.status == 'APPROVED' %}
+                <span
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Approved
+                </span>
+                {% elif req.status == 'CANCELLED' %}
+                <span
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-300">
+                  <span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span> Cancelled
+                </span>
+                {% else %}
+                <span
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
+                  <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Rejected
+                </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Justification toggle -->
+            <button @click="open = !open" class="text-xs text-[#bfa12c] hover:underline mt-2 flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs"
+                x-text="open ? 'expand_less' : 'expand_more'">expand_more</span>
+              <span x-text="open ? 'Hide Details' : 'View Notes'"></span>
+            </button>
+            <div x-show="open" x-collapse
+              class="mt-2 text-xs text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200 font-mono leading-relaxed whitespace-pre-wrap"
+              style="display:none;">{{ req.justification_notes }}</div>
+
+            <!-- Management approval panel — visible only to managers -->
+            {% if req.status == 'PENDING' %}
+            {% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}
+            <div class="mt-3 pt-3 border-t border-gray-100" x-data="{ reviewOpen: false }">
+              <button @click="reviewOpen = !reviewOpen"
+                class="text-xs font-semibold text-gray-700 hover:text-gray-900 flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">rate_review</span> Review &amp; Process
+              </button>
+              <div x-show="reviewOpen" x-collapse style="display:none;" class="mt-2">
+                <form method="POST" action="{% url 'logistic:process_cash_request' req.pk %}" class="space-y-2">
+                  {% csrf_token %}
+                  <textarea name="management_comment" rows="2" placeholder="Optional management comment..."
+                    class="block w-full text-xs rounded-lg border border-gray-300 bg-gray-50 p-2 focus:outline-none focus:ring-1 focus:ring-[#bfa12c]"></textarea>
+                  <div class="flex gap-2">
+                    <button type="submit" name="action" value="APPROVE"
+                      class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition">
+                      ✓ Approve
+                    </button>
+                    <button type="submit" name="action" value="REJECT"
+                      class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition">
+                      ✗ Reject
+                    </button>
+                    <button type="submit" name="action" value="CANCEL"
+                      class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-700 text-white transition">
+                      ✗ Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            {% endif %}
+            {% endif %}
+
+          </div>
+          {% empty %}
+          <div class="p-8 text-center text-gray-400 italic text-sm">
+            No cash requests submitted yet.
+            <a href="{% url 'logistic:request_cash' project.pk %}"
+              class="text-[#bfa12c] hover:underline block mt-1">Submit a milestone request →</a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

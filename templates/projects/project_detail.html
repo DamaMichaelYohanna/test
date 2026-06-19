@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Project Details: {{ project.project_name }} - M & W Resources{% endblock %}
+{% block title %}Project Details: {{ project.project_name }}{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -16,12 +16,18 @@
       <h1 class="text-2xl font-bold text-gray-900 mt-1">{{ project.project_name }}</h1>
       <p class="text-sm text-gray-500">MDA: {{ project.mda }}</p>
     </div>
-    
-    <div class="flex items-center space-x-2 self-start md:self-auto">
-      <a href="{% url 'projects:project_update' project.pk %}" class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition">
+
+    <div class="flex flex-wrap items-center gap-2 self-start md:self-auto">
+      <a href="{% url 'logistic:project_logistics_hub' project.pk %}"
+        class="inline-flex items-center bg-[#3e5052] hover:bg-[#2e3e40] text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition">
+        <span class="material-symbols-outlined text-sm mr-1.5">warehouse</span> Site Logistics Hub
+      </a>
+      <a href="{% url 'projects:project_update' project.pk %}"
+        class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition">
         Edit Project
       </a>
-      <a href="{% url 'projects:project_delete' project.pk %}" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-4 py-2 rounded-lg text-sm font-semibold transition">
+      <a href="{% url 'projects:project_delete' project.pk %}"
+        class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-4 py-2 rounded-lg text-sm font-semibold transition">
         Delete
       </a>
     </div>
@@ -77,10 +83,10 @@
 
   <!-- Details Layout -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    
+
     <!-- Left 2 Cols: Project details and subcontractor allocations -->
     <div class="lg:col-span-2 space-y-6">
-      
+
       <!-- Project Metadata Tabs / Panels -->
       <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
@@ -120,7 +126,8 @@
       <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
           <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center">
-            <span class="material-symbols-outlined mr-2 text-gray-500">query_stats</span> Financial Benchmarking & Inflows
+            <span class="material-symbols-outlined mr-2 text-gray-500">query_stats</span> Financial Benchmarking &
+            Inflows
           </h2>
         </div>
         <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
@@ -148,20 +155,24 @@
             <div class="text-xs text-gray-500 uppercase font-semibold">Staff Assigned</div>
             <div class="text-gray-900 mt-0.5">{{ project.staff_assigned.username|default:"Unassigned" }}</div>
           </div>
-          
+
           <div class="md:col-span-3 border-t border-gray-100 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <div class="text-xs text-gray-500 uppercase font-semibold">Mobilization Received</div>
               <div class="text-gray-900 font-bold mt-0.5">₦{{ project.mobilization_received|default:"0.00" }}</div>
               {% if project.batch_no_mobilization %}
-                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 mt-1 inline-block">Batch: {{ project.batch_no_mobilization }}</span>
+              <span
+                class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 mt-1 inline-block">Batch:
+                {{ project.batch_no_mobilization }}</span>
               {% endif %}
             </div>
             <div>
               <div class="text-xs text-gray-500 uppercase font-semibold">Final Payment Received</div>
               <div class="text-gray-900 font-bold mt-0.5">₦{{ project.final_payment_received|default:"0.00" }}</div>
               {% if project.batch_no_final_payment %}
-                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 mt-1 inline-block">Batch: {{ project.batch_no_final_payment }}</span>
+              <span
+                class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 mt-1 inline-block">Batch:
+                {{ project.batch_no_final_payment }}</span>
               {% endif %}
             </div>
           </div>
@@ -179,31 +190,34 @@
           <div>
             <div class="text-xs text-gray-500 uppercase font-semibold mb-1">Plain BOQ</div>
             {% if project.plain_boq %}
-              <a href="{{ project.plain_boq.url }}" target="_blank" class="flex items-center text-indigo-600 hover:text-indigo-900 font-medium">
-                <span class="material-symbols-outlined text-lg mr-1.5">description</span> Download BOQ
-              </a>
+            <a href="{{ project.plain_boq.url }}" target="_blank"
+              class="flex items-center text-indigo-600 hover:text-indigo-900 font-medium">
+              <span class="material-symbols-outlined text-lg mr-1.5">description</span> Download BOQ
+            </a>
             {% else %}
-              <span class="text-gray-400">Not Uploaded</span>
+            <span class="text-gray-400">Not Uploaded</span>
             {% endif %}
           </div>
           <div>
             <div class="text-xs text-gray-500 uppercase font-semibold mb-1">Drawing/Design</div>
             {% if project.drawing_design %}
-              <a href="{{ project.drawing_design.url }}" target="_blank" class="flex items-center text-indigo-600 hover:text-indigo-900 font-medium">
-                <span class="material-symbols-outlined text-lg mr-1.5">design_services</span> Download Drawing
-              </a>
+            <a href="{{ project.drawing_design.url }}" target="_blank"
+              class="flex items-center text-indigo-600 hover:text-indigo-900 font-medium">
+              <span class="material-symbols-outlined text-lg mr-1.5">design_services</span> Download Drawing
+            </a>
             {% else %}
-              <span class="text-gray-400">Not Uploaded</span>
+            <span class="text-gray-400">Not Uploaded</span>
             {% endif %}
           </div>
           <div>
             <div class="text-xs text-gray-500 uppercase font-semibold mb-1">Award Letter & BOQ</div>
             {% if project.award_letter_and_boq %}
-              <a href="{{ project.award_letter_and_boq.url }}" target="_blank" class="flex items-center text-indigo-600 hover:text-indigo-900 font-medium">
-                <span class="material-symbols-outlined text-lg mr-1.5">verified_user</span> Download Letter
-              </a>
+            <a href="{{ project.award_letter_and_boq.url }}" target="_blank"
+              class="flex items-center text-indigo-600 hover:text-indigo-900 font-medium">
+              <span class="material-symbols-outlined text-lg mr-1.5">verified_user</span> Download Letter
+            </a>
             {% else %}
-              <span class="text-gray-400">Not Uploaded</span>
+            <span class="text-gray-400">Not Uploaded</span>
             {% endif %}
           </div>
         </div>
@@ -215,37 +229,45 @@
           <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center">
             <span class="material-symbols-outlined mr-2 text-gray-500">handshake</span> Subcontractor Allocations
           </h2>
-          <button @click="addOpen = !addOpen" class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center">
-            <span class="material-symbols-outlined text-xs mr-1" x-text="addOpen ? 'remove' : 'add'">add</span> Allocate Subcontractor
+          <button @click="addOpen = !addOpen"
+            class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center">
+            <span class="material-symbols-outlined text-xs mr-1" x-text="addOpen ? 'remove' : 'add'">add</span> Allocate
+            Subcontractor
           </button>
         </div>
 
         <!-- Add Allocation Panel -->
         <div x-show="addOpen" x-collapse class="bg-gray-50 p-6 border-b border-gray-200" style="display: none;">
           <h3 class="text-sm font-bold text-gray-800 mb-4">Allocate Subcontractor</h3>
-          <form method="POST" enctype="multipart/form-data" action="{% url 'projects:allocation_create' project.pk %}" class="space-y-4 text-sm">
+          <form method="POST" enctype="multipart/form-data" action="{% url 'projects:allocation_create' project.pk %}"
+            class="space-y-4 text-sm">
             {% csrf_token %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Subcontractor *</label>
-                <select name="subcontractor" class="w-full rounded-md border-gray-300 shadow-sm focus:ring-[#bfa12c] focus:border-[#bfa12c]" required>
+                <select name="subcontractor"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:ring-[#bfa12c] focus:border-[#bfa12c]"
+                  required>
                   <option value="">-- Choose Subcontractor --</option>
                   {% for sub in allocation_form.subcontractor.field.queryset %}
-                    <option value="{{ sub.id }}">{{ sub.name }}</option>
+                  <option value="{{ sub.id }}">{{ sub.name }}</option>
                   {% endfor %}
                 </select>
               </div>
               <div>
                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Cost Percentage (%)</label>
-                <input type="number" step="0.01" name="sub_contractor_cost_percentage" value="0.00" class="w-full rounded-md border-gray-300 shadow-sm focus:ring-[#bfa12c] focus:border-[#bfa12c]">
+                <input type="number" step="0.01" name="sub_contractor_cost_percentage" value="0.00"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:ring-[#bfa12c] focus:border-[#bfa12c]">
               </div>
               <div>
                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Amount Agreed (NGN)</label>
-                <input type="number" step="0.01" name="amount_agreed_with_supplier_contractor" value="0.00" class="w-full rounded-md border-gray-300 shadow-sm focus:ring-[#bfa12c] focus:border-[#bfa12c]">
+                <input type="number" step="0.01" name="amount_agreed_with_supplier_contractor" value="0.00"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:ring-[#bfa12c] focus:border-[#bfa12c]">
               </div>
               <div>
                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Advance Received (NGN)</label>
-                <input type="number" step="0.01" name="advance_received_by_supplier_contractor" value="0.00" class="w-full rounded-md border-gray-300 shadow-sm focus:ring-[#bfa12c] focus:border-[#bfa12c]">
+                <input type="number" step="0.01" name="advance_received_by_supplier_contractor" value="0.00"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:ring-[#bfa12c] focus:border-[#bfa12c]">
               </div>
               <div>
                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Subcontractor Drawing</label>
@@ -257,8 +279,11 @@
               </div>
             </div>
             <div class="flex justify-end space-x-2 pt-2">
-              <button type="button" @click="addOpen = false" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 transition">Cancel</button>
-              <button type="submit" class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-4 py-2 rounded-lg text-xs font-semibold transition">Submit Allocation</button>
+              <button type="button" @click="addOpen = false"
+                class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 transition">Cancel</button>
+              <button type="submit"
+                class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-4 py-2 rounded-lg text-xs font-semibold transition">Submit
+                Allocation</button>
             </div>
           </form>
         </div>
@@ -281,21 +306,27 @@
               <tr class="hover:bg-gray-50 transition">
                 <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ alloc.subcontractor.name }}</td>
                 <td class="px-6 py-4 whitespace-nowrap">{{ alloc.sub_contractor_cost_percentage }}%</td>
-                <td class="px-6 py-4 whitespace-nowrap font-semibold">₦{{ alloc.amount_agreed_with_supplier_contractor }}</td>
+                <td class="px-6 py-4 whitespace-nowrap font-semibold">₦{{ alloc.amount_agreed_with_supplier_contractor
+                  }}</td>
                 <td class="px-6 py-4 whitespace-nowrap">₦{{ alloc.advance_received_by_supplier_contractor }}</td>
                 <td class="px-6 py-4 whitespace-nowrap font-bold text-red-600">₦{{ alloc.remaining_balance }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-center space-x-1">
                   {% if alloc.sub_contractor_drawing_design %}
-                    <a href="{{ alloc.sub_contractor_drawing_design.url }}" target="_blank" class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200 hover:bg-blue-100 transition">Drawing</a>
+                  <a href="{{ alloc.sub_contractor_drawing_design.url }}" target="_blank"
+                    class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200 hover:bg-blue-100 transition">Drawing</a>
                   {% endif %}
                   {% if alloc.supplier_contractor_price_boq %}
-                    <a href="{{ alloc.supplier_contractor_price_boq.url }}" target="_blank" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-200 hover:bg-indigo-100 transition">Price BOQ</a>
+                  <a href="{{ alloc.supplier_contractor_price_boq.url }}" target="_blank"
+                    class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-200 hover:bg-indigo-100 transition">Price
+                    BOQ</a>
                   {% endif %}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center text-xs space-x-2">
-                  <a href="{% url 'projects:allocation_update' alloc.pk %}" class="text-indigo-600 hover:text-indigo-900 font-semibold">Edit</a>
+                  <a href="{% url 'projects:allocation_update' alloc.pk %}"
+                    class="text-indigo-600 hover:text-indigo-900 font-semibold">Edit</a>
                   <span class="text-gray-300">|</span>
-                  <a href="{% url 'projects:allocation_delete' alloc.pk %}" class="text-red-600 hover:text-red-900 font-semibold">Remove</a>
+                  <a href="{% url 'projects:allocation_delete' alloc.pk %}"
+                    class="text-red-600 hover:text-red-900 font-semibold">Remove</a>
                 </td>
               </tr>
               {% empty %}
@@ -325,12 +356,13 @@
             <ul role="list" class="-mb-8">
               {% for stage in lifecycle_stages %}
               <li>
-                <div class="relative pb-8" x-data="{ editOpen: false, isCompleted: {% if stage.is_completed %}true{% else %}false{% endif %} }">
+                <div class="relative pb-8"
+                  x-data="{ editOpen: false, isCompleted: {% if stage.is_completed %}true{% else %}false{% endif %} }">
                   <!-- Connector Line -->
                   {% if not forloop.last %}
-                    <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                  <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
                   {% endif %}
-                  
+
                   <div class="relative flex space-x-3 items-start">
                     <!-- Icon Indicator -->
                     <div>
@@ -339,49 +371,54 @@
                           bg-green-500 text-white
                         {% else %}
                           bg-gray-100 text-gray-400 border border-gray-300
-                        {% endif %}"
-                        @click="editOpen = !editOpen">
+                        {% endif %}" @click="editOpen = !editOpen">
                         {% if stage.is_completed %}
-                          <span class="material-symbols-outlined text-sm">done</span>
+                        <span class="material-symbols-outlined text-sm">done</span>
                         {% else %}
-                          <span class="text-xs font-bold">{{ stage.sequence_order }}</span>
+                        <span class="text-xs font-bold">{{ stage.sequence_order }}</span>
                         {% endif %}
                       </span>
                     </div>
-                    
+
                     <!-- Content Details -->
                     <div class="flex-1 min-w-0">
                       <div class="text-sm font-semibold text-gray-800 flex justify-between items-center">
-                        <span class="cursor-pointer hover:text-[#bfa12c]" @click="editOpen = !editOpen">{{ stage.stage_name }}</span>
-                        <button type="button" @click="editOpen = !editOpen" class="text-gray-400 hover:text-gray-700 ml-2">
+                        <span class="cursor-pointer hover:text-[#bfa12c]" @click="editOpen = !editOpen">{{
+                          stage.stage_name }}</span>
+                        <button type="button" @click="editOpen = !editOpen"
+                          class="text-gray-400 hover:text-gray-700 ml-2">
                           <span class="material-symbols-outlined text-xs">edit</span>
                         </button>
                       </div>
-                      
+
                       <!-- Completed details display -->
                       <div class="text-xs text-gray-500 mt-1 space-y-1">
                         {% if stage.is_completed and stage.completed_date %}
-                          <div class="flex items-center text-green-600 font-medium">
-                            <span class="material-symbols-outlined text-[10px] mr-1">calendar_month</span> Completed: {{ stage.completed_date|date:"jS N, Y" }}
-                          </div>
+                        <div class="flex items-center text-green-600 font-medium">
+                          <span class="material-symbols-outlined text-[10px] mr-1">calendar_month</span> Completed: {{
+                          stage.completed_date|date:"jS N, Y" }}
+                        </div>
                         {% endif %}
                         {% if stage.notes_or_updates %}
-                          <p class="bg-gray-50 p-2 rounded border border-gray-200 italic font-mono text-[11px] leading-normal text-gray-600">{{ stage.notes_or_updates }}</p>
+                        <p
+                          class="bg-gray-50 p-2 rounded border border-gray-200 italic font-mono text-[11px] leading-normal text-gray-600">
+                          {{ stage.notes_or_updates }}</p>
                         {% endif %}
                         {% if stage.incurred_cost > 0 %}
-                          <div class="font-bold text-gray-700">Cost: ₦{{ stage.incurred_cost }}</div>
+                        <div class="font-bold text-gray-700">Cost: ₦{{ stage.incurred_cost }}</div>
                         {% endif %}
                       </div>
 
                       <!-- Inline Alpine/POST Edit Form -->
-                      <div x-show="editOpen" x-collapse class="mt-3 bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs" style="display: none;">
+                      <div x-show="editOpen" x-collapse
+                        class="mt-3 bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs" style="display: none;">
                         <form method="POST" action="{% url 'projects:lifecycle_update' stage.pk %}">
                           {% csrf_token %}
                           <input type="hidden" name="is_completed" :value="isCompleted ? 'true' : 'false'">
 
                           <div class="flex items-center space-x-2 mb-2">
-                            <input type="checkbox" id="check-{{ stage.pk }}" class="rounded text-[#bfa12c] focus:ring-[#bfa12c]"
-                              :checked="isCompleted"
+                            <input type="checkbox" id="check-{{ stage.pk }}"
+                              class="rounded text-[#bfa12c] focus:ring-[#bfa12c]" :checked="isCompleted"
                               @change="isCompleted = $event.target.checked">
                             <label for="check-{{ stage.pk }}" class="font-bold text-gray-700">Mark Completed</label>
                           </div>
@@ -389,17 +426,21 @@
                           <div class="space-y-2">
                             <div>
                               <label class="block font-bold text-gray-600 mb-0.5">Notes / Updates</label>
-                              <textarea name="notes_or_updates" rows="2" class="w-full text-xs rounded border-gray-300 p-1.5 focus:ring-[#bfa12c] focus:border-[#bfa12c]">{{ stage.notes_or_updates|default:"" }}</textarea>
+                              <textarea name="notes_or_updates" rows="2"
+                                class="w-full text-xs rounded border-gray-300 p-1.5 focus:ring-[#bfa12c] focus:border-[#bfa12c]">{{ stage.notes_or_updates|default:"" }}</textarea>
                             </div>
                             <div>
                               <label class="block font-bold text-gray-600 mb-0.5">Incurred Cost (NGN)</label>
-                              <input type="number" step="0.01" name="incurred_cost" value="{{ stage.incurred_cost }}" class="w-full text-xs rounded border-gray-300 p-1 focus:ring-[#bfa12c] focus:border-[#bfa12c]">
+                              <input type="number" step="0.01" name="incurred_cost" value="{{ stage.incurred_cost }}"
+                                class="w-full text-xs rounded border-gray-300 p-1 focus:ring-[#bfa12c] focus:border-[#bfa12c]">
                             </div>
                           </div>
 
                           <div class="flex justify-end space-x-1.5 mt-3">
-                            <button type="button" @click="editOpen = false" class="bg-white border border-gray-300 text-gray-600 px-2.5 py-1 rounded hover:bg-gray-100 transition">Cancel</button>
-                            <button type="submit" class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-3 py-1 rounded font-semibold transition">Save</button>
+                            <button type="button" @click="editOpen = false"
+                              class="bg-white border border-gray-300 text-gray-600 px-2.5 py-1 rounded hover:bg-gray-100 transition">Cancel</button>
+                            <button type="submit"
+                              class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-3 py-1 rounded font-semibold transition">Save</button>
                           </div>
                         </form>
                       </div>
