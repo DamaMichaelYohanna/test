@@ -306,8 +306,8 @@
               <tr class="hover:bg-gray-50 transition">
                 <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ alloc.subcontractor.name }}</td>
                 <td class="px-6 py-4 whitespace-nowrap">{{ alloc.sub_contractor_cost_percentage }}%</td>
-                <td class="px-6 py-4 whitespace-nowrap font-semibold">₦{{ alloc.amount_agreed_with_supplier_contractor
-                  }}</td>
+                <td class="px-6 py-4 whitespace-nowrap font-semibold">₦{{ alloc.amount_agreed_with_supplier_contractor}}
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap">₦{{ alloc.advance_received_by_supplier_contractor }}</td>
                 <td class="px-6 py-4 whitespace-nowrap font-bold text-red-600">₦{{ alloc.remaining_balance }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-center space-x-1">
@@ -383,8 +383,8 @@
                     <!-- Content Details -->
                     <div class="flex-1 min-w-0">
                       <div class="text-sm font-semibold text-gray-800 flex justify-between items-center">
-                        <span class="cursor-pointer hover:text-[#bfa12c]" @click="editOpen = !editOpen">{{
-                          stage.stage_name }}</span>
+                        <span class="cursor-pointer hover:text-[#bfa12c]" @click="editOpen = !editOpen">
+                          {{stage.stage_name }}</span>
                         <button type="button" @click="editOpen = !editOpen"
                           class="text-gray-400 hover:text-gray-700 ml-2">
                           <span class="material-symbols-outlined text-xs">edit</span>
@@ -395,8 +395,8 @@
                       <div class="text-xs text-gray-500 mt-1 space-y-1">
                         {% if stage.is_completed and stage.completed_date %}
                         <div class="flex items-center text-green-600 font-medium">
-                          <span class="material-symbols-outlined text-[10px] mr-1">calendar_month</span> Completed: {{
-                          stage.completed_date|date:"jS N, Y" }}
+                          <span class="material-symbols-outlined text-[10px] mr-1">calendar_month</span> Completed:
+                          {{stage.completed_date|date:"jS N, Y" }}
                         </div>
                         {% endif %}
                         {% if stage.notes_or_updates %}
