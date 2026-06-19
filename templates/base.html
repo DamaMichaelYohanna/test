@@ -95,7 +95,7 @@
       </div>
 
       <!-- Notification icons -->
-      <div class="flex items-center space-x-1 md:space-x-3 text-gray-500">
+      <!-- <div class="flex items-center space-x-1 md:space-x-3 text-gray-500">
         <div class="relative cursor-pointer p-1 rounded-full hover:bg-gray-100">
           <span class="material-symbols-outlined text-xl md:text-2xl">notifications</span>
           <span
@@ -106,14 +106,14 @@
           <span
             class="absolute top-0 right-0 w-3.5 h-3.5 bg-blue-500 rounded-full text-[8px] font-bold text-white flex items-center justify-center">7</span>
         </div>
-      </div>
+      </div> -->
 
       <!-- User Menu / Logout Button -->
       <div class="flex items-center ml-2 md:ml-4 pl-2 md:pl-4 border-l border-gray-200">
         <a href="{% url 'core:logout' %}"
           class="flex items-center px-3 md:px-4 py-2 rounded-lg text-red-600 font-medium text-xs md:text-sm hover:bg-red-50 transition">
           <span class="material-symbols-outlined text-lg mr-1 md:mr-2">logout</span>
-          <span class="hidden md:inline">Logout {{user}}</span>
+          <span class="hidden md:inline" style="text-transform: uppercase;">{{user}}</span>
         </a>
       </div>
       {% endif %}
