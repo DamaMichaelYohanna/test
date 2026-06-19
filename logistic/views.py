@@ -27,6 +27,9 @@ class ProjectLogisticsDashboardView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['project'] = self.project
         context['page_title'] = f"Logistics Hub: {self.project.project_name}"
+        context['pending_request_count'] = MilestoneCashRequest.objects.filter(
+            project=self.project, status='PENDING'
+        ).count()   
         context['cash_requests'] = MilestoneCashRequest.objects.filter(
             project=self.project
         ).order_by('-date_requested')
