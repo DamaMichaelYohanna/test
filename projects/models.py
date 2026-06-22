@@ -77,7 +77,7 @@ class Project(models.Model):
         verbose_name_plural = "Projects"
 
     def __str__(self):
-        return f"[{self.project_code}] {self.project_name} - {self.mda}"
+        return f"{self.project_code} - {self.mda} - {self.project_name}"
 
 
 

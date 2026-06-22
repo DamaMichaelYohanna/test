@@ -78,7 +78,7 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
 
 class ProjectDeleteView(LoginRequiredMixin, DeleteView):
     model = Project
-    template_name = 'confirm_delete.html'
+    template_name = 'projects/confirm_delete.html'
     success_url = reverse_lazy('projects:project_list')
 
 class ProjectDetailView(LoginRequiredMixin, DetailView):
