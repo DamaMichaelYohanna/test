@@ -88,7 +88,7 @@
             class="absolute inset-0 opacity-0 cursor-pointer">
             <option value="">-- Choose Project --</option>
             {% for p in all_projects %}
-            <option value="{{ p.pk }}">[{{ p.project_code }}] {{ p.project_name }}</option>
+            <option value="{{ p.pk }}">{{ p.project_name | truncatewords:15 }}</option>
             {% endfor %}
           </select>
         </form>
@@ -145,21 +145,7 @@
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">payments</span>
             Cash Requests
           </a>
-          <a href="{% url 'core:usage_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'usage' in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">folder_open</span>
-            Usage
-          </a>
-          <a href="{% url 'core:record_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'record' in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">description</span>
-            Records
-          </a>
-          <a href="{% url 'core:budget_summary' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'budget' in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">savings</span>
-            Budget
-          </a>
+
           <a href="{% url 'projects:project_list' %}"
             class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'projects' in request.path and 'compliance' not in request.path %}active-nav-item{% endif %}">
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">workspaces</span>

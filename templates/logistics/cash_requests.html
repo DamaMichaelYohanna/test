@@ -39,7 +39,7 @@
         <tbody>
           {% for item in per_project %}
           <tr class="border-b border-gray-200">
-            <td class="px-4 py-2">{{ item.project__project_name }}</td>
+            <td class="px-4 py-2">{{ item.project__project_name|truncatewords:20 }}</td>
             <td class="px-4 py-2 text-green-600">₦{{ item.total_given|intcomma }}</td>
           </tr>
           {% empty %}
@@ -142,7 +142,7 @@
         <tbody>
           {% for req in all_requests %}
           <tr class="border-b">
-            <td class="px-4 py-2">{{ req.project.project_name }}</td>
+            <td class="px-4 py-2">{{ req.project.project_name|truncatewords:20 }}</td>
             <td class="px-4 py-2">{{ req.milestone_title }}</td>
             <td class="px-4 py-2 text-green-600">₦{{ req.amount_requested|intcomma }}</td>
             <td class="px-4 py-2">
@@ -182,7 +182,7 @@
             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-gold-bg focus:border-gold-bg">
             <option value="">-- Choose Project --</option>
             {% for p in projects %}
-            <option value="{{ p.pk }}">{{ p.project_name }}</option>
+            <option value="{{ p.pk }}">{{ p.project_name|truncatewords:20 }}</option>
             {% endfor %}
           </select>
         </div>
@@ -225,7 +225,7 @@
         <tbody>
           {% for req in user_requests %}
           <tr class="border-b">
-            <td class="px-4 py-2">{{ req.project.project_name }}</td>
+            <td class="px-4 py-2">{{ req.project.project_name|truncatewords:20 }}</td>
             <td class="px-4 py-2">{{ req.milestone_title }}</td>
             <td class="px-4 py-2 text-green-600">₦{{ req.amount_requested|intcomma }}</td>
             <td class="px-4 py-2">

@@ -9,11 +9,24 @@
     <p class="text-sm text-gray-500">Manage staff accounts, job titles, and access levels.</p>
   </div>
   <div class="flex gap-3">
-    <a href="{% url 'users:user_create' %}" class="px-4 py-2 rounded-lg bg-[#bfa12c] text-white font-medium">Add User</a>
-    <a href="{% url 'users:jobtitle_list' %}" class="px-4 py-2 rounded-lg bg-gray-800 text-white font-medium">Job Titles</a>
+    <a href="{% url 'users:user_create' %}" class="px-4 py-2 rounded-lg bg-[#bfa12c] text-white font-medium">Add
+      User</a>
+    <a href="{% url 'users:jobtitle_list' %}" class="px-4 py-2 rounded-lg bg-gray-800 text-white font-medium">Job
+      Titles</a>
   </div>
 </div>
-
+{% if messages %}
+<div class="space-y-2">
+  {% for message in messages %}
+  <div class="px-4 py-3 rounded-lg text-sm font-medium
+      {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200
+      {% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200
+      {% else %}bg-amber-50 text-amber-800 border border-amber-200{% endif %}">
+    {{ message }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 <div class="bg-white rounded-lg shadow overflow-hidden">
   <table class="min-w-full divide-y divide-gray-200">
     <thead class="bg-gray-50">
@@ -34,19 +47,77 @@
         <td class="px-4 py-3">{{ user.profile.job_title|default:'-' }}</td>
         <td class="px-4 py-3">
           {% if user.profile.job_title %}
-            {{ user.profile.job_title.permission_group.name }}
+          {{ user.profile.job_title.permission_group.name }}
           {% else %}
-            -
+          -
           {% endif %}
         </td>
         <td class="px-4 py-3">{{ user.profile.phone_number|default:'-' }}</td>
         <td class="px-4 py-3 text-right space-x-2">
           <a href="{% url 'users:user_update' user.pk %}" class="text-blue-600">Edit</a>
-          <a href="{% url 'users:user_delete' user.pk %}" class="text-red-600">Delete</a>
+          <div x-data="{ open: false }" class="inline-block">
+            <button @click="open = true" class="text-red-600 hover:text-red-800 font-medium">
+              Delete
+            </button>
+
+            <!-- Overlay -->
+            <div x-show="open" x-transition.opacity class="fixed inset-0 bg-black/50 z-40" style="display:none;">
+            </div>
+
+            <!-- Modal -->
+            <div x-show="open" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style="display:none;">
+
+              <div @click.away="open = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+
+                <div class="p-6">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-red-600">
+                        warning
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 class="text-lg font-bold text-gray-900">
+                        Delete User
+                      </h3>
+                      <p class="text-sm text-gray-500">
+                        This action cannot be undone.
+                      </p>
+                    </div>
+                  </div>
+
+                  <p class="text-gray-700 mb-6">
+                    Are you sure you want to delete
+                    <strong>{{ user.get_full_name|default:user.username }}</strong>?
+                  </p>
+
+                  <div class="flex justify-end gap-3">
+                    <button @click="open = false" type="button"
+                      class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                      Cancel
+                    </button>
+
+                    <form method="post" action="{% url 'users:user_delete' user.pk %}">
+                      {% csrf_token %}
+                      <button type="submit"
+                        class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold">
+                        Delete User
+                      </button>
+                    </form>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="6" class="px-4 py-6 text-center text-gray-500">No users found.</td></tr>
+      <tr>
+        <td colspan="6" class="px-4 py-6 text-center text-gray-500">No users found.</td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
