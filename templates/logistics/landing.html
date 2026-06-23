@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Site Logistics Landing{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-6">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Site Logistics Hub</h1>
+    <p class="text-gray-500 mt-2">Select a project to view its logistics, inventory, and cash requests.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for p in projects %}
+    <a href="{% url 'logistic:project_logistics_hub' p.pk %}" class="block group">
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 hover:shadow-md transition-all duration-300 transform group-hover:-translate-y-1">
+        <div class="flex items-center justify-between mb-4">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#bfa12c] text-white">
+            {{ p.project_code }}
+          </span>
+          <span class="material-symbols-outlined text-gray-400 group-hover:text-[#bfa12c] transition">warehouse</span>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 mb-1 group-hover:text-[#bfa12c] transition line-clamp-2">
+          {{ p.project_name }}
+        </h3>
+        <p class="text-sm text-gray-500 flex items-center">
+          <span class="material-symbols-outlined text-sm mr-1">location_on</span>
+          {{ p.location|default:"No location set" }}
+        </p>
+      </div>
+    </a>
+    {% empty %}
+    <div class="col-span-full bg-white rounded-xl border border-gray-200 p-10 text-center">
+      <span class="material-symbols-outlined text-gray-400 text-4xl mb-3 block">search_off</span>
+      <h3 class="text-lg font-medium text-gray-900">No active projects</h3>
+      <p class="text-gray-500 mt-1">There are no projects available to view logistics for.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
