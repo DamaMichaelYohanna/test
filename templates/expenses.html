@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Expenses Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+  
+  <!-- Header with Project Filter -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-200">
+    <div>
+      <h1 class="text-3xl font-extrabold text-gray-900">Expenses Dashboard</h1>
+      <p class="text-gray-500 mt-1 text-sm">Track lifecycle stage costs and milestone cash requests.</p>
+    </div>
+    
+    <div class="w-full md:w-72">
+      <form method="GET" action="" class="flex items-center shadow-sm">
+        <select name="project" onchange="this.form.submit()" class="bg-white border border-slate-300 text-slate-800 text-sm rounded-md focus:ring-[#bfa12c] focus:border-[#bfa12c] block w-full px-3 py-2 cursor-pointer transition hover:border-slate-400 font-medium">
+          <option value="0">ALL PORTFOLIO CONTRACTS</option>
+          {% for p in all_projects %}
+          <option value="{{ p.pk }}" {% if project and project.pk == p.pk %}selected{% endif %}>{{ p.project_code }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col justify-between">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Total Lifecycle Costs</h3>
+        <span class="material-symbols-outlined text-purple-600 bg-purple-50 p-2 rounded-lg">account_tree</span>
+      </div>
+      <div>
+        <p class="text-2xl font-black text-gray-900">₦{{ total_stage_costs|floatformat:2|intcomma }}</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col justify-between">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Approved Cash Requests</h3>
+        <span class="material-symbols-outlined text-emerald-600 bg-emerald-50 p-2 rounded-lg">payments</span>
+      </div>
+      <div>
+        <p class="text-2xl font-black text-gray-900">₦{{ total_cash_request_costs|floatformat:2|intcomma }}</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-[#bfa12c] p-6 flex flex-col justify-between relative overflow-hidden">
+      <div class="absolute -right-4 -top-4 opacity-10">
+        <span class="material-symbols-outlined text-9xl text-[#bfa12c]">account_balance_wallet</span>
+      </div>
+      <div class="flex items-center justify-between mb-4 relative z-10">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-[#bfa12c]">Total Expenses</h3>
+      </div>
+      <div class="relative z-10">
+        <p class="text-3xl font-black text-gray-900">₦{{ total_expenses|floatformat:2|intcomma }}</p>
+      </div>
+    </div>
+  </div>
+
+  {% if not project and per_project_expenses %}
+  <!-- Breakdown by Project (Only shown when "ALL" is selected) -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-6">
+    <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
+      <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider">Expenses by Project</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-left text-sm">
+        <thead>
+          <tr class="bg-gray-50 border-b border-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <th class="px-6 py-3">Project</th>
+            <th class="px-6 py-3 text-right">Lifecycle Costs</th>
+            <th class="px-6 py-3 text-right">Cash Requests</th>
+            <th class="px-6 py-3 text-right">Total Expense</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 text-gray-700">
+          {% for exp in per_project_expenses %}
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-6 py-3 font-semibold text-gray-900">{{ exp.project.project_name|truncatewords:10 }}</td>
+            <td class="px-6 py-3 text-right text-gray-600">₦{{ exp.stage_costs|floatformat:2|intcomma }}</td>
+            <td class="px-6 py-3 text-right text-emerald-600">₦{{ exp.cash_request_costs|floatformat:2|intcomma }}</td>
+            <td class="px-6 py-3 text-right font-bold text-gray-900">₦{{ exp.total|floatformat:2|intcomma }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Details Columns -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    <!-- Lifecycle Stages Costs -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center">
+        <span class="material-symbols-outlined mr-2 text-purple-600">account_tree</span>
+        <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider">Lifecycle Incurred Costs</h2>
+      </div>
+      <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+        <table class="w-full text-sm text-left">
+          <tbody class="divide-y divide-gray-100 text-gray-700">
+            {% for stage in recent_stages %}
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4">
+                <p class="font-semibold text-gray-900 text-sm">{{ stage.stage_name }}</p>
+                {% if not project %}
+                <p class="text-xs text-gray-500 mt-1">{{ stage.project.project_name }}</p>
+                {% endif %}
+                <p class="text-xs text-gray-400 mt-1">{{ stage.completed_date|date:"j N Y"|default:"Pending" }}</p>
+              </td>
+              <td class="px-6 py-4 text-right">
+                <span class="font-bold text-gray-900">₦{{ stage.incurred_cost|floatformat:2|intcomma }}</span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="2" class="px-6 py-10 text-center text-gray-500 italic">No lifecycle costs incurred yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Approved Cash Requests -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center">
+        <span class="material-symbols-outlined mr-2 text-emerald-600">payments</span>
+        <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider">Approved Cash Requests</h2>
+      </div>
+      <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+        <table class="w-full text-sm text-left">
+          <tbody class="divide-y divide-gray-100 text-gray-700">
+            {% for req in recent_cash_requests %}
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4">
+                <p class="font-semibold text-gray-900 text-sm">{{ req.milestone_title }}</p>
+                {% if not project %}
+                <p class="text-xs text-gray-500 mt-1">{{ req.project.project_name }}</p>
+                {% endif %}
+                <p class="text-xs text-gray-400 mt-1">{{ req.date_requested|date:"j N Y" }} &bull; {{ req.requested_by.get_full_name|default:req.requested_by.username }}</p>
+              </td>
+              <td class="px-6 py-4 text-right">
+                <span class="font-bold text-emerald-600">₦{{ req.amount_requested|floatformat:2|intcomma }}</span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="2" class="px-6 py-10 text-center text-gray-500 italic">No approved cash requests yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

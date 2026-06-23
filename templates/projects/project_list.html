@@ -51,7 +51,7 @@
         class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50">
         <option value="">All Years</option>
         {% for d in year_choices %}
-        <option value="{{ d.year }}" {% if selected_year==d.year|stringformat:"s" %}selected{% endif %}>{{ d.year }}
+        <option value="{{ d.year }}" {% if selected_year == d.year|stringformat:"s" %}selected{% endif %}>{{ d.year }}
         </option>
         {% endfor %}
       </select>
@@ -63,7 +63,7 @@
         class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50">
         <option value="">All MDAs</option>
         {% for m in mda_choices %}
-        <option value="{{ m }}" {% if selected_mda==m %}selected{% endif %}>{{ m }}</option>
+        <option value="{{ m }}" {% if selected_mda == m %}selected{% endif %}>{{ m }}</option>
         {% endfor %}
       </select>
     </div>
@@ -74,7 +74,7 @@
         class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50">
         <option value="">All Types</option>
         {% for val, label in type_choices %}
-        <option value="{{ val }}" {% if selected_type==val %}selected{% endif %}>{{ label }}</option>
+        <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
     </div>
