@@ -10,6 +10,16 @@ from .models import SiteStore, MilestoneCashRequest, SiteUsageLog
 from django.views import View
 
 
+class SiteLogisticsLandingView(LoginRequiredMixin, ListView):
+    """
+    Landing page for site logistics when no project is explicitly selected.
+    Allows the user to select a project to jump into its logistics hub.
+    """
+    model = Project
+    template_name = 'logistics/landing.html'
+    context_object_name = 'projects'
+
+
 class ProjectLogisticsDashboardView(LoginRequiredMixin, ListView):
     """
     Main hub for a specific site. Displays local stock inventory levels,
@@ -244,32 +254,46 @@ class CashRequestDashboardView(LoginRequiredMixin, View):
 
     def get(self, request):
         is_manager = request.user.is_superuser or request.user.groups.filter(name__in=['Level 3', 'Level 4']).exists()
-        context = {'is_manager': is_manager}
+        project_id = request.GET.get('project')
+
+        approved_qs = MilestoneCashRequest.objects.filter(status='APPROVED')
+        pending_qs = MilestoneCashRequest.objects.filter(status='PENDING')
+        all_qs = MilestoneCashRequest.objects.all()
+        user_qs = MilestoneCashRequest.objects.filter(requested_by=request.user)
+
+        project_obj = None
+        if project_id and project_id != '0':
+            approved_qs = approved_qs.filter(project_id=project_id)
+            pending_qs = pending_qs.filter(project_id=project_id)
+            all_qs = all_qs.filter(project_id=project_id)
+            user_qs = user_qs.filter(project_id=project_id)
+            project_obj = Project.objects.filter(pk=project_id).first()
+
+        context = {
+            'is_manager': is_manager,
+            'selected_project': project_obj
+        }
+
         if is_manager:
             # Global total of approved cash
-            global_total = MilestoneCashRequest.objects.filter(status='APPROVED')\
-                .aggregate(total=Sum('amount_requested'))['total'] or 0
+            global_total = approved_qs.aggregate(total=Sum('amount_requested'))['total'] or 0
             # Per‑project totals of approved cash
             per_project = (
-                MilestoneCashRequest.objects.filter(status='APPROVED')
-                .values('project__project_name')
+                approved_qs.values('project__project_name')
                 .annotate(total_given=Sum('amount_requested'))
             )
-            pending = MilestoneCashRequest.objects.filter(status='PENDING')
-            all_requests = MilestoneCashRequest.objects.all().order_by('-date_requested')
             context.update({
                 'global_total': global_total,
                 'per_project': per_project,
-                'pending_requests': pending,
-                'all_requests': all_requests,
+                'pending_requests': pending_qs,
+                'all_requests': all_qs.order_by('-date_requested'),
             })
         else:
             # Staff view – list all projects and user's own requests
             projects = Project.objects.all()
-            user_requests = MilestoneCashRequest.objects.filter(requested_by=request.user).order_by('-date_requested')
             context.update({
                 'projects': projects,
-                'user_requests': user_requests,
+                'user_requests': user_qs.order_by('-date_requested'),
             })
         return render(request, self.template_name, context)
 

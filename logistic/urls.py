@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    SiteLogisticsLandingView,
     ProjectLogisticsDashboardView,
     AddSiteStoreInventoryView,
     MilestoneCashRequestCreateView,
@@ -11,6 +12,10 @@ from .views import (
 app_name = 'logistic'
 
 urlpatterns = [
+
+    # Landing page for site logistics
+    path('', SiteLogisticsLandingView.as_view(), name='site_logistics_landing'),
+
     # Main site logistics dashboard (inventory + cash requests + usage)
     path('project/<int:project_id>/logistics/', ProjectLogisticsDashboardView.as_view(), name='project_logistics_hub'),
 
