@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import (
     TemplateView,
@@ -9,8 +10,10 @@ from django.views.generic import (
 )
 from django.shortcuts import redirect, get_object_or_404, render
 from django.urls import reverse_lazy
-from .models import Project, Record, Request, Store, Account, Material, Usage
-from django.db.models import Sum, F
+from projects.models import Project
+from django.db.models import Sum, F, Q
+from django.utils import timezone
+from datetime import timedelta
 from django.http import HttpResponse
 import openpyxl
 
@@ -32,9 +35,9 @@ class ProjectRequiredMixin(LoginRequiredMixin):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        project_id = request.session.get("project_id")
+        project_id = request.GET.get("project")
         self.project = None
-        if project_id:
+        if project_id and project_id != '0':
             self.project = get_object_or_404(Project, pk=project_id)
         return super().dispatch(request, *args, **kwargs)
 
@@ -55,14 +58,87 @@ class ProjectSwitcherView(LoginRequiredMixin, View):
     """
 
     def get(self, request, pk):
-        # Validate the project exists.
-        project = get_object_or_404(Project, pk=pk)
-        request.session["project_id"] = project.sn
-        # Optional: store a friendly name for display.
-        request.session["project_name"] = project.project_name
+        from urllib.parse import urlparse
+        from django.urls import resolve, reverse, Resolver404
+
+        if pk == 0:
+            if "project_id" in request.session:
+                del request.session["project_id"]
+            if "project_name" in request.session:
+                del request.session["project_name"]
+        else:
+            # Validate the project exists.
+            project = get_object_or_404(Project, pk=pk)
+            request.session["project_id"] = project.sn
+            request.session["project_name"] = project.project_code
+
         # Redirect back.
-        next_url = request.META.get("HTTP_REFERER") or reverse_lazy("core:dashboard")
+        next_url = request.META.get("HTTP_REFERER") or reverse("core:dashboard")
+        
+        if request.META.get("HTTP_REFERER"):
+            parsed = urlparse(next_url)
+            try:
+                match = resolve(parsed.path)
+                if 'project_id' in match.kwargs:
+                    if pk == 0:
+                        # Cannot stay on a project-specific page if "ALL" is selected
+                        next_url = reverse("core:dashboard")
+                    else:
+                        match.kwargs['project_id'] = pk
+                        next_url = reverse(match.view_name, args=match.args, kwargs=match.kwargs)
+                elif 'pk' in match.kwargs and match.view_name.startswith('projects:'):
+                    # For project detail pages, 'pk' might be the project id
+                    if pk == 0:
+                        next_url = reverse("core:dashboard")
+                    else:
+                        match.kwargs['pk'] = pk
+                        next_url = reverse(match.view_name, args=match.args, kwargs=match.kwargs)
+            except Resolver404:
+                pass
+
         return redirect(next_url)
+
+
+class ExpensesDashboardView(ProjectRequiredMixin, TemplateView):
+    template_name = "expenses.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from projects.models import ProjectLifecycleStage, Project
+        from logistic.models import MilestoneCashRequest
+
+        if self.project:
+            stages = ProjectLifecycleStage.objects.filter(project=self.project)
+            cash_requests = MilestoneCashRequest.objects.filter(project=self.project)
+        else:
+            stages = ProjectLifecycleStage.objects.all()
+            cash_requests = MilestoneCashRequest.objects.all()
+
+        stage_costs = stages.aggregate(total=Sum('incurred_cost'))['total'] or 0.0
+        cash_request_costs = cash_requests.filter(status='APPROVED').aggregate(total=Sum('amount_requested'))['total'] or 0.0
+        
+        per_project_expenses = []
+        if not self.project:
+            for p in Project.objects.all():
+                p_stage = ProjectLifecycleStage.objects.filter(project=p).aggregate(total=Sum('incurred_cost'))['total'] or 0.0
+                p_cash = MilestoneCashRequest.objects.filter(project=p, status='APPROVED').aggregate(total=Sum('amount_requested'))['total'] or 0.0
+                if p_stage > 0 or p_cash > 0:
+                    per_project_expenses.append({
+                        'project': p,
+                        'stage_costs': p_stage,
+                        'cash_request_costs': p_cash,
+                        'total': Decimal(p_stage) + Decimal(p_cash)
+                    })
+
+        context.update({
+            'total_stage_costs': float(stage_costs),
+            'total_cash_request_costs': float(cash_request_costs),
+            'total_expenses': float(stage_costs) + float(cash_request_costs),
+            'per_project_expenses': per_project_expenses,
+            'recent_stages': stages.filter(incurred_cost__gt=0).order_by('-completed_date')[:50],
+            'recent_cash_requests': cash_requests.filter(status='APPROVED').order_by('-date_requested')[:50],
+        })
+        return context
 
 
 class DashboardView(ProjectRequiredMixin, TemplateView):
@@ -70,365 +146,152 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # If a project is selected, filter data; otherwise show aggregate for all.
-        from projects.models import Project, ProjectLifecycleStage
-        from contractors.models import Subcontractor
-
+        
+        from projects.models import Project, ProjectAllocation, ProjectLifecycleStage
+        from contractors.models import Subcontractor, Company, CompanyCompliance
+        from logistic.models import SiteStore, MilestoneCashRequest
+        
+        # 1. Scope determination
         if self.project:
-            stages = ProjectLifecycleStage.objects.filter(project=self.project)
-            records = Record.objects.filter(project=self.project)
-            requests_qs = Request.objects.filter(project=self.project)
-            stores = Store.objects.filter(project=self.project)
+            projects_qs = Project.objects.filter(sn=self.project.sn)
+            allocations_qs = ProjectAllocation.objects.filter(project=self.project)
+            cash_requests_qs = MilestoneCashRequest.objects.filter(project=self.project)
+            stores_qs = SiteStore.objects.filter(project=self.project)
         else:
-            stages = ProjectLifecycleStage.objects.all()
-            records = Record.objects.all()
-            requests_qs = Request.objects.all()
-            stores = Store.objects.all()
-
-        total_spent = stages.aggregate(total=Sum("incurred_cost"))["total"] or 0
-        active_requests = requests_qs.filter(status="pending").count()
-        low_stock = stores.filter(current_stock__lt=F("reorder_level"))
-        wallets = Account.objects.filter(project=self.project) if self.project else Account.objects.all()
-        wallet_balances = {w.name: w.balance for w in wallets}
-
-        total_projects = Project.objects.count()
-        internal_contractors = Subcontractor.objects.filter(company_type='INTERNAL').count()
-        external_contractors = Subcontractor.objects.filter(company_type='EXTERNAL').count()
-
-        context.update(
-            {
-                "total_spent": total_spent,
-                "active_requests": active_requests,
-                "low_stock": low_stock,
-                "wallet_balances": wallet_balances,
-                "project": self.project,
-                "total_projects": total_projects,
-                "internal_contractors": internal_contractors,
-                "external_contractors": external_contractors,
-            }
+            projects_qs = Project.objects.all()
+            allocations_qs = ProjectAllocation.objects.all()
+            cash_requests_qs = MilestoneCashRequest.objects.all()
+            stores_qs = SiteStore.objects.all()
+            
+        # 2. Role-Based Access Guards
+        user = self.request.user
+        user_groups = list(user.groups.values_list('name', flat=True)) if user.is_authenticated else []
+        is_executive_or_management = (
+            user.is_superuser or 
+            any(g in ['Executive', 'Management', 'Level 3', 'Level 4'] for g in user_groups)
         )
-        return context
+        if 'Technical/Field' in user_groups:
+            is_executive_or_management = False
+            
+        # 3. Layer A: Executive Financial KPI Cards
+        # Total Contract Value Portfolio
+        total_contract_value = projects_qs.aggregate(val=Sum('actual_contract_amount'))['val'] or 0.0
+        
+        # Expected Gross Profit Margin Panel
+        total_in_house_benchmark = projects_qs.aggregate(val=Sum('in_house_benchmark'))['val'] or 0.0
+        
+        if total_contract_value > 0:
+            cost_percentage = (Decimal(total_in_house_benchmark) / Decimal(total_contract_value)) * 100
 
-
-# Generic CRUD views – they all inherit ProjectRequiredMixin to ensure proper scoping.
-class RecordListView(ProjectRequiredMixin, ListView):
-    model = Record
-    template_name = "record_list.html"
-    context_object_name = "records"
-
-    def get_queryset(self):
-        return super().get_queryset().select_related("material", "project")
-
-class RecordCreateView(ProjectRequiredMixin, CreateView):
-    model = Record
-    fields = ["project", "material", "amount", "quantity", "bank_name", "account_number", "wallet"]
-    template_name = "record_form.html"
-    success_url = reverse_lazy("core:record_list")
-
-    def form_valid(self, form):
-        # Ensure the record belongs to the selected project if one is set.
-        if self.project and not form.instance.project_id:
-            form.instance.project = self.project
-        return super().form_valid(form)
-
-class RecordUpdateView(ProjectRequiredMixin, UpdateView):
-    model = Record
-    fields = ["material", "amount", "quantity", "bank_name", "account_number", "wallet"]
-    template_name = "record_form.html"
-    success_url = reverse_lazy("core:record_list")
-
-class RecordDeleteView(ProjectRequiredMixin, DeleteView):
-    model = Record
-    template_name = "confirm_delete.html"
-    success_url = reverse_lazy("core:record_list")
-
-# Requests CRUD – similar pattern.
-class RequestListView(ProjectRequiredMixin, ListView):
-    model = Request
-    template_name = "request_list.html"
-    context_object_name = "requests"
-
-    def get_queryset(self):
-        return super().get_queryset().select_related("material", "project")
-
-class RequestCreateView(ProjectRequiredMixin, CreateView):
-    model = Request
-    fields = ["project", "material", "quantity", "requested_by", "status"]
-    template_name = "request_form.html"
-    success_url = reverse_lazy("core:request_list")
-
-    def form_valid(self, form):
-        if self.project and not form.instance.project_id:
-            form.instance.project = self.project
-        return super().form_valid(form)
-
-class RequestUpdateView(ProjectRequiredMixin, UpdateView):
-    model = Request
-    fields = ["material", "quantity", "status"]
-    template_name = "request_form.html"
-    success_url = reverse_lazy("core:request_list")
-
-class RequestDeleteView(ProjectRequiredMixin, DeleteView):
-    model = Request
-    template_name = "confirm_delete.html"
-    success_url = reverse_lazy("core:request_list")
-
-# Additional CRUD for Store, Usage, Account, Material can be added similarly.
-
-# --- Account Views ---
-class AccountListView(ProjectRequiredMixin, ListView):
-    model = Account
-    template_name = "account_list.html"
-    context_object_name = "accounts"
-
-class AccountCreateView(ProjectRequiredMixin, CreateView):
-    model = Account
-    fields = ["project", "name", "balance", "currency"]
-    template_name = "account_form.html"
-    success_url = reverse_lazy("core:account_list")
-
-    def form_valid(self, form):
-        if self.project and not form.instance.project_id:
-            form.instance.project = self.project
-        return super().form_valid(form)
-
-class AccountUpdateView(ProjectRequiredMixin, UpdateView):
-    model = Account
-    fields = ["name", "balance", "currency"]
-    template_name = "account_form.html"
-    success_url = reverse_lazy("core:account_list")
-
-class AccountDeleteView(ProjectRequiredMixin, DeleteView):
-    model = Account
-    template_name = "confirm_delete.html"
-    success_url = reverse_lazy("core:account_list")
-
-
-# --- Inventory (Material) Views ---
-class MaterialListView(ProjectRequiredMixin, ListView):
-    model = Material
-    template_name = "material_list.html"
-    context_object_name = "materials"
-
-class MaterialCreateView(ProjectRequiredMixin, CreateView):
-    model = Material
-    fields = ["project", "name", "description", "unit", "standard_price"]
-    template_name = "material_form.html"
-    success_url = reverse_lazy("core:material_list")
-
-    def form_valid(self, form):
-        if self.project and not form.instance.project_id:
-            form.instance.project = self.project
-        return super().form_valid(form)
-
-class MaterialUpdateView(ProjectRequiredMixin, UpdateView):
-    model = Material
-    fields = ["name", "description", "unit", "standard_price"]
-    template_name = "material_form.html"
-    success_url = reverse_lazy("core:material_list")
-
-class MaterialDeleteView(ProjectRequiredMixin, DeleteView):
-    model = Material
-    template_name = "confirm_delete.html"
-    success_url = reverse_lazy("core:material_list")
-
-
-# --- Store Views ---
-class StoreListView(ProjectRequiredMixin, ListView):
-    model = Store
-    template_name = "store_list.html"
-    context_object_name = "stores"
-
-    def get_queryset(self):
-        return super().get_queryset().select_related("material", "project")
-
-class StoreCreateView(ProjectRequiredMixin, CreateView):
-    model = Store
-    fields = ["project", "material", "current_stock", "reorder_level", "warehouse_location"]
-    template_name = "store_form.html"
-    success_url = reverse_lazy("core:store_list")
-
-    def form_valid(self, form):
-        if self.project and not form.instance.project_id:
-            form.instance.project = self.project
-        return super().form_valid(form)
-
-class StoreUpdateView(ProjectRequiredMixin, UpdateView):
-    model = Store
-    fields = ["material", "current_stock", "reorder_level", "warehouse_location"]
-    template_name = "store_form.html"
-    success_url = reverse_lazy("core:store_list")
-
-class StoreDeleteView(ProjectRequiredMixin, DeleteView):
-    model = Store
-    template_name = "confirm_delete.html"
-    success_url = reverse_lazy("core:store_list")
-
-
-# --- Usage Views ---
-class UsageListView(ProjectRequiredMixin, ListView):
-    model = Usage
-    template_name = "usage_list.html"
-    context_object_name = "usages"
-
-    def get_queryset(self):
-        return super().get_queryset().select_related("material", "project")
-
-class UsageCreateView(ProjectRequiredMixin, CreateView):
-    model = Usage
-    fields = ["project", "material", "quantity", "purpose"]
-    template_name = "usage_form.html"
-    success_url = reverse_lazy("core:usage_list")
-
-    def form_valid(self, form):
-        if self.project and not form.instance.project_id:
-            form.instance.project = self.project
-        return super().form_valid(form)
-
-class UsageUpdateView(ProjectRequiredMixin, UpdateView):
-    model = Usage
-    fields = ["material", "quantity", "purpose"]
-    template_name = "usage_form.html"
-    success_url = reverse_lazy("core:usage_list")
-
-class UsageDeleteView(ProjectRequiredMixin, DeleteView):
-    model = Usage
-    template_name = "confirm_delete.html"
-    success_url = reverse_lazy("core:usage_list")
-
-
-# --- Budget View ---
-class BudgetView(ProjectRequiredMixin, TemplateView):
-    template_name = "budget_summary.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Calculate budget details (total records cost vs available account balances)
-        if self.project:
-            records = Record.objects.filter(project=self.project)
-            accounts = Account.objects.filter(project=self.project)
         else:
-            records = Record.objects.all()
-            accounts = Account.objects.all()
-
-        total_expenditure = records.aggregate(total=Sum("total_cost"))["total"] or 0
-        total_funds = accounts.aggregate(total=Sum("balance"))["total"] or 0
-        net_budget = total_funds - total_expenditure
-
+            cost_percentage = 0.0
+        gross_profit_margin = 100.0 - float(cost_percentage)
+        
+        # Total Disbursed Capital
+        total_disbursed_capital = projects_qs.aggregate(
+            val=Sum(F('mobilization_received') + F('final_payment_received'))
+        )['val'] or 0.0
+        
+        # Subcontractor Exposure Liability
+        subcontractor_exposure = allocations_qs.aggregate(
+            val=Sum(F('amount_agreed_with_supplier_contractor') - F('advance_received_by_supplier_contractor'))
+        )['val'] or 0.0
+        
+        # 4. Layer B: Bidding Strategy & File Tracking Pipeline
+        active_bidding_pipeline = projects_qs.filter(current_phase='PRE_AWARD')
+        
+        project_roadmaps = []
+        for p in projects_qs:
+            stages_list = p.lifecycle_stages.all().order_by('sequence_order')
+            audit_stage = next((s for s in stages_list if "Head of Audit" in s.stage_name), None)
+            procurement_stage = next((s for s in stages_list if "Procurement Office" in s.stage_name), None)
+            store_stage = next((s for s in stages_list if "Store Department" in s.stage_name), None)
+            finance_stage = next((s for s in stages_list if "Director of Finance" in s.stage_name), None)
+            agf_stage = next((s for s in stages_list if "Confirmation of Payment" in s.stage_name or "Certified Status" in s.stage_name or "AGF" in s.stage_name), None)
+            
+            p_status = (p.payment_status or "").strip().lower()
+            p_batch = (p.batch_no_final_payment or "").strip()
+            is_alert = (p_status == "uploaded for payment" and not p_batch)
+            
+            project_roadmaps.append({
+                'project_code': p.project_code,
+                'project_name': p.project_name,
+                'payment_status': p.payment_status,
+                'batch_no_final_payment': p.batch_no_final_payment,
+                'is_alert': is_alert,
+                'stages': [
+                    {'name': 'Head of Audit', 'is_completed': audit_stage.is_completed if audit_stage else False, 'notes': audit_stage.notes_or_updates if audit_stage else ''},
+                    {'name': 'Procurement Office', 'is_completed': procurement_stage.is_completed if procurement_stage else False, 'notes': procurement_stage.notes_or_updates if procurement_stage else ''},
+                    {'name': 'Store Department', 'is_completed': store_stage.is_completed if store_stage else False, 'notes': store_stage.notes_or_updates if store_stage else ''},
+                    {'name': 'Director of Finance', 'is_completed': finance_stage.is_completed if finance_stage else False, 'notes': finance_stage.notes_or_updates if finance_stage else ''},
+                    {'name': 'AGF Payment', 'is_completed': agf_stage.is_completed if agf_stage else False, 'notes': agf_stage.notes_or_updates if agf_stage else ''},
+                ]
+            })
+            
+        # 5. Layer C: Field Operations & Subcontractor Health
+        # Progress vs Budget Burn-Rate Variance
+        project_variances = []
+        for p in projects_qs:
+            drawn_down = MilestoneCashRequest.objects.filter(project=p, status='APPROVED').aggregate(total=Sum('amount_requested'))['total'] or 0.0
+            drawdown_rate = (float(drawn_down) / float(p.budget_amount) * 100) if p.budget_amount > 0 else 0.0
+            completion_rate = p.level_of_completion_percentage
+            variance = completion_rate - drawdown_rate
+            exceeds = drawdown_rate > completion_rate
+            project_variances.append({
+                'project_code': p.project_code,
+                'project_name': p.project_name,
+                'budget_amount': p.budget_amount,
+                'drawn_down': drawn_down,
+                'drawdown_rate': round(drawdown_rate, 2),
+                'completion_rate': completion_rate,
+                'variance': round(variance, 2),
+                'exceeds': exceeds,
+            })
+            
+        # Allocation Spread
+        external_pct = allocations_qs.aggregate(total=Sum('sub_contractor_cost_percentage'))['total'] or 0.0
+        external_pct = float(external_pct)
+        in_house_pct = max(0.0, 100.0 - external_pct)
+        
+        # 6. Layer D: Field Operations Action Items
+        # Pending Milestone Cash Requests
+        pending_cash_requests = cash_requests_qs.filter(status='PENDING').select_related('project', 'requested_by')
+        
+        # Material Deficiency Alerts
+        material_alerts = stores_qs.filter(quantity_on_site=0).select_related('project')
+        
+        # Vendor Compliance Safeguards
+        current_year = timezone.now().year
+        today = timezone.now().date()
+        thirty_days_later = today + timedelta(days=30)
+        
+        compliance_alerts = CompanyCompliance.objects.filter(
+            year=current_year
+        ).filter(
+            Q(status__in=['PENDING', 'EXPIRED']) |
+            Q(status='APPROVED', expiry_date__lte=thirty_days_later)
+        ).select_related('company', 'requirement').order_by('company__name', 'requirement__name')
+        
         context.update({
-            "total_expenditure": total_expenditure,
-            "total_funds": total_funds,
-            "net_budget": net_budget,
-            "project": self.project,
+            'is_executive_or_management': is_executive_or_management,
+            'total_contract_value': total_contract_value,
+            'total_in_house_benchmark': total_in_house_benchmark,
+            'cost_percentage': round(cost_percentage, 2),
+            'gross_profit_margin': round(gross_profit_margin, 2),
+            'total_disbursed_capital': total_disbursed_capital,
+            'subcontractor_exposure': subcontractor_exposure,
+            'active_bidding_pipeline': active_bidding_pipeline,
+            'project_roadmaps': project_roadmaps,
+            'project_variances': project_variances,
+            'external_pct': external_pct,
+            'in_house_pct': in_house_pct,
+            'pending_cash_requests': pending_cash_requests,
+            'material_alerts': material_alerts,
+            'compliance_alerts': compliance_alerts,
+            'project': self.project,
+            'total_projects': Project.objects.count(),
+            'internal_contractors': Subcontractor.objects.filter(company_type='INTERNAL').count(),
+            'external_contractors': Subcontractor.objects.filter(company_type='EXTERNAL').count(),
         })
         return context
-
-
-# --- Project Management Views ---
-class ProjectListView(LoginRequiredMixin, ListView):
-    model = Project
-    template_name = "project_list.html"
-    context_object_name = "projects"
-
-class ProjectCreateView(LoginRequiredMixin, CreateView):
-    model = Project
-    fields = ["name", "location", "start_date", "status"]
-    template_name = "project_form.html"
-    success_url = reverse_lazy("core:project_list")
-
-class ProjectUpdateView(LoginRequiredMixin, UpdateView):
-    model = Project
-    fields = ["name", "location", "start_date", "status"]
-    template_name = "project_form.html"
-    success_url = reverse_lazy("core:project_list")
-
-class ProjectDeleteView(LoginRequiredMixin, DeleteView):
-    model = Project
-    template_name = "confirm_delete.html"
-    success_url = reverse_lazy("core:project_list")
-
-
-# --- Excel Export Views ---
-class ExportRecordsExcelView(ProjectRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Records"
-        headers = ["S/N", "Created On", "Material", "Amount (NGN)", "Quantity", "Total Cost (NGN)", "Bank Name", "Account Number"]
-        ws.append(headers)
-        qs = Record.objects.filter(project=self.project).select_related("material") if self.project else Record.objects.all().select_related("material")
-        for idx, r in enumerate(qs, 1):
-            ws.append([idx, r.created_on.strftime("%Y-%m-%d") if r.created_on else "", r.material.name, float(r.amount), r.quantity, float(r.total_cost), r.bank_name, r.account_number])
-        response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        pname = self.project.project_name if self.project else "All_Projects"
-        response["Content-Disposition"] = f'attachment; filename="Records_{pname}.xlsx"'
-        wb.save(response)
-        return response
-
-
-class ExportRequestsExcelView(ProjectRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Requests"
-        ws.append(["S/N", "Date Requested", "Material", "Quantity", "Requested By", "Status"])
-        qs = Request.objects.filter(project=self.project).select_related("material", "requested_by") if self.project else Request.objects.all().select_related("material", "requested_by")
-        for idx, r in enumerate(qs, 1):
-            ws.append([idx, r.date_requested.strftime("%Y-%m-%d") if r.date_requested else "", r.material.name, r.quantity, r.requested_by.username if r.requested_by else "-", r.status])
-        response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        pname = self.project.project_name if self.project else "All_Projects"
-        response["Content-Disposition"] = f'attachment; filename="Requests_{pname}.xlsx"'
-        wb.save(response)
-        return response
-
-
-class ExportAccountsExcelView(ProjectRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Accounts"
-        ws.append(["S/N", "Account Name", "Currency", "Balance", "Last Updated"])
-        qs = Account.objects.filter(project=self.project) if self.project else Account.objects.all()
-        for idx, a in enumerate(qs, 1):
-            ws.append([idx, a.name, a.currency, float(a.balance), a.last_updated.strftime("%Y-%m-%d %H:%M") if a.last_updated else ""])
-        response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        pname = self.project.project_name if self.project else "All_Projects"
-        response["Content-Disposition"] = f'attachment; filename="Accounts_{pname}.xlsx"'
-        wb.save(response)
-        return response
-
-
-class ExportStoreExcelView(ProjectRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Store"
-        ws.append(["S/N", "Material", "Unit", "Current Stock", "Reorder Level", "Status", "Warehouse Location"])
-        qs = Store.objects.filter(project=self.project).select_related("material") if self.project else Store.objects.all().select_related("material")
-        for idx, s in enumerate(qs, 1):
-            status = "Low Stock" if s.current_stock <= s.reorder_level else "Good"
-            ws.append([idx, s.material.name, s.material.unit, s.current_stock, s.reorder_level, status, s.warehouse_location or "-"])
-        response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        pname = self.project.project_name if self.project else "All_Projects"
-        response["Content-Disposition"] = f'attachment; filename="Store_{pname}.xlsx"'
-        wb.save(response)
-        return response
-
-
-class ExportUsageExcelView(ProjectRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Usage"
-        ws.append(["S/N", "Date", "Material", "Quantity", "Unit", "Purpose"])
-        qs = Usage.objects.filter(project=self.project).select_related("material") if self.project else Usage.objects.all().select_related("material")
-        for idx, u in enumerate(qs, 1):
-            ws.append([idx, u.date.strftime("%Y-%m-%d") if u.date else "", u.material.name, u.quantity, u.material.unit, u.purpose or "-"])
-        response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        pname = self.project.project_name if self.project else "All_Projects"
-        response["Content-Disposition"] = f'attachment; filename="Usage_{pname}.xlsx"'
-        wb.save(response)
-        return response
-
-
 
