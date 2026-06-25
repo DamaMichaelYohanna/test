@@ -12,5 +12,6 @@ urlpatterns = [
     path('accounts/logout/', views.logout_view, name='logout'),
     path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
     path('expenses/', views.ExpensesDashboardView.as_view(), name='expenses_dashboard'),
+    path('expenses/unplanned/add/', views.UnplannedExpenseCreateView.as_view(), name='add_unplanned_expense'),
     path('project/<int:pk>/select/', views.ProjectSwitcherView.as_view(), name='select_project'),
     ]

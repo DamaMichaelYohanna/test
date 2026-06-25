@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.contrib import messages     
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import (
     TemplateView,
@@ -16,6 +17,9 @@ from django.utils import timezone
 from datetime import timedelta
 from django.http import HttpResponse
 import openpyxl
+
+from projects.models import ProjectLifecycleStage, Project, UnplannedExpense
+from logistic.models import MilestoneCashRequest
 
 
 def logout_view(request):
@@ -104,41 +108,83 @@ class ExpensesDashboardView(ProjectRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from projects.models import ProjectLifecycleStage, Project
-        from logistic.models import MilestoneCashRequest
 
         if self.project:
             stages = ProjectLifecycleStage.objects.filter(project=self.project)
             cash_requests = MilestoneCashRequest.objects.filter(project=self.project)
+            unplanned = UnplannedExpense.objects.filter(project=self.project)
         else:
             stages = ProjectLifecycleStage.objects.all()
             cash_requests = MilestoneCashRequest.objects.all()
+            unplanned = UnplannedExpense.objects.all()
 
-        stage_costs = stages.aggregate(total=Sum('incurred_cost'))['total'] or 0.0
-        cash_request_costs = cash_requests.filter(status='APPROVED').aggregate(total=Sum('amount_requested'))['total'] or 0.0
-        
+        stage_costs = stages.aggregate(total=Sum('incurred_cost'))['total'] or Decimal('0.00')
+        cash_request_costs = cash_requests.filter(status='APPROVED').aggregate(total=Sum('amount_requested'))['total'] or Decimal('0.00')
+        unplanned_costs = unplanned.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
         per_project_expenses = []
         if not self.project:
             for p in Project.objects.all():
-                p_stage = ProjectLifecycleStage.objects.filter(project=p).aggregate(total=Sum('incurred_cost'))['total'] or 0.0
-                p_cash = MilestoneCashRequest.objects.filter(project=p, status='APPROVED').aggregate(total=Sum('amount_requested'))['total'] or 0.0
-                if p_stage > 0 or p_cash > 0:
+                p_stage = ProjectLifecycleStage.objects.filter(project=p).aggregate(total=Sum('incurred_cost'))['total'] or Decimal('0.00')
+                p_cash = MilestoneCashRequest.objects.filter(project=p, status='APPROVED').aggregate(total=Sum('amount_requested'))['total'] or Decimal('0.00')
+                p_unplanned = UnplannedExpense.objects.filter(project=p).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+                if p_stage > 0 or p_cash > 0 or p_unplanned > 0:
                     per_project_expenses.append({
                         'project': p,
                         'stage_costs': p_stage,
                         'cash_request_costs': p_cash,
-                        'total': Decimal(p_stage) + Decimal(p_cash)
+                        'unplanned_costs': p_unplanned,
+                        'total': Decimal(p_stage) + Decimal(p_cash) + Decimal(p_unplanned)
                     })
 
         context.update({
-            'total_stage_costs': float(stage_costs),
-            'total_cash_request_costs': float(cash_request_costs),
-            'total_expenses': float(stage_costs) + float(cash_request_costs),
+            'total_stage_costs': stage_costs,
+            'total_cash_request_costs': cash_request_costs,
+            'total_unplanned_costs': unplanned_costs,
+            'total_expenses': Decimal(stage_costs) + Decimal(cash_request_costs) + Decimal(unplanned_costs),
             'per_project_expenses': per_project_expenses,
             'recent_stages': stages.filter(incurred_cost__gt=0).order_by('-completed_date')[:50],
             'recent_cash_requests': cash_requests.filter(status='APPROVED').order_by('-date_requested')[:50],
+            'recent_unplanned': unplanned.select_related('reported_by', 'project').order_by('-date_incurred')[:50],
         })
         return context
+
+
+class UnplannedExpenseCreateView(LoginRequiredMixin, View):
+    """Allows any logged-in user to instantly log an unplanned project expense."""
+    template_name = 'core/unplanned_expense_form.html'
+
+    def get(self, request):
+        projects = Project.objects.all()
+        preselect = request.GET.get('project')
+        return render(request, self.template_name, {
+            'projects': projects,
+            'preselect': preselect,
+        })
+
+    def post(self, request):
+        project_id = request.POST.get('project_id')
+        description = request.POST.get('description', '').strip()
+        amount = request.POST.get('amount', '').strip()
+        date_incurred = request.POST.get('date_incurred', '').strip()
+
+        if not project_id or not description or not amount or not date_incurred:
+            messages.error(request, "Project, description, amount, and date are all required.")
+            return redirect('core:add_unplanned_expense')
+
+        try:
+            project = get_object_or_404(Project, pk=project_id)
+            UnplannedExpense.objects.create(
+                project=project,
+                description=description,
+                amount=Decimal(amount),
+                date_incurred=date_incurred,
+                reported_by=request.user,
+            )
+            messages.success(request, f"Unplanned expense of ₦{Decimal(amount):,.2f} logged for {project.project_code}.")
+        except Exception as e:
+            messages.error(request, f"Could not save expense: {e}")
+        return redirect('core:expenses_dashboard')
 
 
 class DashboardView(ProjectRequiredMixin, TemplateView):
