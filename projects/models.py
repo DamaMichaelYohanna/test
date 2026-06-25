@@ -140,4 +140,44 @@ class ProjectLifecycleStage(models.Model):
 
     def __str__(self):
         return f"{self.project.project_name} - Step {self.sequence_order}: {self.stage_name} [{'Done' if self.is_completed else 'Pending'}]"
-        
+
+
+class UnplannedExpense(models.Model):
+    """
+    Captures ad-hoc or unplanned project costs that do not fall within
+    the defined lifecycle pipeline or milestone cash request schedule.
+    These are added instantly without any approval workflow.
+    """
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='unplanned_expenses',
+    )
+    description = models.CharField(
+        max_length=255,
+        help_text="Brief description of what the expense was for."
+    )
+    amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        help_text="Total amount of the unplanned expense."
+    )
+    date_incurred = models.DateField(
+        help_text="Date the expense was incurred."
+    )
+    reported_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reported_expenses',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date_incurred']
+        verbose_name = "Unplanned Expense"
+        verbose_name_plural = "Unplanned Expenses"
+
+    def __str__(self):
+        return f"{self.project.project_code} — {self.description} (₦{self.amount:,.2f})"
