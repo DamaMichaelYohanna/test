@@ -7,12 +7,12 @@ from .models import Company, CompanyCompliance, ComplianceRequirement, Subcontra
 class CompanyForm(forms.ModelForm):
     class Meta:
         model = Company
-        fields = ['name', 'contact']
+        fields = ['name', 'director_name']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['name'].widget = TextInput(attrs={'class': 'form-control', 'placeholder': 'Company Name'})
-        self.fields['contact'].widget = TextInput(attrs={'class': 'form-control', 'placeholder': 'Primary Contact'})
+        self.fields['director_name'].widget = TextInput(attrs={'class': 'form-control', 'placeholder': 'Director Name'})
 
 class SubcontractorForm(forms.ModelForm):
     class Meta:
