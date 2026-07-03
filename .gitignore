@@ -65,3 +65,7 @@ static
 
 # MacOS
 .DS_Store
+
+# WSGI config file
+material_logistics/wsgi.py
+
