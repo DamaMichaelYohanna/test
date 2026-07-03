@@ -78,7 +78,7 @@ class ProjectRestructuringTests(TestCase):
             'linked_project': '',
             'budget_amount': '8000000.00',
             'current_phase': 'PRE_AWARD',
-            'level_of_completion_percentage': 0,
+            'execution_level_percentage': 0,
             'project_status': 'Initiated',
             'payment_status': 'Pending',
             'actual_contract_amount': '0.00',
