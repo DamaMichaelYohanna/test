@@ -1,20 +1,18 @@
 from django import forms
-from .models import Project, ProjectAllocation, ProjectLifecycleStage
+from django.forms import inlineformset_factory
+from .models import Project, ProjectCategory, ProjectAllocation, ProjectLifecycleStage, ProjectFee, FeeType
 
 class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
         fields = [
-            'mda', 'project_code', 'project_name', 'lot', 'project_type', 'location', 'category',
-            'plain_boq', 'drawing_design', 'award_letter_and_boq',
-            'final_companies', 'back_up_companies', 'updated_recommended_companies',
-            'technical_status', 'financial_status',
-            'budget_amount', 'actual_contract_amount', 'admin_fee',
-            'in_house_benchmark', 'cost_percentage',
-            'mobilization_received', 'batch_no_mobilization',
-            'batch_no_final_payment', 'final_payment_received',
-            'staff_assigned', 'current_phase', 'level_of_completion_percentage',
-            'project_status', 'payment_status', 'comments', 'remarks'
+            'project_code', 'mda', 'project_name', 'project_type', 'lot', 'location', 'category', 'linked_project',
+            'budget_amount', 'technical_status', 'financial_status', 'final_companies', 'back_up_companies', 'updated_recommended_companies',
+            'plain_boq', 'drawing_design',
+            'actual_contract_amount', 'in_house_benchmark', 'cost_percentage', 'staff_assigned', 'current_phase',
+            'mobilization_received', 'batch_no_mobilization', 'final_payment_received', 'batch_no_final_payment',
+            'award_letter_and_boq',
+            'execution_level_percentage', 'project_status', 'payment_status', 'comments', 'remarks'
         ]
         widgets = {
             'comments': forms.Textarea(attrs={'rows': 3, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
@@ -23,6 +21,29 @@ class ProjectForm(forms.ModelForm):
             'back_up_companies': forms.Textarea(attrs={'rows': 2, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
             'updated_recommended_companies': forms.Textarea(attrs={'rows': 2, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['linked_project'].queryset = Project.objects.exclude(pk=self.instance.pk)
+        
+        # Style form fields using modern Tailwind classes
+        for name, field in self.fields.items():
+            if name not in ['comments', 'remarks', 'final_companies', 'back_up_companies', 'updated_recommended_companies', 'plain_boq', 'drawing_design', 'award_letter_and_boq']:
+                field.widget.attrs.setdefault('class', 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm')
+
+
+ProjectFeeFormSet = inlineformset_factory(
+    Project,
+    ProjectFee,
+    fields=('fee_type', 'amount'),
+    extra=1,
+    can_delete=True,
+    widgets={
+        'fee_type': forms.Select(attrs={'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+        'amount': forms.NumberInput(attrs={'step': '0.01', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+    }
+)
 
 class ProjectAllocationForm(forms.ModelForm):
     class Meta:
@@ -40,4 +61,24 @@ class ProjectLifecycleStageForm(forms.ModelForm):
         widgets = {
             'completed_date': forms.DateInput(attrs={'type': 'date'}),
             'notes_or_updates': forms.Textarea(attrs={'rows': 2}),
+        }
+
+
+class ProjectCategoryForm(forms.ModelForm):
+    class Meta:
+        model = ProjectCategory
+        fields = ['name', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+        }
+
+
+class FeeTypeForm(forms.ModelForm):
+    class Meta:
+        model = FeeType
+        fields = ['name', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
         }

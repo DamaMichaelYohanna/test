@@ -111,10 +111,17 @@
           </a>
 
           <a href="{% url 'projects:project_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'projects' in request.path and 'compliance' not in request.path %}active-nav-item{% endif %}">
+            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'projects' in request.path and 'compliance' not in request.path and 'settings' not in request.path %}active-nav-item{% endif %}">
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">workspaces</span>
             Projects
           </a>
+          {% if user.is_staff or user.is_superuser %}
+          <a href="{% url 'projects:settings' %}"
+            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'projects/settings' in request.path %}active-nav-item{% endif %}">
+            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">settings</span>
+            Project Settings
+          </a>
+          {% endif %}
           <a href="{% url 'logistic:site_logistics_landing' %}"
             class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'logistics' in request.path %}active-nav-item{% endif %}">
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">warehouse</span>

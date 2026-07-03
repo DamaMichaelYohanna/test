@@ -280,7 +280,7 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
         for p in projects_qs:
             drawn_down = MilestoneCashRequest.objects.filter(project=p, status='APPROVED').aggregate(total=Sum('amount_requested'))['total'] or 0.0
             drawdown_rate = (float(drawn_down) / float(p.budget_amount) * 100) if p.budget_amount > 0 else 0.0
-            completion_rate = p.level_of_completion_percentage
+            completion_rate = p.execution_level_percentage
             variance = completion_rate - drawdown_rate
             exceeds = drawdown_rate > completion_rate
             project_variances.append({

@@ -51,7 +51,7 @@
         class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50">
         <option value="">All Years</option>
         {% for d in year_choices %}
-        <option value="{{ d.year }}" {% if selected_year == d.year|stringformat:"s" %}selected{% endif %}>{{ d.year }}
+        <option value="{{ d.year }}" {% if selected_year==d.year|stringformat:"s" %}selected{% endif %}>{{ d.year }}
         </option>
         {% endfor %}
       </select>
@@ -63,7 +63,7 @@
         class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50">
         <option value="">All MDAs</option>
         {% for m in mda_choices %}
-        <option value="{{ m }}" {% if selected_mda == m %}selected{% endif %}>{{ m }}</option>
+        <option value="{{ m }}" {% if selected_mda==m %}selected{% endif %}>{{ m }}</option>
         {% endfor %}
       </select>
     </div>
@@ -74,7 +74,7 @@
         class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50">
         <option value="">All Types</option>
         {% for val, label in type_choices %}
-        <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
+        <option value="{{ val }}" {% if selected_type==val %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
     </div>
@@ -125,7 +125,7 @@
           <th scope="col" class="px-6 py-4 text-left">MDA</th>
           <th scope="col" class="px-6 py-4 text-left">Type</th>
           <th scope="col" class="px-6 py-4 text-left">Current Phase</th>
-          <th scope="col" class="px-6 py-4 text-left">Completion</th>
+          <th scope="col" class="px-6 py-4 text-left">Execution Level %</th>
           <th scope="col" class="px-6 py-4 text-center">Actions</th>
         </tr>
       </thead>
@@ -160,10 +160,9 @@
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <div class="w-24 bg-gray-200 rounded-full h-2">
-                <div class="bg-[#bfa12c] h-2 rounded-full" style="width: {{ proj.level_of_completion_percentage }}%">
-                </div>
+                <div class="bg-[#bfa12c] h-2 rounded-full" style="width: {{ proj.execution_level_percentage }}%"></div>
               </div>
-              <span class="text-xs font-semibold text-gray-700">{{ proj.level_of_completion_percentage }}%</span>
+              <span class="text-xs font-semibold text-gray-700">{{ proj.execution_level_percentage }}%</span>
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-center text-xs font-medium space-x-1">

@@ -8,7 +8,7 @@
   <div class="px-6 py-5 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
     <div>
       <h1 class="text-xl font-bold text-gray-900">{% if form.instance.pk %}Edit Project: {{ form.instance.project_name }}{% else %}Register New Project{% endif %}</h1>
-      <p class="text-sm text-gray-500 mt-1">Specify procurement metrics, attachments, and financial thresholds.</p>
+      <p class="text-sm text-gray-500 mt-1">Specify procurement metrics, attachments, and financial thresholds sorted by project phases.</p>
     </div>
     <a href="{% url 'projects:project_list' %}" class="text-sm text-gray-500 hover:text-gray-900 flex items-center">
       <span class="material-symbols-outlined text-sm mr-1">arrow_back</span> Back to Directory
@@ -41,102 +41,58 @@
     </div>
     {% endif %}
 
-    <!-- Core Details -->
-    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
-      <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4">Core Identifiers & Classification</h2>
+    <!-- PHASE 1: Pre-Award Phase -->
+    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+      <h2 class="text-sm font-bold text-[#bfa12c] uppercase tracking-wider mb-4 border-b border-gray-200 pb-2 flex items-center">
+        <span class="material-symbols-outlined mr-2">gavel</span> Phase 1: Pre-Award
+      </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Project Code *</label>
-          <input type="text" name="project_code" value="{{ form.project_code.value|default:'' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm" required>
+          {{ form.project_code }}
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">MDA *</label>
-          <input type="text" name="mda" value="{{ form.mda.value|default:'' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm" required>
+          {{ form.mda }}
         </div>
         <div class="md:col-span-2">
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Project Name *</label>
-          <input type="text" name="project_name" value="{{ form.project_name.value|default:'' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm" required>
+          {{ form.project_name }}
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Project Type *</label>
-          <select name="project_type" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
-            {% for val, label in form.project_type.field.choices %}
-            <option value="{{ val }}" {% if form.project_type.value == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
+          {{ form.project_type }}
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Lot</label>
-          <input type="text" name="lot" value="{{ form.lot.value|default:'' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
+          {{ form.lot }}
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Location *</label>
-          <input type="text" name="location" value="{{ form.location.value|default:'' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm" required>
+          {{ form.location }}
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Category</label>
-          <input type="text" name="category" value="{{ form.category.value|default:'' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
+          {{ form.category }}
         </div>
-      </div>
-    </div>
-
-    <!-- Financial Benchmarking -->
-    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
-      <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4">Financial Benchmarking & Invoicing</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Linked Project</label>
+          {{ form.linked_project }}
+        </div>
         <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Budget Amount (NGN)</label>
-          <input type="number" step="0.01" name="budget_amount" value="{{ form.budget_amount.value|default:'0.00' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
+          {{ form.budget_amount }}
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Actual Contract Amount</label>
-          <input type="number" step="0.01" name="actual_contract_amount" value="{{ form.actual_contract_amount.value|default:'0.00' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Admin Fee (NGN)</label>
-          <input type="number" step="0.01" name="admin_fee" value="{{ form.admin_fee.value|default:'0.00' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">In-House Benchmark</label>
-          <input type="number" step="0.01" name="in_house_benchmark" value="{{ form.in_house_benchmark.value|default:'0.00' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Cost Percentage (%)</label>
-          <input type="number" step="0.01" name="cost_percentage" value="{{ form.cost_percentage.value|default:'0.00' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
-        </div>
-      </div>
-    </div>
-
-    <!-- Pre-Award Phase Tracking & Inflows -->
-    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
-      <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4">Pre-Award & Inflow Status</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Technical Status</label>
-          <input type="text" name="technical_status" value="{{ form.technical_status.value|default:'' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
+          {{ form.technical_status }}
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Financial Status</label>
-          <input type="text" name="financial_status" value="{{ form.financial_status.value|default:'' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Mobilization Received (NGN)</label>
-          <input type="number" step="0.01" name="mobilization_received" value="{{ form.mobilization_received.value|default:'0.00' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Batch No. Mobilization</label>
-          <input type="text" name="batch_no_mobilization" value="{{ form.batch_no_mobilization.value|default:'' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Final Payment Received (NGN)</label>
-          <input type="number" step="0.01" name="final_payment_received" value="{{ form.final_payment_received.value|default:'0.00' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Batch No. Final Payment</label>
-          <input type="text" name="batch_no_final_payment" value="{{ form.batch_no_final_payment.value|default:'' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
+          {{ form.financial_status }}
         </div>
         <div class="md:col-span-2">
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Final Companies (Text Area)</label>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Final Companies</label>
           {{ form.final_companies }}
         </div>
         <div class="md:col-span-2">
@@ -147,43 +103,138 @@
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Updated Recommended Companies</label>
           {{ form.updated_recommended_companies }}
         </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Plain BOQ File</label>
+          <input type="file" name="plain_boq" class="w-full text-xs">
+          {% if form.instance.plain_boq %}
+            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.plain_boq.url }}" target="_blank" class="underline text-[#bfa12c]">Download</a></span>
+          {% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Drawing / Design File</label>
+          <input type="file" name="drawing_design" class="w-full text-xs">
+          {% if form.instance.drawing_design %}
+            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.drawing_design.url }}" target="_blank" class="underline text-[#bfa12c]">Download</a></span>
+          {% endif %}
+        </div>
       </div>
     </div>
 
-    <!-- Management & Status -->
-    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
-      <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4">Management & Completion Details</h2>
+    <!-- PHASE 2: Post-Award Phase -->
+    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+      <h2 class="text-sm font-bold text-[#bfa12c] uppercase tracking-wider mb-4 border-b border-gray-200 pb-2 flex items-center">
+        <span class="material-symbols-outlined mr-2">verified</span> Phase 2: Post-Award
+      </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Actual Contract Amount (NGN)</label>
+          {{ form.actual_contract_amount }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">In-House Benchmark (NGN)</label>
+          {{ form.in_house_benchmark }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Cost Percentage (%)</label>
+          {{ form.cost_percentage }}
+        </div>
+        <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Staff Assigned</label>
-          <select name="staff_assigned" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
-            <option value="">---------</option>
-            {% for val, label in form.staff_assigned.field.choices %}
-              {% if val %}
-              <option value="{{ val }}" {% if form.staff_assigned.value|stringformat:"s" == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
-              {% endif %}
-            {% endfor %}
-          </select>
+          {{ form.staff_assigned }}
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Current Phase</label>
-          <select name="current_phase" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
-            {% for val, label in form.current_phase.field.choices %}
-            <option value="{{ val }}" {% if form.current_phase.value == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
+          {{ form.current_phase }}
         </div>
         <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Mobilization Received (NGN)</label>
+          {{ form.mobilization_received }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Batch No. Mobilization</label>
+          {{ form.batch_no_mobilization }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Final Payment Received (NGN)</label>
+          {{ form.final_payment_received }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Batch No. Final Payment</label>
+          {{ form.batch_no_final_payment }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Award Letter & BOQ File</label>
+          <input type="file" name="award_letter_and_boq" class="w-full text-xs">
+          {% if form.instance.award_letter_and_boq %}
+            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.award_letter_and_boq.url }}" target="_blank" class="underline text-[#bfa12c]">Download</a></span>
+          {% endif %}
+        </div>
+        
+        <!-- Inline Project Fees formset -->
+        <div class="md:col-span-2 mt-4">
+          <label class="block text-xs font-bold text-gray-700 uppercase mb-2">Project Fees & Deductions</label>
+          <div class="bg-white p-4 rounded-lg border border-gray-200" id="fee-formset-container">
+            {{ fee_formset.management_form }}
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+              <thead class="bg-gray-50 text-gray-700 text-xs font-semibold uppercase tracking-wider">
+                <tr>
+                  <th class="px-4 py-2 text-left">Fee Type</th>
+                  <th class="px-4 py-2 text-left">Amount (NGN)</th>
+                  <th class="px-4 py-2 text-center">Delete?</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200" id="fee-tbody">
+                {% for f_form in fee_formset %}
+                  <tr class="fee-form-row">
+                    {% for hidden in f_form.hidden_fields %}
+                      {{ hidden }}
+                    {% endfor %}
+                    <td class="px-4 py-2">
+                      {{ f_form.fee_type }}
+                      {% if f_form.fee_type.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ f_form.fee_type.errors }}</div>
+                      {% endif %}
+                    </td>
+                    <td class="px-4 py-2">
+                      {{ f_form.amount }}
+                      {% if f_form.amount.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ f_form.amount.errors }}</div>
+                      {% endif %}
+                    </td>
+                    <td class="px-4 py-2 text-center align-middle">
+                      {% if fee_formset.can_delete %}
+                        {{ f_form.DELETE }}
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <button type="button" id="add-fee-btn" class="mt-3 inline-flex items-center bg-[#bfa12c] hover:bg-[#a88d25] text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition">
+              <span class="material-symbols-outlined text-xs mr-1">add</span> Add Fee Row
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 3: Execution Phase -->
+    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+      <h2 class="text-sm font-bold text-[#bfa12c] uppercase tracking-wider mb-4 border-b border-gray-200 pb-2 flex items-center">
+        <span class="material-symbols-outlined mr-2">engineering</span> Phase 3: Project Execution
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Level of Completion %</label>
-          <input type="number" name="level_of_completion_percentage" value="{{ form.level_of_completion_percentage.value|default:'0' }}" min="0" max="100" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
+          {{ form.level_of_completion_percentage }}
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Project Status</label>
-          <input type="text" name="project_status" value="{{ form.project_status.value|default:'Initiated' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
+          {{ form.project_status }}
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Payment Status</label>
-          <input type="text" name="payment_status" value="{{ form.payment_status.value|default:'Pending' }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm">
+          {{ form.payment_status }}
         </div>
         <div class="md:col-span-2">
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Comments</label>
@@ -192,34 +243,6 @@
         <div class="md:col-span-2">
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Remarks</label>
           {{ form.remarks }}
-        </div>
-      </div>
-    </div>
-
-    <!-- Documents -->
-    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
-      <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4">Project Documents & BOQs</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Plain BOQ File</label>
-          <input type="file" name="plain_boq" class="w-full text-xs">
-          {% if form.instance.plain_boq %}
-            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.plain_boq.url }}" target="_blank" class="underline text-indigo-600">Download</a></span>
-          {% endif %}
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Drawing / Design File</label>
-          <input type="file" name="drawing_design" class="w-full text-xs">
-          {% if form.instance.drawing_design %}
-            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.drawing_design.url }}" target="_blank" class="underline text-indigo-600">Download</a></span>
-          {% endif %}
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Award Letter & BOQ</label>
-          <input type="file" name="award_letter_and_boq" class="w-full text-xs">
-          {% if form.instance.award_letter_and_boq %}
-            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.award_letter_and_boq.url }}" target="_blank" class="underline text-indigo-600">Download</a></span>
-          {% endif %}
         </div>
       </div>
     </div>
@@ -235,4 +258,45 @@
     </div>
   </form>
 </div>
+
+<!-- Template for adding dynamic fee rows -->
+<template id="fee-row-template">
+  <tr class="fee-form-row">
+    {% for hidden in fee_formset.empty_form.hidden_fields %}
+      {{ hidden }}
+    {% endfor %}
+    <td class="px-4 py-2">
+      {{ fee_formset.empty_form.fee_type }}
+    </td>
+    <td class="px-4 py-2">
+      {{ fee_formset.empty_form.amount }}
+    </td>
+    <td class="px-4 py-2 text-center align-middle">
+      {{ fee_formset.empty_form.DELETE }}
+    </td>
+  </tr>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const addButton = document.getElementById('add-fee-btn');
+  const tbody = document.getElementById('fee-tbody');
+  const template = document.getElementById('fee-row-template');
+  const totalFormsInput = document.getElementById('id_fees-TOTAL_FORMS');
+  
+  if (addButton && tbody && template && totalFormsInput) {
+    addButton.addEventListener('click', function() {
+      const formCount = parseInt(totalFormsInput.value, 10);
+      let html = template.innerHTML.replace(/__prefix__/g, formCount);
+      
+      const tempTr = document.createElement('tbody');
+      tempTr.innerHTML = html;
+      const newRow = tempTr.firstElementChild;
+      
+      tbody.appendChild(newRow);
+      totalFormsInput.value = formCount + 1;
+    });
+  }
+});
+</script>
 {% endblock %}

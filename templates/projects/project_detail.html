@@ -99,139 +99,243 @@
     <!-- Left 2 Cols: Project details and subcontractor allocations -->
     <div class="lg:col-span-2 space-y-6">
 
-      <!-- Project Metadata Tabs / Panels -->
+      <!-- PHASE 1: Pre-Award Details -->
       <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
+        <div class="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between">
           <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center">
-            <span class="material-symbols-outlined mr-2 text-gray-500">info</span> General Information
+            <span class="material-symbols-outlined mr-2 text-[#bfa12c]">gavel</span> Phase 1: Pre-Award
           </h2>
         </div>
-        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold">Project Code</div>
-            <div class="text-gray-900 font-bold mt-0.5">{{ project.project_code }}</div>
+        <div class="p-6 space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Project Code</div>
+              <div class="text-gray-900 font-bold mt-0.5">{{ project.project_code }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">MDA</div>
+              <div class="text-gray-900 font-semibold mt-0.5">{{ project.mda }}</div>
+            </div>
+            <div class="md:col-span-2">
+              <div class="text-xs text-gray-500 uppercase font-semibold">Project Name</div>
+              <div class="text-gray-900 font-semibold mt-0.5">{{ project.project_name }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Project Type</div>
+              <div class="text-gray-900 mt-0.5 font-medium">{{ project.get_project_type_display }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Lot</div>
+              <div class="text-gray-900 mt-0.5">{{ project.lot|default:"-" }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Location</div>
+              <div class="text-gray-900 mt-0.5">{{ project.location }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Category</div>
+              <div class="text-gray-900 mt-0.5">{{ project.category.name|default:"-" }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Linked Project</div>
+              <div class="text-gray-900 mt-0.5">
+                {% if project.linked_project %}
+                  <a href="{% url 'projects:project_detail' project.linked_project.pk %}" class="text-[#bfa12c] hover:underline font-semibold flex items-center">
+                    <span class="material-symbols-outlined text-xs mr-1">link</span> {{ project.linked_project.project_code }}
+                  </a>
+                {% else %}
+                  -
+                {% endif %}
+              </div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Budget Amount</div>
+              <div class="text-gray-900 font-bold mt-0.5">₦{{ project.budget_amount|default:"0.00" }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Technical Status</div>
+              <div class="text-gray-900 mt-0.5">{{ project.technical_status|default:"-" }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Financial Status</div>
+              <div class="text-gray-900 mt-0.5">{{ project.financial_status|default:"-" }}</div>
+            </div>
           </div>
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold">MDA</div>
-            <div class="text-gray-900 font-semibold mt-0.5">{{ project.mda }}</div>
+          
+          {% if project.final_companies or project.back_up_companies or project.updated_recommended_companies %}
+          <div class="border-t border-gray-100 pt-4 space-y-4 text-sm">
+            {% if project.final_companies %}
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Final Companies</div>
+              <div class="text-gray-800 mt-1 whitespace-pre-line bg-gray-50 p-2.5 rounded border border-gray-200 text-xs font-mono">{{ project.final_companies }}</div>
+            </div>
+            {% endif %}
+            {% if project.back_up_companies %}
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Back Up Companies</div>
+              <div class="text-gray-800 mt-1 whitespace-pre-line bg-gray-50 p-2.5 rounded border border-gray-200 text-xs font-mono">{{ project.back_up_companies }}</div>
+            </div>
+            {% endif %}
+            {% if project.updated_recommended_companies %}
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Updated Recommended Companies</div>
+              <div class="text-gray-800 mt-1 whitespace-pre-line bg-gray-50 p-2.5 rounded border border-gray-200 text-xs font-mono">{{ project.updated_recommended_companies }}</div>
+            </div>
+            {% endif %}
           </div>
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold">Location</div>
-            <div class="text-gray-900 mt-0.5">{{ project.location }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold">Project Type</div>
-            <div class="text-gray-900 mt-0.5 font-medium">{{ project.get_project_type_display }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold">Lot</div>
-            <div class="text-gray-900 mt-0.5">{{ project.lot|default:"-" }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold">Category</div>
-            <div class="text-gray-900 mt-0.5">{{ project.category|default:"-" }}</div>
+          {% endif %}
+          
+          <div class="border-t border-gray-100 pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold mb-1">Plain BOQ</div>
+              {% if project.plain_boq %}
+              <a href="{{ project.plain_boq.url }}" target="_blank" class="flex items-center text-indigo-600 hover:text-indigo-900 font-medium">
+                <span class="material-symbols-outlined text-lg mr-1.5">description</span> Download BOQ
+              </a>
+              {% else %}
+              <span class="text-gray-400">Not Uploaded</span>
+              {% endif %}
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold mb-1">Drawing/Design</div>
+              {% if project.drawing_design %}
+              <a href="{{ project.drawing_design.url }}" target="_blank" class="flex items-center text-indigo-600 hover:text-indigo-900 font-medium">
+                <span class="material-symbols-outlined text-lg mr-1.5">design_services</span> Download Drawing
+              </a>
+              {% else %}
+              <span class="text-gray-400">Not Uploaded</span>
+              {% endif %}
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Financial Pillars & Benchmarking -->
+      <!-- PHASE 2: Post-Award Details -->
       <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
           <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center">
-            <span class="material-symbols-outlined mr-2 text-gray-500">query_stats</span> Financial Benchmarking &
-            Inflows
+            <span class="material-symbols-outlined mr-2 text-[#bfa12c]">verified</span> Phase 2: Post-Award
           </h2>
         </div>
-        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold">Budget Amount</div>
-            <div class="text-gray-900 font-bold mt-0.5">₦{{ project.budget_amount|default:"0.00" }}</div>
+        <div class="p-6 space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Actual Contract Amount</div>
+              <div class="text-gray-900 font-bold mt-0.5">₦{{ project.actual_contract_amount|default:"0.00" }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">In-House Benchmark</div>
+              <div class="text-gray-900 font-bold mt-0.5">₦{{ project.in_house_benchmark|default:"0.00" }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Cost Percentage</div>
+              <div class="text-gray-900 font-semibold mt-0.5">{{ project.cost_percentage|default:"0.00" }}%</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Staff Assigned</div>
+              <div class="text-gray-900 mt-0.5">{{ project.staff_assigned.username|default:"Unassigned" }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Current Phase</div>
+              <div class="text-gray-900 mt-0.5 font-bold text-[#bfa12c]">{{ project.get_current_phase_display }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Award Letter & BOQ</div>
+              {% if project.award_letter_and_boq %}
+              <a href="{{ project.award_letter_and_boq.url }}" target="_blank" class="flex items-center text-indigo-600 hover:text-indigo-900 font-medium mt-0.5">
+                <span class="material-symbols-outlined text-lg mr-1.5">verified_user</span> Download Letter
+              </a>
+              {% else %}
+              <span class="text-gray-400 mt-0.5 block">Not Uploaded</span>
+              {% endif %}
+            </div>
           </div>
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold">Actual Contract Amount</div>
-            <div class="text-gray-900 font-bold mt-0.5">₦{{ project.actual_contract_amount|default:"0.00" }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold">Admin Fee</div>
-            <div class="text-gray-900 font-bold mt-0.5">₦{{ project.admin_fee|default:"0.00" }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold">In-House Benchmark (Direct Labour)</div>
-            <div class="text-gray-900 font-semibold mt-0.5">₦{{ project.in_house_benchmark|default:"0.00" }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold">Cost Percentage</div>
-            <div class="text-gray-900 font-semibold mt-0.5">{{ project.cost_percentage|default:"0.00" }}%</div>
-          </div>
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold">Staff Assigned</div>
-            <div class="text-gray-900 mt-0.5">{{ project.staff_assigned.username|default:"Unassigned" }}</div>
-          </div>
-
-          <div class="md:col-span-3 border-t border-gray-100 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <div class="border-t border-gray-100 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
             <div>
               <div class="text-xs text-gray-500 uppercase font-semibold">Mobilization Received</div>
               <div class="text-gray-900 font-bold mt-0.5">₦{{ project.mobilization_received|default:"0.00" }}</div>
               {% if project.batch_no_mobilization %}
-              <span
-                class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 mt-1 inline-block">Batch:
-                {{ project.batch_no_mobilization }}</span>
+              <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 mt-1 inline-block">Batch: {{ project.batch_no_mobilization }}</span>
               {% endif %}
             </div>
             <div>
               <div class="text-xs text-gray-500 uppercase font-semibold">Final Payment Received</div>
               <div class="text-gray-900 font-bold mt-0.5">₦{{ project.final_payment_received|default:"0.00" }}</div>
               {% if project.batch_no_final_payment %}
-              <span
-                class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 mt-1 inline-block">Batch:
-                {{ project.batch_no_final_payment }}</span>
+              <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 mt-1 inline-block">Batch: {{ project.batch_no_final_payment }}</span>
               {% endif %}
+            </div>
+          </div>
+
+          <!-- Dynamic Project Fees display -->
+          <div class="border-t border-gray-100 pt-4">
+            <div class="text-xs text-gray-500 uppercase font-bold mb-2">Project Fees & Deductions</div>
+            <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+              <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50 text-gray-700 text-xs font-semibold uppercase">
+                  <tr>
+                    <th class="px-4 py-2 text-left">Fee Type</th>
+                    <th class="px-4 py-2 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                  {% for fee in project.fees.all %}
+                  <tr class="hover:bg-gray-50 transition">
+                    <td class="px-4 py-2 text-gray-700 font-medium">{{ fee.fee_type.name }}</td>
+                    <td class="px-4 py-2 text-right font-semibold text-gray-900">₦{{ fee.amount|default:"0.00" }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="2" class="px-4 py-4 text-center text-gray-400">No project fees recorded.</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Attachment & BOQs -->
+      <!-- PHASE 3: Execution Details -->
       <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
           <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center">
-            <span class="material-symbols-outlined mr-2 text-gray-500">attach_file</span> Project Files & Documentations
+            <span class="material-symbols-outlined mr-2 text-[#bfa12c]">engineering</span> Phase 3: Project Execution & Comments
           </h2>
         </div>
-        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold mb-1">Plain BOQ</div>
-            {% if project.plain_boq %}
-            <a href="{{ project.plain_boq.url }}" target="_blank"
-              class="flex items-center text-indigo-600 hover:text-indigo-900 font-medium">
-              <span class="material-symbols-outlined text-lg mr-1.5">description</span> Download BOQ
-            </a>
-            {% else %}
-            <span class="text-gray-400">Not Uploaded</span>
+        <div class="p-6 space-y-6 text-sm">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Execution Level</div>
+              <div class="text-gray-900 font-bold mt-0.5">{{ project.execution_level_percentage }}%</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Project Status</div>
+              <div class="text-gray-900 font-bold mt-0.5">{{ project.project_status }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Payment Status</div>
+              <div class="text-gray-900 font-bold mt-0.5">{{ project.payment_status }}</div>
+            </div>
+          </div>
+          
+          {% if project.comments or project.remarks %}
+          <div class="border-t border-gray-100 pt-4 space-y-4">
+            {% if project.comments %}
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Comments</div>
+              <div class="text-gray-800 mt-1 bg-gray-50 p-3 rounded border border-gray-200">{{ project.comments }}</div>
+            </div>
+            {% endif %}
+            {% if project.remarks %}
+            <div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Remarks</div>
+              <div class="text-gray-800 mt-1 bg-gray-50 p-3 rounded border border-gray-200">{{ project.remarks }}</div>
+            </div>
             {% endif %}
           </div>
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold mb-1">Drawing/Design</div>
-            {% if project.drawing_design %}
-            <a href="{{ project.drawing_design.url }}" target="_blank"
-              class="flex items-center text-indigo-600 hover:text-indigo-900 font-medium">
-              <span class="material-symbols-outlined text-lg mr-1.5">design_services</span> Download Drawing
-            </a>
-            {% else %}
-            <span class="text-gray-400">Not Uploaded</span>
-            {% endif %}
-          </div>
-          <div>
-            <div class="text-xs text-gray-500 uppercase font-semibold mb-1">Award Letter & BOQ</div>
-            {% if project.award_letter_and_boq %}
-            <a href="{{ project.award_letter_and_boq.url }}" target="_blank"
-              class="flex items-center text-indigo-600 hover:text-indigo-900 font-medium">
-              <span class="material-symbols-outlined text-lg mr-1.5">verified_user</span> Download Letter
-            </a>
-            {% else %}
-            <span class="text-gray-400">Not Uploaded</span>
-            {% endif %}
-          </div>
+          {% endif %}
         </div>
       </div>
 

@@ -8,8 +8,8 @@ from django.http import HttpResponseRedirect
 from django.utils.timezone import now
 from django.db.models import Q
 
-from .models import Project, ProjectAllocation, ProjectLifecycleStage
-from .forms import ProjectForm, ProjectAllocationForm, ProjectLifecycleStageForm
+from .models import Project, ProjectCategory, ProjectAllocation, ProjectLifecycleStage, ProjectFee, FeeType
+from .forms import ProjectForm, ProjectAllocationForm, ProjectLifecycleStageForm, ProjectFeeFormSet, ProjectCategoryForm, FeeTypeForm
 
 class ProjectListView(LoginRequiredMixin, ListView):
     model = Project
@@ -60,9 +60,25 @@ class ProjectCreateView(LoginRequiredMixin, CreateView):
     template_name = 'projects/project_form.html'
     success_url = reverse_lazy('projects:project_list')
 
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        if self.request.POST:
+            data['fee_formset'] = ProjectFeeFormSet(self.request.POST)
+        else:
+            data['fee_formset'] = ProjectFeeFormSet()
+        return data
+
     def form_valid(self, form):
-        messages.success(self.request, "Project created successfully!")
-        return super().form_valid(form)
+        context = self.get_context_data()
+        fee_formset = context['fee_formset']
+        if fee_formset.is_valid():
+            self.object = form.save()
+            fee_formset.instance = self.object
+            fee_formset.save()
+            messages.success(self.request, "Project created successfully!")
+            return redirect(self.success_url)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
 
 class ProjectUpdateView(LoginRequiredMixin, UpdateView):
     model = Project
@@ -72,9 +88,25 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('projects:project_detail', kwargs={'pk': self.object.pk})
 
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        if self.request.POST:
+            data['fee_formset'] = ProjectFeeFormSet(self.request.POST, instance=self.object)
+        else:
+            data['fee_formset'] = ProjectFeeFormSet(instance=self.object)
+        return data
+
     def form_valid(self, form):
-        messages.success(self.request, "Project updated successfully!")
-        return super().form_valid(form)
+        context = self.get_context_data()
+        fee_formset = context['fee_formset']
+        if fee_formset.is_valid():
+            self.object = form.save()
+            fee_formset.instance = self.object
+            fee_formset.save()
+            messages.success(self.request, "Project updated successfully!")
+            return redirect(self.get_success_url())
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
 
 class ProjectDeleteView(LoginRequiredMixin, DeleteView):
     model = Project
@@ -165,3 +197,88 @@ class UpdateLifecycleStageView(LoginRequiredMixin, View):
         stage.save()
         messages.success(request, f"Updated step: {stage.stage_name}")
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+
+class ProjectSettingsView(LoginRequiredMixin, View):
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_staff and not request.user.is_superuser:
+            messages.error(request, "Access denied. Admins only.")
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, request, cat_form=None, fee_form=None, active_tab='categories'):
+        edit_cat_id = request.GET.get('edit_cat')
+        edit_fee_id = request.GET.get('edit_fee')
+        
+        if cat_form is None:
+            cat_instance = get_object_or_404(ProjectCategory, pk=edit_cat_id) if edit_cat_id else None
+            cat_form = ProjectCategoryForm(instance=cat_instance)
+            
+        if fee_form is None:
+            fee_instance = get_object_or_404(FeeType, pk=edit_fee_id) if edit_fee_id else None
+            fee_form = FeeTypeForm(instance=fee_instance)
+            
+        return {
+            'categories': ProjectCategory.objects.all(),
+            'fee_types': FeeType.objects.all(),
+            'cat_form': cat_form,
+            'fee_form': fee_form,
+            'is_editing_cat': edit_cat_id is not None,
+            'is_editing_fee': edit_fee_id is not None,
+            'edit_cat_id': edit_cat_id,
+            'edit_fee_id': edit_fee_id,
+            'active_tab': active_tab,
+        }
+
+    def get(self, request):
+        edit_fee_id = request.GET.get('edit_fee')
+        active_tab = 'feetypes' if edit_fee_id else 'categories'
+        return render(request, 'projects/settings.html', self.get_context_data(request, active_tab=active_tab))
+
+    def post(self, request):
+        action = request.POST.get('action')
+        if action == 'save_category':
+            edit_cat_id = request.GET.get('edit_cat')
+            cat_instance = get_object_or_404(ProjectCategory, pk=edit_cat_id) if edit_cat_id else None
+            form = ProjectCategoryForm(request.POST, instance=cat_instance)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Project category saved successfully.")
+                return redirect('projects:settings')
+            else:
+                messages.error(request, "Failed to save category. Please correct the errors.")
+                context = self.get_context_data(request, cat_form=form, active_tab='categories')
+                return render(request, 'projects/settings.html', context)
+                
+        elif action == 'save_feetype':
+            edit_fee_id = request.GET.get('edit_fee')
+            fee_instance = get_object_or_404(FeeType, pk=edit_fee_id) if edit_fee_id else None
+            form = FeeTypeForm(request.POST, instance=fee_instance)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Fee type saved successfully.")
+                return redirect('projects:settings')
+            else:
+                messages.error(request, "Failed to save fee type. Please correct the errors.")
+                context = self.get_context_data(request, fee_form=form, active_tab='feetypes')
+                return render(request, 'projects/settings.html', context)
+
+        elif action == 'delete_category':
+            cat_id = request.POST.get('cat_id')
+            category = get_object_or_404(ProjectCategory, pk=cat_id)
+            if category.project_set.exists():
+                messages.error(request, f"Cannot delete category '{category.name}' because it is assigned to projects.")
+            else:
+                category.delete()
+                messages.success(request, "Category deleted successfully.")
+            return redirect('projects:settings')
+
+        elif action == 'delete_feetype':
+            fee_id = request.POST.get('fee_id')
+            feetype = get_object_or_404(FeeType, pk=fee_id)
+            if feetype.projectfee_set.exists():
+                messages.error(request, f"Cannot delete fee type '{feetype.name}' because it is assigned to projects.")
+            else:
+                feetype.delete()
+                messages.success(request, "Fee type deleted successfully.")
+            return redirect('projects:settings')

@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Project Settings - Logistics{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-7xl mx-auto" x-data="{ 
+    tab: '{{ active_tab }}',
+    showDeleteModal: false,
+    deleteAction: '',
+    deleteItemId: '',
+    deleteItemName: ''
+}">
+    <!-- Breadcrumb & Header -->
+    <div class="flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+        <a href="{% url 'projects:project_list' %}" class="hover:text-[#bfa12c] transition duration-150">Projects</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="text-gray-900">Settings</span>
+    </div>
+
+    {% if messages %}
+    <div class="space-y-2">
+      {% for message in messages %}
+      <div class="px-4 py-3 rounded-lg text-sm font-medium
+        {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200
+        {% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200
+        {% else %}bg-amber-50 text-amber-800 border border-amber-200{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="pb-5 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight text-gray-900">Project Settings</h1>
+            <p class="text-sm text-gray-500 mt-1">Configure project classification categories and standard project fee types.</p>
+        </div>
+        
+        <!-- Tab Navigation Buttons -->
+        <div class="bg-gray-100 p-1 rounded-lg flex items-center space-x-1 shrink-0">
+            <button @click="tab = 'categories'" 
+                    :class="tab === 'categories' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                    class="px-4 py-2 text-sm font-semibold rounded-md transition duration-150 flex items-center">
+                <span class="material-symbols-outlined text-sm mr-1.5">folder</span> Project Categories
+            </button>
+            <button @click="tab = 'feetypes'" 
+                    :class="tab === 'feetypes' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                    class="px-4 py-2 text-sm font-semibold rounded-md transition duration-150 flex items-center">
+                <span class="material-symbols-outlined text-sm mr-1.5">payments</span> Fee Types
+            </button>
+        </div>
+    </div>
+
+    <!-- TAB 1: Project Categories -->
+    <div x-show="tab === 'categories'" class="grid grid-cols-1 lg:grid-cols-3 gap-6" x-cloak>
+        <!-- Category Form Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-fit space-y-6">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">
+                    {% if is_editing_cat %}Edit Category{% else %}Add Category{% endif %}
+                </h2>
+                <p class="text-xs text-gray-500 mt-0.5">
+                    {% if is_editing_cat %}Modify properties of this project category.{% else %}Define a new project classification.{% endif %}
+                </p>
+            </div>
+
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_category">
+                
+                <!-- Name -->
+                <div class="space-y-1">
+                    <label for="{{ cat_form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700">Category Name *</label>
+                    {{ cat_form.name }}
+                    {% if cat_form.name.errors %}
+                    <p class="text-xs text-red-650 mt-1">{{ cat_form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-1">
+                    <label for="{{ cat_form.description.id_for_label }}" class="block text-sm font-semibold text-gray-700">Description</label>
+                    {{ cat_form.description }}
+                    {% if cat_form.description.errors %}
+                    <p class="text-xs text-red-650 mt-1">{{ cat_form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="pt-4 flex flex-col gap-2">
+                    <button type="submit"
+                            class="w-full flex justify-center items-center px-4 py-2 rounded-lg shadow-sm text-sm font-semibold text-white bg-[#bfa12c] hover:bg-[#a88d25] transition duration-150">
+                        <span class="material-symbols-outlined mr-1.5 text-white text-lg">
+                            {% if is_editing_cat %}save{% else %}add{% endif %}
+                        </span>
+                        {% if is_editing_cat %}Save Changes{% else %}Add Category{% endif %}
+                    </button>
+                    {% if is_editing_cat %}
+                    <a href="{% url 'projects:settings' %}"
+                       class="w-full text-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
+                        Cancel Edit
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- Categories List -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900">Active Categories</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Classification tags currently available when registering projects.</p>
+            </div>
+
+            <div class="divide-y divide-gray-150">
+                {% for cat in categories %}
+                <div class="p-6 flex items-start justify-between gap-4 hover:bg-gray-50/50 transition duration-150">
+                    <div class="space-y-1 flex-1">
+                        <h3 class="font-bold text-gray-900 text-base">{{ cat.name }}</h3>
+                        <p class="text-sm text-gray-500">{{ cat.description|default:"No description provided." }}</p>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="shrink-0 flex items-center gap-2">
+                        <a href="?edit_cat={{ cat.id }}" 
+                           class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:text-[#bfa12c] transition duration-150">
+                            <span class="material-symbols-outlined text-sm mr-1">edit</span> Edit
+                        </a>
+                        <button type="button" @click="showDeleteModal = true; deleteAction = 'delete_category'; deleteItemId = '{{ cat.id }}'; deleteItemName = '{{ cat.name|escapejs }}';" 
+                                class="inline-flex items-center px-3 py-1.5 border border-red-200 rounded-lg text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition duration-150">
+                            <span class="material-symbols-outlined text-sm mr-1">delete</span> Delete
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="p-12 text-center text-gray-500 italic">
+                    No project categories configured yet. Use the form on the left to add one.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: Project Fee Types -->
+    <div x-show="tab === 'feetypes'" class="grid grid-cols-1 lg:grid-cols-3 gap-6" x-cloak>
+        <!-- Fee Type Form Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-fit space-y-6">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">
+                    {% if is_editing_fee %}Edit Fee Type{% else %}Add Fee Type{% endif %}
+                </h2>
+                <p class="text-xs text-gray-500 mt-0.5">
+                    {% if is_editing_fee %}Modify properties of this fee structure.{% else %}Define a new project fee type.{% endif %}
+                </p>
+            </div>
+
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_feetype">
+                
+                <!-- Name -->
+                <div class="space-y-1">
+                    <label for="{{ fee_form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700">Fee Name *</label>
+                    {{ fee_form.name }}
+                    {% if fee_form.name.errors %}
+                    <p class="text-xs text-red-650 mt-1">{{ fee_form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-1">
+                    <label for="{{ fee_form.description.id_for_label }}" class="block text-sm font-semibold text-gray-700">Description</label>
+                    {{ fee_form.description }}
+                    {% if fee_form.description.errors %}
+                    <p class="text-xs text-red-650 mt-1">{{ fee_form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="pt-4 flex flex-col gap-2">
+                    <button type="submit"
+                            class="w-full flex justify-center items-center px-4 py-2 rounded-lg shadow-sm text-sm font-semibold text-white bg-[#bfa12c] hover:bg-[#a88d25] transition duration-150">
+                        <span class="material-symbols-outlined mr-1.5 text-white text-lg">
+                            {% if is_editing_fee %}save{% else %}add{% endif %}
+                        </span>
+                        {% if is_editing_fee %}Save Changes{% else %}Add Fee Type{% endif %}
+                    </button>
+                    {% if is_editing_fee %}
+                    <a href="{% url 'projects:settings' %}?edit_fee="
+                       class="w-full text-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
+                        Cancel Edit
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- Fee Types List -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900">Active Fee Types</h2>
+                <p class="text-xs text-gray-500 mt-0.5">List of deductibles and charges that can be added to project contracts.</p>
+            </div>
+
+            <div class="divide-y divide-gray-150">
+                {% for fee in fee_types %}
+                <div class="p-6 flex items-start justify-between gap-4 hover:bg-gray-50/50 transition duration-150">
+                    <div class="space-y-1 flex-1">
+                        <h3 class="font-bold text-gray-900 text-base">{{ fee.name }}</h3>
+                        <p class="text-sm text-gray-500">{{ fee.description|default:"No description provided." }}</p>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="shrink-0 flex items-center gap-2">
+                        <a href="?edit_fee={{ fee.id }}" 
+                           class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:text-[#bfa12c] transition duration-150">
+                            <span class="material-symbols-outlined text-sm mr-1">edit</span> Edit
+                        </a>
+                        <button type="button" @click="showDeleteModal = true; deleteAction = 'delete_feetype'; deleteItemId = '{{ fee.id }}'; deleteItemName = '{{ fee.name|escapejs }}';" 
+                                class="inline-flex items-center px-3 py-1.5 border border-red-200 rounded-lg text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition duration-150">
+                            <span class="material-symbols-outlined text-sm mr-1">delete</span> Delete
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="p-12 text-center text-gray-500 italic">
+                    No project fee types configured yet. Use the form on the left to add one.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <!-- Beautiful Custom Delete Confirmation Modal Overlay -->
+    <div x-show="showDeleteModal" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showDeleteModal = false"></div>
+
+        <!-- Modal Dialog wrapper -->
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <!-- Modal box -->
+            <div x-show="showDeleteModal" 
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-150">
+                
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <!-- Icon indicator -->
+                        <div class="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-50 sm:mx-0 sm:h-10 sm:w-10">
+                            <span class="material-symbols-outlined text-red-600">warning</span>
+                        </div>
+                        
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                            <h3 class="text-base font-bold leading-6 text-gray-900">Confirm Deletion</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">
+                                    Are you sure you want to delete <span class="font-bold text-gray-900" x-text="deleteItemName"></span>? This action cannot be undone.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons footer -->
+                <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
+                    <form method="POST" action="" class="inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" :value="deleteAction">
+                        <template x-if="deleteAction === 'delete_category'">
+                            <input type="hidden" name="cat_id" :value="deleteItemId">
+                        </template>
+                        <template x-if="deleteAction === 'delete_feetype'">
+                            <input type="hidden" name="fee_id" :value="deleteItemId">
+                        </template>
+                        <button type="submit" class="inline-flex w-full justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto">
+                            Delete Permanently
+                        </button>
+                    </form>
+                    <button type="button" @click="showDeleteModal = false" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-950 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

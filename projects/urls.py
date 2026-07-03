@@ -6,6 +6,7 @@ app_name = 'projects'
 urlpatterns = [
     path('', views.ProjectListView.as_view(), name='project_list'),
     path('create/', views.ProjectCreateView.as_view(), name='project_create'),
+    path('settings/', views.ProjectSettingsView.as_view(), name='settings'),
     path('<int:pk>/', views.ProjectDetailView.as_view(), name='project_detail'),
     path('<int:pk>/update/', views.ProjectUpdateView.as_view(), name='project_update'),
     path('<int:pk>/delete/', views.ProjectDeleteView.as_view(), name='project_delete'),

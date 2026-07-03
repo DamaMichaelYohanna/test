@@ -2,6 +2,32 @@ from django.db import models
 from contractors.models import Subcontractor
 from django.contrib.auth.models import User
 
+class ProjectCategory(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Category Name")
+    description = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Project Category"
+        verbose_name_plural = "Project Categories"
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class FeeType(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name="Fee Type Name")
+    description = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Fee Type"
+        verbose_name_plural = "Fee Types"
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class Project(models.Model):
     PROJECT_TYPE_CHOICES = [
         ('CONSTRUCTION', 'Construction / Civil Works'),
@@ -9,10 +35,9 @@ class Project(models.Model):
     ]
 
     PHASE_CHOICES = [
-        ('PRE_AWARD', 'Bidding / Pre-Award Phase'),
-        ('POST_AWARD', 'Execution / Post-Award Phase'),
-        ('PAYMENT_PROCESSING', 'Application & Payment Processing'),
-        ('COMPLETED', 'Project Fully Closed / Paid'),
+        ('PRE_AWARD', 'Pre-Award Phase'),
+        ('POST_AWARD', 'Post-Award Phase'),
+        ('EXECUTION', 'Execution Phase'),
     ]
 
     # --- Core Identifiers ---
@@ -23,7 +48,8 @@ class Project(models.Model):
     lot = models.CharField(max_length=50, blank=True, null=True, verbose_name="Lot")
     project_type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default='CONSTRUCTION', verbose_name="Type")
     location = models.CharField(max_length=255, verbose_name="Location")
-    category = models.CharField(max_length=100, blank=True, null=True, verbose_name="Category")
+    category = models.ForeignKey(ProjectCategory, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Category")
+    linked_project = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='linked_projects', verbose_name="Linked Project")
     
     # --- Documents & Attachments ---
     plain_boq = models.FileField(upload_to='projects/boq/plain/', blank=True, null=True, verbose_name="Plain BOQ")
@@ -40,7 +66,6 @@ class Project(models.Model):
     # --- Company Financial Pillars ---
     budget_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Budget Amount")
     actual_contract_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Actual Contract Amount")
-    admin_fee = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Admin Fee")
     
     # --- Internal Benchmarking ---
     in_house_benchmark = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="In-House Benchmark (Direct Labour)")
@@ -55,7 +80,7 @@ class Project(models.Model):
     # --- Management & Status Flags ---
     staff_assigned = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Staff Assigned")
     current_phase = models.CharField(max_length=20, choices=PHASE_CHOICES, default='PRE_AWARD')
-    level_of_completion_percentage = models.PositiveIntegerField(default=0, verbose_name="Level of Completion %")
+    execution_level_percentage = models.PositiveIntegerField(default=0, verbose_name="Execution Level %")
     project_status = models.CharField(max_length=100, default="Initiated", verbose_name="Project Status")
     payment_status = models.CharField(max_length=100, default="Pending", verbose_name="Payment Status")
     comments = models.TextField(blank=True, null=True, verbose_name="Comments")
@@ -78,6 +103,20 @@ class Project(models.Model):
 
     def __str__(self):
         return f"{self.project_code} - {self.mda} - {self.project_name}"
+
+
+class ProjectFee(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='fees')
+    fee_type = models.ForeignKey(FeeType, on_delete=models.CASCADE, verbose_name="Fee Type")
+    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Amount")
+
+    class Meta:
+        unique_together = ('project', 'fee_type')
+        verbose_name = "Project Fee"
+        verbose_name_plural = "Project Fees"
+
+    def __str__(self):
+        return f"{self.project.project_code} - {self.fee_type.name}: ₦{self.amount:,.2f}"
 
 
 
