@@ -1,16 +1,42 @@
 from django.contrib import admin
-from .models import Project, ProjectCategory, FeeType, ProjectFee, UnplannedExpense
+from .models import (
+    Project, ProjectCategory, FeeType, ProjectFee, UnplannedExpense,
+    ProjectMonitoringLog, ProjectMonitoringImage
+)
 
 class ProjectFeeInline(admin.TabularInline):
     model = ProjectFee
     extra = 1
 
+class ProjectMonitoringImageInline(admin.TabularInline):
+    model = ProjectMonitoringImage
+    extra = 1
+
+class ProjectMonitoringLogInline(admin.TabularInline):
+    model = ProjectMonitoringLog
+    extra = 0
+    fields = ('reported_by', 'start_date', 'end_date', 'reported_execution_percentage', 'description')
+    readonly_fields = ('reported_at',)
+    show_change_link = True
+
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('project_code', 'mda', 'project_name', 'project_type', 'current_phase', 'budget_amount', 'actual_contract_amount')
-    list_filter = ('project_type', 'current_phase', 'category')
+    list_display = (
+        'project_code', 'mda', 'project_name', 'project_type', 
+        'execution_mode', 'current_phase', 'execution_level_percentage',
+        'budget_amount', 'actual_contract_amount'
+    )
+    list_filter = ('project_type', 'execution_mode', 'current_phase', 'category')
     search_fields = ('project_code', 'project_name', 'mda')
-    inlines = [ProjectFeeInline]
+    inlines = [ProjectFeeInline, ProjectMonitoringLogInline]
+
+@admin.register(ProjectMonitoringLog)
+class ProjectMonitoringLogAdmin(admin.ModelAdmin):
+    list_display = ('project', 'reported_by', 'start_date', 'reported_execution_percentage', 'reported_at')
+    list_filter = ('project', 'reported_by', 'start_date')
+    search_fields = ('project__project_code', 'project__project_name', 'description')
+    inlines = [ProjectMonitoringImageInline]
+
 
 @admin.register(ProjectCategory)
 class ProjectCategoryAdmin(admin.ModelAdmin):

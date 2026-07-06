@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 from projects.models import Project
 from django.contrib.auth.models import User
 
@@ -17,6 +18,15 @@ class SiteStore(models.Model):
         unique_together = ('project', 'material_name')
         verbose_name = "Site Store Inventory"
         verbose_name_plural = "Site Store Inventories"
+
+    def clean(self):
+        super().clean()
+        if self.project and self.project.execution_mode == 'SUBCONTRACTED':
+            raise ValidationError("Logistics and material tracking are disabled for Subcontracted projects.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.material_name} at [{self.project.project_code}] - Qty: {self.quantity_on_site}"

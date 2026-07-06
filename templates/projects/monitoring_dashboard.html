@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Progress Logs - Azanigroup{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header Section -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4" x-data="{ logOpen: false }">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Project Progress Logs</h1>
+      <p class="text-sm text-gray-500">Global feed of project activity reports, progress observations, and execution checks.</p>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <button @click="logOpen = !logOpen"
+        class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition flex items-center">
+        <span class="material-symbols-outlined text-sm mr-1.5" x-text="logOpen ? 'remove' : 'trending_up'">trending_up</span> Log Progress
+      </button>
+    </div>
+
+    <!-- Collapsible Submission Form (Global) -->
+    <div x-show="logOpen" x-collapse class="w-full bg-white p-6 rounded-xl border border-gray-200 shadow-sm mt-4" style="display: none;">
+      <h3 class="text-base font-bold text-gray-900 mb-4 flex items-center">
+        <span class="material-symbols-outlined text-xl mr-2 text-[#bfa12c]">assignment_turned_in</span> Submit Progress Report
+      </h3>
+      <form method="POST" enctype="multipart/form-data" action="{% url 'projects:monitoring_dashboard' %}" class="space-y-4 text-sm">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Searchable Project Select Dropdown -->
+          <div class="md:col-span-3" x-data="{ 
+              open: false, 
+              search: '', 
+              selectedName: 'Select Project...',
+              selectedId: ''
+          }">
+            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Target Project *</label>
+            <div class="relative">
+              <button type="button" @click="open = !open" class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-[#bfa12c] focus:border-[#bfa12c] text-sm">
+                <span class="block truncate" x-text="selectedName"></span>
+                <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <span class="material-symbols-outlined text-gray-400 text-sm">unfold_more</span>
+                </span>
+              </button>
+              
+              <div x-show="open" @click.outside="open = false" class="absolute z-30 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-hidden focus:outline-none text-sm" style="display: none;">
+                <div class="sticky top-0 z-10 bg-white px-2 py-1.5 border-b border-gray-100">
+                  <input type="text" x-model="search" placeholder="Type project code or name..." class="w-full text-xs rounded border-gray-300 focus:ring-[#bfa12c] focus:border-[#bfa12c] p-1.5">
+                </div>
+                <ul class="max-h-48 overflow-y-auto">
+                  {% for p in projects %}
+                  <li x-show="!search || $el.getAttribute('data-search').toLowerCase().includes(search.toLowerCase())"
+                      data-search="[{{ p.project_code }}] {{ p.project_name }}"
+                      @click="selectedId = '{{ p.id }}'; selectedName = '[{{ p.project_code|escapejs }}] {{ p.project_name|escapejs }}'; open = false;"
+                      class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-100 text-gray-900">
+                    <span class="block truncate font-normal">[{{ p.project_code }}] {{ p.project_name }}</span>
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+            <input type="hidden" name="project" :value="selectedId" required>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Start Date *</label>
+            {{ monitoring_form.start_date }}
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">End Date (Optional)</label>
+            {{ monitoring_form.end_date }}
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Overall Physical Progress % *</label>
+            {{ monitoring_form.reported_execution_percentage }}
+          </div>
+          <div class="md:col-span-3">
+            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Detailed Description of Work Done & Observations *</label>
+            {{ monitoring_form.description }}
+          </div>
+          <div class="md:col-span-3">
+            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Upload Supporting Photos/Files (You can select multiple files)</label>
+            <input type="file" name="images" multiple class="w-full text-xs rounded border border-gray-300 bg-white p-2">
+            <p class="text-[11px] text-gray-500 mt-1">Supported file formats: PNG, JPG, JPEG. Hold Ctrl/Cmd to select multiple files.</p>
+          </div>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" @click="logOpen = false"
+            class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 transition">Cancel</button>
+          <button type="submit"
+            class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-4 py-2 rounded-lg text-xs font-semibold transition">Submit Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Messages notifications -->
+  {% if messages %}
+  <div class="space-y-2">
+    {% for message in messages %}
+    <div class="px-4 py-3 rounded-lg text-sm font-medium
+      {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200
+      {% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200
+      {% else %}bg-amber-50 text-amber-800 border border-amber-200{% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Filter Bar -->
+  <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+    <form method="GET" action="{% url 'projects:monitoring_dashboard' %}" x-ref="filterForm" class="flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm">
+      <div class="flex-1" x-data="{ 
+          open: false, 
+          search: '', 
+          selectedName: '{% if selected_project %}[{{ selected_project.project_code }}] {{ selected_project.project_name|escapejs }}{% else %}-- Show All Projects --{% endif %}',
+          selectedId: '{{ selected_project.id|default:0 }}'
+      }">
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-1.5">Filter Feed by Project</label>
+        <div class="relative">
+          <button type="button" @click="open = !open" class="w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-[#bfa12c] focus:border-[#bfa12c] text-sm">
+            <span class="block truncate" x-text="selectedName"></span>
+            <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+              <span class="material-symbols-outlined text-gray-400 text-sm">unfold_more</span>
+            </span>
+          </button>
+          
+          <div x-show="open" @click.outside="open = false" class="absolute z-20 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-hidden focus:outline-none text-sm" style="display: none;">
+            <div class="sticky top-0 z-10 bg-white px-2 py-1.5 border-b border-gray-100">
+              <input type="text" x-model="search" placeholder="Type project code or name to filter..." class="w-full text-xs rounded border-gray-300 focus:ring-[#bfa12c] focus:border-[#bfa12c] p-1.5">
+            </div>
+            <ul class="max-h-48 overflow-y-auto">
+              <li x-show="!search || $el.getAttribute('data-search').toLowerCase().includes(search.toLowerCase())"
+                  data-search="-- Show All Projects --"
+                  @click="selectedId = 0; selectedName = '-- Show All Projects --'; open = false; $nextTick(() => { $el.closest('form').querySelector('input[name=project]').value = 0; $el.closest('form').submit(); })"
+                  class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-100 text-gray-900 font-semibold border-b border-gray-100">
+                <span class="block truncate">-- Show All Projects --</span>
+              </li>
+              {% for p in projects %}
+              <li x-show="!search || $el.getAttribute('data-search').toLowerCase().includes(search.toLowerCase())"
+                  data-search="[{{ p.project_code }}] {{ p.project_name }}"
+                  @click="selectedId = '{{ p.id }}'; selectedName = '[{{ p.project_code|escapejs }}] {{ p.project_name|escapejs }}'; open = false; $nextTick(() => { $el.closest('form').querySelector('input[name=project]').value = '{{ p.id }}'; $el.closest('form').submit(); })"
+                  class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-100 text-gray-900">
+                <span class="block truncate font-normal">[{{ p.project_code }}] {{ p.project_name }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <input type="hidden" name="project" value="{% if selected_project %}{{ selected_project.id }}{% else %}0{% endif %}">
+      </div>
+      {% if selected_project %}
+      <div class="self-end pt-1">
+        <a href="{% url 'projects:monitoring_dashboard' %}" class="inline-flex items-center text-gray-500 hover:text-[#bfa12c] font-semibold text-xs py-2">
+          <span class="material-symbols-outlined text-xs mr-1">close</span> Clear Filter
+        </a>
+      </div>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Main Feed Area -->
+  <div class="space-y-6">
+    {% for log in logs %}
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+      <!-- Feed Entry Header -->
+      <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 border-b border-gray-100 pb-4">
+        <div>
+          <!-- Project Link Label -->
+          <div class="flex flex-wrap items-center gap-2">
+            <a href="{% url 'projects:project_detail' log.project.pk %}" class="inline-flex items-center text-xs font-bold text-[#bfa12c] hover:underline uppercase tracking-wider">
+              <span class="material-symbols-outlined text-xs mr-1">workspaces</span> {{ log.project.project_code }}
+            </a>
+            <span class="text-gray-300 text-xs">|</span>
+            <span class="text-xs text-gray-500 font-semibold">{{ log.project.project_name }}</span>
+          </div>
+
+          <!-- Author and Time -->
+          <div class="flex items-center space-x-2 mt-2">
+            <div class="h-7 w-7 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+              <span class="material-symbols-outlined text-gray-400 text-base">person</span>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-gray-700 leading-none">{{ log.reported_by.username }}</div>
+              <div class="text-[10px] text-gray-400 mt-0.5 flex items-center">
+                <span class="material-symbols-outlined text-[10px] mr-1">schedule</span>
+                {{ log.reported_at|date:"F j, Y, g:i a" }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric Badges -->
+        <div class="flex items-center space-x-2 self-start md:self-auto">
+          <!-- Execution Mode Badge -->
+          <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded bg-gray-100 text-gray-600 border border-gray-200">
+            {{ log.project.get_execution_mode_display }}
+          </span>
+          <!-- Assessed Progress Badge -->
+          <div class="flex flex-col items-end">
+            <span class="text-[9px] uppercase font-bold text-gray-400">Assessed Progress</span>
+            <span class="text-sm font-bold text-gray-800 bg-[#bfa12c] bg-opacity-20 text-[#a88d25] px-2.5 py-0.5 rounded mt-0.5">
+              {{ log.reported_execution_percentage }}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dates Range details -->
+      <div class="flex items-center text-xs text-gray-500 font-medium">
+        <span class="material-symbols-outlined text-xs mr-1.5 text-gray-400">calendar_month</span>
+        Monitoring Period: <span class="text-gray-800 ml-1 font-semibold">{{ log.start_date|date:"M d, Y" }}</span>
+        {% if log.end_date %}
+        <span class="mx-1.5">to</span>
+        <span class="text-gray-800 font-semibold">{{ log.end_date|date:"M d, Y" }}</span>
+        {% endif %}
+      </div>
+
+      <!-- Description content -->
+      <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ log.description }}</p>
+
+      <!-- Photos Gallery (Grid) -->
+      {% if log.images.all %}
+      <div class="border-t border-gray-100 pt-4">
+        <span class="text-xs uppercase font-bold text-gray-400 block mb-2.5 flex items-center">
+          <span class="material-symbols-outlined text-xs mr-1">photo_library</span> Attached Photos / Evidence
+        </span>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {% for img in log.images.all %}
+          <div class="group relative rounded-xl border border-gray-200 overflow-hidden bg-white aspect-[4/3] shadow-sm">
+            <img src="{{ img.image.url }}" alt="Site Photo" class="object-cover w-full h-full">
+            {% if img.caption %}
+            <div class="absolute bottom-0 inset-x-0 bg-black bg-opacity-50 text-white text-[10px] p-1 truncate">{{ img.caption }}</div>
+            {% endif %}
+            <a href="{{ img.image.url }}" target="_blank" class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-35 transition flex items-center justify-center text-white opacity-0 group-hover:opacity-100 font-semibold text-xs">
+              <span class="material-symbols-outlined text-sm mr-1">open_in_new</span> View Full
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-500 shadow-sm">
+      <span class="material-symbols-outlined text-5xl text-gray-300 mb-2">insights</span>
+      <h3 class="text-base font-bold text-gray-700">No progress logs found</h3>
+      <p class="text-sm text-gray-400 mt-1">{% if selected_project %}No progress reports have been submitted for this specific project yet.{% else %}No progress reports or supporting evidence have been uploaded across any projects yet.{% endif %}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

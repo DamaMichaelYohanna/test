@@ -7,6 +7,7 @@ urlpatterns = [
     path('', views.ProjectListView.as_view(), name='project_list'),
     path('create/', views.ProjectCreateView.as_view(), name='project_create'),
     path('settings/', views.ProjectSettingsView.as_view(), name='settings'),
+    path('monitoring/', views.ProjectMonitoringDashboardView.as_view(), name='monitoring_dashboard'),
     path('<int:pk>/', views.ProjectDetailView.as_view(), name='project_detail'),
     path('<int:pk>/update/', views.ProjectUpdateView.as_view(), name='project_update'),
     path('<int:pk>/delete/', views.ProjectDeleteView.as_view(), name='project_delete'),
@@ -18,4 +19,8 @@ urlpatterns = [
     
     # Lifecycle Stage routes
     path('lifecycle/<int:pk>/update/', views.UpdateLifecycleStageView.as_view(), name='lifecycle_update'),
+    
+    # Progress Monitoring routes
+    path('<int:project_pk>/monitoring/create/', views.ProjectMonitoringLogCreateView.as_view(), name='monitoring_log_create'),
 ]
+

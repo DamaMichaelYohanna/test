@@ -8,8 +8,15 @@ from django.http import HttpResponseRedirect
 from django.utils.timezone import now
 from django.db.models import Q
 
-from .models import Project, ProjectCategory, ProjectAllocation, ProjectLifecycleStage, ProjectFee, FeeType
-from .forms import ProjectForm, ProjectAllocationForm, ProjectLifecycleStageForm, ProjectFeeFormSet, ProjectCategoryForm, FeeTypeForm
+from .models import (
+    Project, ProjectCategory, ProjectAllocation, ProjectLifecycleStage, 
+    ProjectFee, FeeType, ProjectMonitoringLog, ProjectMonitoringImage
+)
+from .forms import (
+    ProjectForm, ProjectAllocationForm, ProjectLifecycleStageForm, 
+    ProjectFeeFormSet, ProjectCategoryForm, FeeTypeForm, ProjectMonitoringLogForm,
+    ProjectMonitoringLogGlobalForm
+)
 
 class ProjectListView(LoginRequiredMixin, ListView):
     model = Project
@@ -123,14 +130,39 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
         # Fetch subcontractor allocations
         context['allocations'] = ProjectAllocation.objects.filter(project=self.object).select_related('subcontractor')
         # Fetch lifecycle stages ordered by sequence_order
-        context['lifecycle_stages'] = self.object.lifecycle_stages.all()
+        lifecycle_stages = self.object.lifecycle_stages.all()
+        context['lifecycle_stages'] = lifecycle_stages
+        
+        # Group lifecycle stages by phases
+        phase1 = []
+        phase2 = []
+        phase3 = []
+        
+        # Thresholds based on project type (from signals.py logic)
+        if self.object.project_type == 'CONSTRUCTION':
+            phase2_limit = 25
+        else:
+            phase2_limit = 19
+            
+        for stage in lifecycle_stages:
+            if stage.sequence_order <= 17:
+                phase1.append(stage)
+            elif stage.sequence_order <= phase2_limit:
+                phase2.append(stage)
+            else:
+                phase3.append(stage)
+                
+        context['phase1_stages'] = phase1
+        context['phase2_stages'] = phase2
+        context['phase3_stages'] = phase3
+
         # Form for adding allocation in modal/page
         context['allocation_form'] = ProjectAllocationForm()
         # Calculate totals
-        total_incurred_cost = sum(stage.incurred_cost for stage in context['lifecycle_stages'])
+        total_incurred_cost = sum(stage.incurred_cost for stage in lifecycle_stages)
         context['total_incurred_cost'] = total_incurred_cost
         
-        # Calculate completion percentage based on completed stages vs total stages
+        # Fetch completion percentage based on completed stages vs total stages
         total_stages = context['lifecycle_stages'].count()
         completed_stages = context['lifecycle_stages'].filter(is_completed=True).count()
         if total_stages > 0:
@@ -138,6 +170,9 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
         else:
             context['calculated_completion_percentage'] = 0
             
+        # Fetch site monitoring logs and their images
+        context['monitoring_logs'] = self.object.monitoring_logs.all().prefetch_related('images')
+        context['monitoring_form'] = ProjectMonitoringLogForm()
         return context
 
 class ProjectAllocationCreateView(LoginRequiredMixin, View):
@@ -282,3 +317,67 @@ class ProjectSettingsView(LoginRequiredMixin, View):
                 feetype.delete()
                 messages.success(request, "Fee type deleted successfully.")
             return redirect('projects:settings')
+
+
+class ProjectMonitoringLogCreateView(LoginRequiredMixin, View):
+    def post(self, request, project_pk):
+        project = get_object_or_404(Project, pk=project_pk)
+        form = ProjectMonitoringLogForm(request.POST)
+        if form.is_valid():
+            log_entry = form.save(commit=False)
+            log_entry.project = project
+            log_entry.reported_by = request.user
+            log_entry.save()
+            
+            # Handle multiple images
+            images = request.FILES.getlist('images')
+            for img in images:
+                ProjectMonitoringImage.objects.create(
+                    monitoring_log=log_entry,
+                    image=img
+                )
+            messages.success(request, f"Monitoring log updated. Project progress set to {log_entry.reported_execution_percentage}%.")
+        else:
+            messages.error(request, "Error creating monitoring log. Please verify details.")
+        return redirect('projects:project_detail', pk=project.pk)
+
+
+class ProjectMonitoringDashboardView(LoginRequiredMixin, View):
+    template_name = 'projects/monitoring_dashboard.html'
+
+    def get(self, request):
+        project_id = request.GET.get('project')
+        logs_qs = ProjectMonitoringLog.objects.all().prefetch_related('images').select_related('project', 'reported_by')
+        selected_project = None
+        if project_id and project_id != '0':
+            logs_qs = logs_qs.filter(project_id=project_id)
+            selected_project = get_object_or_404(Project, pk=project_id)
+
+        context = {
+            'logs': logs_qs.order_by('-reported_at'),
+            'projects': Project.objects.all(),
+            'selected_project': selected_project,
+            'monitoring_form': ProjectMonitoringLogGlobalForm(),
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        form = ProjectMonitoringLogGlobalForm(request.POST, request.FILES)
+        if form.is_valid():
+            log_entry = form.save(commit=False)
+            log_entry.reported_by = request.user
+            log_entry.save()
+            
+            # Handle multiple images
+            images = request.FILES.getlist('images')
+            for img in images:
+                ProjectMonitoringImage.objects.create(
+                    monitoring_log=log_entry,
+                    image=img
+                )
+            messages.success(request, f"Monitoring log submitted for project {log_entry.project.project_code}. Progress updated to {log_entry.reported_execution_percentage}%.")
+        else:
+            messages.error(request, "Failed to submit monitoring log. Please correct form errors.")
+        return redirect('projects:monitoring_dashboard')
+
+

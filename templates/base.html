@@ -111,9 +111,15 @@
           </a>
 
           <a href="{% url 'projects:project_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'projects' in request.path and 'compliance' not in request.path and 'settings' not in request.path %}active-nav-item{% endif %}">
+            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'projects' in request.path and 'compliance' not in request.path and 'settings' not in request.path and 'monitoring' not in request.path %}active-nav-item{% endif %}">
             <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">workspaces</span>
             Projects
+          </a>
+
+          <a href="{% url 'projects:monitoring_dashboard' %}"
+            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'monitoring' in request.path %}active-nav-item{% endif %}">
+            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">trending_up</span>
+            Progress Logs
           </a>
           {% if user.is_staff or user.is_superuser %}
           <a href="{% url 'projects:settings' %}"

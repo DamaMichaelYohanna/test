@@ -78,6 +78,16 @@ class Project(models.Model):
     final_payment_received = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Final Payment Received")
 
     # --- Management & Status Flags ---
+    EXECUTION_MODE_CHOICES = [
+        ('SELF_EXECUTED', 'Self-Executed (Direct Labor)'),
+        ('SUBCONTRACTED', 'Given to Sub-Contractor'),
+    ]
+    execution_mode = models.CharField(
+        max_length=20,
+        choices=EXECUTION_MODE_CHOICES,
+        default='SELF_EXECUTED',
+        verbose_name="Execution Mode"
+    )
     staff_assigned = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Staff Assigned")
     current_phase = models.CharField(max_length=20, choices=PHASE_CHOICES, default='PRE_AWARD')
     execution_level_percentage = models.PositiveIntegerField(default=0, verbose_name="Execution Level %")
@@ -220,3 +230,62 @@ class UnplannedExpense(models.Model):
 
     def __str__(self):
         return f"{self.project.project_code} — {self.description} (₦{self.amount:,.2f})"
+
+
+class ProjectMonitoringLog(models.Model):
+    """
+    Tracks site monitoring visits by engineers.
+    They report the physical completion percentage and log any site observations or issues.
+    """
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="monitoring_logs")
+    reported_by = models.ForeignKey(User, on_delete=models.PROTECT)
+    
+    start_date = models.DateField(help_text="Start date of the monitoring period/visit")
+    end_date = models.DateField(blank=True, null=True, help_text="End date if the monitoring spans multiple days")
+    
+    description = models.TextField(help_text="Detailed description of current progress, site conditions, or issues.")
+    reported_execution_percentage = models.PositiveIntegerField(
+        help_text="The engineer's assessment of the overall physical progress (0 to 100)"
+    )
+    reported_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-reported_at']
+        verbose_name = "Project Monitoring Log"
+        verbose_name_plural = "Project Monitoring Logs"
+
+    def __str__(self):
+        return f"{self.project.project_code} - {self.reported_execution_percentage}% on {self.start_date}"
+
+    def save(self, *args, **kwargs):
+        # Automatically update the parent project's execution percentage
+        super().save(*args, **kwargs)
+        self.project.execution_level_percentage = self.reported_execution_percentage
+        self.project.save(update_fields=['execution_level_percentage'])
+
+
+class ProjectMonitoringImage(models.Model):
+    """
+    Allows attaching multiple images/photos to a single site monitoring log.
+    """
+    monitoring_log = models.ForeignKey(
+        ProjectMonitoringLog, 
+        on_delete=models.CASCADE, 
+        related_name="images"
+    )
+    image = models.ImageField(upload_to="projects/monitoring_logs/")
+    caption = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True, 
+        help_text="Optional description of what this image shows (e.g., 'Foundation pouring progress')"
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Project Monitoring Image"
+        verbose_name_plural = "Project Monitoring Images"
+
+    def __str__(self):
+        return f"Image for {self.monitoring_log.project.project_code} log on {self.monitoring_log.start_date}"
+

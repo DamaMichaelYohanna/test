@@ -1,12 +1,15 @@
 from django import forms
 from django.forms import inlineformset_factory
-from .models import Project, ProjectCategory, ProjectAllocation, ProjectLifecycleStage, ProjectFee, FeeType
+from .models import (
+    Project, ProjectCategory, ProjectAllocation, ProjectLifecycleStage, 
+    ProjectFee, FeeType, ProjectMonitoringLog, ProjectMonitoringImage
+)
 
 class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
         fields = [
-            'project_code', 'mda', 'project_name', 'project_type', 'lot', 'location', 'category', 'linked_project',
+            'project_code', 'mda', 'project_name', 'project_type', 'execution_mode', 'lot', 'location', 'category', 'linked_project',
             'budget_amount', 'technical_status', 'financial_status', 'final_companies', 'back_up_companies', 'updated_recommended_companies',
             'plain_boq', 'drawing_design',
             'actual_contract_amount', 'in_house_benchmark', 'cost_percentage', 'staff_assigned', 'current_phase',
@@ -82,3 +85,27 @@ class FeeTypeForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
             'description': forms.Textarea(attrs={'rows': 3, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
         }
+
+
+class ProjectMonitoringLogForm(forms.ModelForm):
+    class Meta:
+        model = ProjectMonitoringLog
+        fields = ['start_date', 'end_date', 'reported_execution_percentage', 'description']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+            'reported_execution_percentage': forms.NumberInput(attrs={'min': 0, 'max': 100, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm', 'placeholder': 'Provide a detailed description of what is happening on site...'}),
+        }
+
+
+class ProjectMonitoringLogGlobalForm(ProjectMonitoringLogForm):
+    class Meta(ProjectMonitoringLogForm.Meta):
+        fields = ['project'] + ProjectMonitoringLogForm.Meta.fields
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['project'].widget.attrs.update({'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'})
+        self.fields['project'].queryset = Project.objects.all()
+
+

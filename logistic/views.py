@@ -29,9 +29,17 @@ class ProjectLogisticsDashboardView(LoginRequiredMixin, ListView):
     template_name = 'logistics/project_hub.html'
     context_object_name = 'inventory_items'
 
+    def dispatch(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=self.kwargs['project_id'])
+        if project.execution_mode == 'SUBCONTRACTED':
+            messages.warning(request, f"Logistics & material tracking are disabled for subcontracted project '{project.project_code}'.")
+            return redirect('projects:project_detail', pk=project.pk)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         self.project = get_object_or_404(Project, pk=self.kwargs['project_id'])
         return SiteStore.objects.filter(project=self.project)
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -56,6 +64,14 @@ class AddSiteStoreInventoryView(LoginRequiredMixin, View):
     without creating duplicates.
     """
     template_name = 'logistics/add_inventory_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=self.kwargs['project_id'])
+        if project.execution_mode == 'SUBCONTRACTED':
+            messages.warning(request, "Logistics and material tracking are disabled for Subcontracted projects.")
+            return redirect('projects:project_detail', pk=project.pk)
+        return super().dispatch(request, *args, **kwargs)
+
 
     def get(self, request, project_id):
         from django import forms as django_forms
@@ -150,6 +166,14 @@ class LogSiteUsageCreateView(LoginRequiredMixin, CreateView):
     model = SiteUsageLog
     fields = ['site_store', 'quantity_used', 'date_used', 'activity_details']
     template_name = 'logistics/usage_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=self.kwargs['project_id'])
+        if project.execution_mode == 'SUBCONTRACTED':
+            messages.warning(request, "Logistics and material tracking are disabled for Subcontracted projects.")
+            return redirect('projects:project_detail', pk=project.pk)
+        return super().dispatch(request, *args, **kwargs)
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
