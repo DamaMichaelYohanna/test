@@ -109,7 +109,7 @@
 
   <!-- Filter Bar -->
   <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-    <form method="GET" action="{% url 'projects:monitoring_dashboard' %}" x-ref="filterForm" class="flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm">
+    <form id="project-filter-form" method="GET" action="{% url 'projects:monitoring_dashboard' %}" class="flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm">
       <div class="flex-1" x-data="{ 
           open: false, 
           search: '', 
@@ -132,14 +132,14 @@
             <ul class="max-h-48 overflow-y-auto">
               <li x-show="!search || $el.getAttribute('data-search').toLowerCase().includes(search.toLowerCase())"
                   data-search="-- Show All Projects --"
-                  @click="selectedId = 0; selectedName = '-- Show All Projects --'; open = false; $nextTick(() => { $el.closest('form').querySelector('input[name=project]').value = 0; $el.closest('form').submit(); })"
+                  @click="open = false; submitProjectFilter(0, '-- Show All Projects --');"
                   class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-100 text-gray-900 font-semibold border-b border-gray-100">
                 <span class="block truncate">-- Show All Projects --</span>
               </li>
               {% for p in projects %}
               <li x-show="!search || $el.getAttribute('data-search').toLowerCase().includes(search.toLowerCase())"
                   data-search="[{{ p.project_code }}] {{ p.project_name }}"
-                  @click="selectedId = '{{ p.id }}'; selectedName = '[{{ p.project_code|escapejs }}] {{ p.project_name|escapejs }}'; open = false; $nextTick(() => { $el.closest('form').querySelector('input[name=project]').value = '{{ p.id }}'; $el.closest('form').submit(); })"
+                  @click="open = false; submitProjectFilter('{{ p.id }}', '[{{ p.project_code|escapejs }}] {{ p.project_name|escapejs }}');"
                   class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-100 text-gray-900">
                 <span class="block truncate font-normal">[{{ p.project_code }}] {{ p.project_name }}</span>
               </li>
@@ -147,7 +147,6 @@
             </ul>
           </div>
         </div>
-        <input type="hidden" name="project" value="{% if selected_project %}{{ selected_project.id }}{% else %}0{% endif %}">
       </div>
       {% if selected_project %}
       <div class="self-end pt-1">
@@ -251,4 +250,14 @@
   </div>
 
 </div>
+
+<script>
+function submitProjectFilter(projectId, projectName) {
+    if (projectId && projectId !== '0' && projectId !== 0) {
+        window.location.href = "{% url 'projects:monitoring_dashboard' %}?project=" + projectId;
+    } else {
+        window.location.href = "{% url 'projects:monitoring_dashboard' %}";
+    }
+}
+</script>
 {% endblock %}
