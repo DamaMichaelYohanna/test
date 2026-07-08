@@ -295,7 +295,8 @@ class CashRequestDashboardView(LoginRequiredMixin, View):
 
         context = {
             'is_manager': is_manager,
-            'selected_project': project_obj
+            'selected_project': project_obj,
+            'all_projects': Project.objects.all(),
         }
 
         if is_manager:
