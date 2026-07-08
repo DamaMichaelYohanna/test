@@ -25,7 +25,7 @@ class ProjectListView(LoginRequiredMixin, ListView):
     context_object_name = 'projects'
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = super().get_queryset().select_related('category')
         q = self.request.GET.get('q', '').strip()
         year = self.request.GET.get('year', '').strip()
         mda = self.request.GET.get('mda', '').strip()
@@ -173,7 +173,7 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
             context['calculated_completion_percentage'] = 0
             
         # Fetch site monitoring logs and their images
-        context['monitoring_logs'] = self.object.monitoring_logs.all().prefetch_related('images')
+        context['monitoring_logs'] = self.object.monitoring_logs.all().select_related('reported_by').prefetch_related('images')
         context['monitoring_form'] = ProjectMonitoringLogForm()
         return context
 

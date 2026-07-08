@@ -50,7 +50,7 @@ class ProjectLogisticsDashboardView(LoginRequiredMixin, ListView):
         ).count()   
         context['cash_requests'] = MilestoneCashRequest.objects.filter(
             project=self.project
-        ).order_by('-date_requested')
+        ).select_related('requested_by').order_by('-date_requested')
         context['recent_usage'] = SiteUsageLog.objects.filter(
             site_store__project=self.project
         ).select_related('site_store').order_by('-date_used')[:10]
@@ -280,10 +280,10 @@ class CashRequestDashboardView(LoginRequiredMixin, View):
         is_manager = request.user.is_superuser or request.user.groups.filter(name__in=['Level 3', 'Level 4']).exists()
         project_id = request.GET.get('project')
 
-        approved_qs = MilestoneCashRequest.objects.filter(status='APPROVED')
-        pending_qs = MilestoneCashRequest.objects.filter(status='PENDING')
-        all_qs = MilestoneCashRequest.objects.all()
-        user_qs = MilestoneCashRequest.objects.filter(requested_by=request.user)
+        approved_qs = MilestoneCashRequest.objects.filter(status='APPROVED').select_related('project')
+        pending_qs = MilestoneCashRequest.objects.filter(status='PENDING').select_related('project', 'requested_by')
+        all_qs = MilestoneCashRequest.objects.all().select_related('project', 'requested_by')
+        user_qs = MilestoneCashRequest.objects.filter(requested_by=request.user).select_related('project')
 
         project_obj = None
         if project_id and project_id != '0':
