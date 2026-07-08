@@ -396,7 +396,7 @@
 
         <!-- Monitoring Logs List -->
         <div class="p-6 space-y-4">
-          {% for log in monitoring_logs %}
+          {% for log in monitoring_logs|slice:":1" %}
           <div class="border border-gray-100 bg-gray-50 rounded-xl p-4 shadow-sm relative">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 border-b border-gray-200 pb-3 mb-3">
               <div>
@@ -446,6 +446,14 @@
             <p class="text-xs">No progress reports or evidence logged yet.</p>
           </div>
           {% endfor %}
+
+          {% if monitoring_logs.count > 1 %}
+          <div class="pt-3 text-center border-t border-gray-100 mt-2">
+            <a href="{% url 'projects:monitoring_dashboard' %}?project={{ project.pk }}" class="inline-flex items-center text-xs font-bold text-[#bfa12c] hover:underline uppercase tracking-wider">
+              <span class="material-symbols-outlined text-xs mr-1.5">history</span> View Previous Progress Reports ({{ monitoring_logs.count|add:"-1" }} more)
+            </a>
+          </div>
+          {% endif %}
         </div>
       </div>
 
@@ -527,14 +535,25 @@
                 <th class="px-6 py-3 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              {% for alloc in allocations %}
+            {% for alloc in allocations %}
+            <tbody class="bg-white divide-y divide-gray-200" x-data="{ tranchesOpen: false, addTrancheOpen: false }">
               <tr class="hover:bg-gray-50 transition">
-                <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ alloc.subcontractor.name }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">{{ alloc.sub_contractor_cost_percentage }}%</td>
-                <td class="px-6 py-4 whitespace-nowrap font-semibold">₦{{ alloc.amount_agreed_with_supplier_contractor}}
+                <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                  <div class="flex items-center gap-2">
+                    <button type="button" @click="tranchesOpen = !tranchesOpen" class="text-gray-400 hover:text-gray-600 focus:outline-none flex items-center">
+                      <span class="material-symbols-outlined text-sm" x-text="tranchesOpen ? 'expand_less' : 'expand_more'">expand_more</span>
+                    </button>
+                    <span>{{ alloc.subcontractor.name }}</span>
+                  </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">₦{{ alloc.advance_received_by_supplier_contractor }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ alloc.sub_contractor_cost_percentage }}%</td>
+                <td class="px-6 py-4 whitespace-nowrap font-semibold">₦{{ alloc.amount_agreed_with_supplier_contractor}}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div>₦{{ alloc.total_paid }}</div>
+                  {% if alloc.advance_received_by_supplier_contractor > 0 %}
+                  <div class="text-[10px] text-gray-500 font-mono">(Adv: ₦{{ alloc.advance_received_by_supplier_contractor }})</div>
+                  {% endif %}
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap font-bold text-red-600">₦{{ alloc.remaining_balance }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-center space-x-1">
                   {% if alloc.sub_contractor_drawing_design %}
@@ -543,24 +562,109 @@
                   {% endif %}
                   {% if alloc.supplier_contractor_price_boq %}
                   <a href="{{ alloc.supplier_contractor_price_boq.url }}" target="_blank"
-                    class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-200 hover:bg-indigo-100 transition">Price
-                    BOQ</a>
+                    class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-200 hover:bg-indigo-100 transition">Price BOQ</a>
                   {% endif %}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center text-xs space-x-2">
-                  <a href="{% url 'projects:allocation_update' alloc.pk %}"
-                    class="text-indigo-600 hover:text-indigo-900 font-semibold">Edit</a>
+                  <button type="button" @click="addTrancheOpen = !addTrancheOpen" class="text-[#bfa12c] hover:underline font-semibold">Pay Tranche</button>
                   <span class="text-gray-300">|</span>
-                  <a href="{% url 'projects:allocation_delete' alloc.pk %}"
-                    class="text-red-600 hover:text-red-900 font-semibold">Remove</a>
+                  <a href="{% url 'projects:allocation_update' alloc.pk %}" class="text-indigo-600 hover:text-indigo-900 font-semibold">Edit</a>
+                  <span class="text-gray-300">|</span>
+                  <a href="{% url 'projects:allocation_delete' alloc.pk %}" class="text-red-600 hover:text-red-900 font-semibold">Remove</a>
                 </td>
               </tr>
-              {% empty %}
+
+              <!-- Tranche Log and Entry Form Nested Row -->
+              <tr x-show="tranchesOpen || addTrancheOpen" style="display: none;" class="bg-gray-50">
+                <td colspan="7" class="px-8 py-4">
+                  <div class="space-y-4">
+                    <!-- Add Tranche Form -->
+                    <div x-show="addTrancheOpen" x-collapse class="bg-white p-4 rounded-lg border border-gray-200 max-w-xl shadow-sm">
+                      <h4 class="text-xs font-bold text-gray-800 uppercase mb-3 flex items-center">
+                        <span class="material-symbols-outlined text-xs mr-1 text-[#bfa12c]">payment</span> Record Payment Tranche
+                      </h4>
+                      <form method="POST" action="{% url 'projects:subcontractor_tranche_create' alloc.pk %}" class="space-y-3">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label class="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">Amount (NGN) *</label>
+                            {{ tranche_form.amount }}
+                          </div>
+                          <div>
+                            <label class="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">Date Paid *</label>
+                            {{ tranche_form.date_paid }}
+                          </div>
+                          <div class="md:col-span-2">
+                            <label class="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">Payment Reference</label>
+                            {{ tranche_form.payment_reference }}
+                          </div>
+                          <div class="md:col-span-2">
+                            <label class="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">Notes / Description</label>
+                            {{ tranche_form.notes }}
+                          </div>
+                        </div>
+                        <div class="flex justify-end space-x-1.5 pt-2">
+                          <button type="button" @click="addTrancheOpen = false" class="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded text-xs hover:bg-gray-50 transition">Cancel</button>
+                          <button type="submit" class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-3 py-1 rounded text-xs font-semibold transition">Save Payment</button>
+                        </div>
+                      </form>
+                    </div>
+
+                    <!-- Tranche Log list -->
+                    <div class="space-y-2">
+                      <h4 class="text-xs font-bold text-gray-700 uppercase flex items-center">
+                        <span class="material-symbols-outlined text-xs mr-1">history</span> Tranche Payment History
+                      </h4>
+                      <div class="overflow-hidden border border-gray-200 rounded-lg bg-white">
+                        <table class="min-w-full text-xs divide-y divide-gray-100">
+                          <thead class="bg-gray-50 text-gray-600 font-semibold uppercase">
+                            <tr>
+                              <th class="px-4 py-2 text-left">Date Paid</th>
+                              <th class="px-4 py-2 text-left">Reference</th>
+                              <th class="px-4 py-2 text-left">Notes</th>
+                              <th class="px-4 py-2 text-right">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody class="divide-y divide-gray-100">
+                            <!-- Show initial advance if exists -->
+                            {% if alloc.advance_received_by_supplier_contractor > 0 %}
+                            <tr class="text-gray-500 italic bg-gray-50 bg-opacity-40">
+                              <td class="px-4 py-2 font-medium">Initial Setup</td>
+                              <td class="px-4 py-2">Advance Payment</td>
+                              <td class="px-4 py-2">Agreed allocation advance deposit</td>
+                              <td class="px-4 py-2 text-right font-semibold">₦{{ alloc.advance_received_by_supplier_contractor }}</td>
+                            </tr>
+                            {% endif %}
+                            
+                            {% for tranche in alloc.payment_tranches.all %}
+                            <tr class="hover:bg-gray-50">
+                              <td class="px-4 py-2 font-medium">{{ tranche.date_paid|date:"M d, Y" }}</td>
+                              <td class="px-4 py-2 font-mono">{{ tranche.payment_reference|default:"-" }}</td>
+                              <td class="px-4 py-2">{{ tranche.notes|default:"-" }}</td>
+                              <td class="px-4 py-2 text-right font-semibold text-gray-900">₦{{ tranche.amount }}</td>
+                            </tr>
+                            {% empty %}
+                            {% if alloc.advance_received_by_supplier_contractor == 0 %}
+                            <tr>
+                              <td colspan="4" class="px-4 py-3 text-center text-gray-400">No tranche payments recorded yet.</td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+            {% empty %}
+            <tbody class="bg-white divide-y divide-gray-200">
               <tr>
                 <td colspan="7" class="px-6 py-8 text-center text-gray-500">No subcontractor allocations recorded.</td>
               </tr>
-              {% endfor %}
             </tbody>
+            {% endfor %}
           </table>
         </div>
       </div>

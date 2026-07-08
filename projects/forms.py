@@ -2,7 +2,8 @@ from django import forms
 from django.forms import inlineformset_factory
 from .models import (
     Project, ProjectCategory, ProjectAllocation, ProjectLifecycleStage, 
-    ProjectFee, FeeType, ProjectMonitoringLog, ProjectMonitoringImage
+    ProjectFee, FeeType, ProjectMonitoringLog, ProjectMonitoringImage,
+    SubcontractorPaymentTranche
 )
 
 class ProjectForm(forms.ModelForm):
@@ -107,5 +108,14 @@ class ProjectMonitoringLogGlobalForm(ProjectMonitoringLogForm):
         super().__init__(*args, **kwargs)
         self.fields['project'].widget.attrs.update({'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'})
         self.fields['project'].queryset = Project.objects.all()
-
+class SubcontractorPaymentTrancheForm(forms.ModelForm):
+    class Meta:
+        model = SubcontractorPaymentTranche
+        fields = ['amount', 'date_paid', 'payment_reference', 'notes']
+        widgets = {
+            'amount': forms.NumberInput(attrs={'step': '0.01', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+            'date_paid': forms.DateInput(attrs={'type': 'date', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+            'payment_reference': forms.TextInput(attrs={'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm', 'placeholder': 'e.g., Transfer ID, bank transaction code'}),
+            'notes': forms.Textarea(attrs={'rows': 2, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm', 'placeholder': 'Any supporting description...'}),
+        }
 

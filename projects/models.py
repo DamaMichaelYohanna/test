@@ -154,9 +154,51 @@ class ProjectAllocation(models.Model):
         return f"{self.project.project_code} assigned to {self.subcontractor.name}"
 
     @property
+    def total_paid(self):
+        """Calculates total paid (advance plus all tranches)."""
+        return self.advance_received_by_supplier_contractor + sum(t.amount for t in self.payment_tranches.all())
+
+    @property
     def remaining_balance(self):
         """Calculates balance remaining for the subcontractor payment schedule."""
-        return self.amount_agreed_with_supplier_contractor - self.advance_received_by_supplier_contractor
+        return self.amount_agreed_with_supplier_contractor - self.total_paid
+
+
+class SubcontractorPaymentTranche(models.Model):
+    """
+    Tracks installment payments (tranches) made to subcontractors.
+    """
+    allocation = models.ForeignKey(
+        ProjectAllocation, 
+        on_delete=models.CASCADE, 
+        related_name="payment_tranches"
+    )
+    amount = models.DecimalField(
+        max_digits=15, 
+        decimal_places=2, 
+        verbose_name="Amount Paid"
+    )
+    date_paid = models.DateField(verbose_name="Date Paid")
+    payment_reference = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True, 
+        help_text="e.g., Bank transfer Ref, Receipt #"
+    )
+    notes = models.TextField(
+        blank=True, 
+        null=True, 
+        help_text="Any additional details or remarks."
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date_paid', '-created_at']
+        verbose_name = "Subcontractor Payment Tranche"
+        verbose_name_plural = "Subcontractor Payment Tranches"
+
+    def __str__(self):
+        return f"{self.allocation.subcontractor.name} - ₦{self.amount:,.2f} on {self.date_paid}"
 
 
 class ProjectLifecycleStage(models.Model):

@@ -10,12 +10,13 @@ from django.db.models import Q
 
 from .models import (
     Project, ProjectCategory, ProjectAllocation, ProjectLifecycleStage, 
-    ProjectFee, FeeType, ProjectMonitoringLog, ProjectMonitoringImage
+    ProjectFee, FeeType, ProjectMonitoringLog, ProjectMonitoringImage,
+    SubcontractorPaymentTranche
 )
 from .forms import (
     ProjectForm, ProjectAllocationForm, ProjectLifecycleStageForm, 
     ProjectFeeFormSet, ProjectCategoryForm, FeeTypeForm, ProjectMonitoringLogForm,
-    ProjectMonitoringLogGlobalForm
+    ProjectMonitoringLogGlobalForm, SubcontractorPaymentTrancheForm
 )
 
 class ProjectListView(LoginRequiredMixin, ListView):
@@ -127,8 +128,9 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Fetch subcontractor allocations
-        context['allocations'] = ProjectAllocation.objects.filter(project=self.object).select_related('subcontractor')
+        # Fetch subcontractor allocations with prefetched tranches
+        context['allocations'] = ProjectAllocation.objects.filter(project=self.object).select_related('subcontractor').prefetch_related('payment_tranches')
+        context['tranche_form'] = SubcontractorPaymentTrancheForm()
         # Fetch lifecycle stages ordered by sequence_order
         lifecycle_stages = self.object.lifecycle_stages.all()
         context['lifecycle_stages'] = lifecycle_stages
@@ -379,5 +381,19 @@ class ProjectMonitoringDashboardView(LoginRequiredMixin, View):
         else:
             messages.error(request, "Failed to submit monitoring log. Please correct form errors.")
         return redirect('projects:monitoring_dashboard')
+
+
+class SubcontractorPaymentTrancheCreateView(LoginRequiredMixin, View):
+    def post(self, request, allocation_pk):
+        allocation = get_object_or_404(ProjectAllocation, pk=allocation_pk)
+        form = SubcontractorPaymentTrancheForm(request.POST)
+        if form.is_valid():
+            tranche = form.save(commit=False)
+            tranche.allocation = allocation
+            tranche.save()
+            messages.success(request, f"Recorded payment tranche of ₦{tranche.amount:,.2f} for {allocation.subcontractor.name} successfully!")
+        else:
+            messages.error(request, "Failed to record payment tranche. Please check form values.")
+        return redirect('projects:project_detail', pk=allocation.project.pk)
 
 

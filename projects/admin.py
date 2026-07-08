@@ -1,8 +1,15 @@
 from django.contrib import admin
 from .models import (
     Project, ProjectCategory, FeeType, ProjectFee, UnplannedExpense,
-    ProjectMonitoringLog, ProjectMonitoringImage
+    ProjectMonitoringLog, ProjectMonitoringImage, SubcontractorPaymentTranche
 )
+
+@admin.register(SubcontractorPaymentTranche)
+class SubcontractorPaymentTrancheAdmin(admin.ModelAdmin):
+    list_display = ('allocation', 'amount', 'date_paid', 'payment_reference', 'created_at')
+    list_filter = ('date_paid', 'allocation__project')
+    search_fields = ('allocation__subcontractor__name', 'allocation__project__project_code', 'payment_reference')
+
 
 class ProjectFeeInline(admin.TabularInline):
     model = ProjectFee
