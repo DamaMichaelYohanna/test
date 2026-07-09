@@ -153,7 +153,18 @@
           {% for req in all_requests %}
           <tr class="border-b">
             <td class="px-4 py-2">{{ req.project.project_name|truncatewords:20 }}</td>
-            <td class="px-4 py-2">{{ req.milestone_title }}</td>
+            <td class="px-4 py-2">
+              <div class="font-semibold text-gray-900">{{ req.milestone_title }}</div>
+              {% if req.justification_notes %}
+              <div class="text-[11px] text-gray-500 font-mono mt-1 whitespace-pre-wrap bg-gray-50 p-1.5 rounded border border-gray-100">{{ req.justification_notes }}</div>
+              {% endif %}
+              {% if req.management_comment %}
+              <div class="text-[11px] text-[#a88d25] font-medium mt-1 whitespace-pre-wrap bg-amber-50 bg-opacity-40 p-1.5 rounded border border-amber-100 flex items-start gap-1">
+                <span class="material-symbols-outlined text-xs mt-0.5">verified_user</span>
+                <div><span class="font-bold">Management:</span> {{ req.management_comment }}</div>
+              </div>
+              {% endif %}
+            </td>
             <td class="px-4 py-2 text-green-600">₦{{ req.amount_requested|intcomma }}</td>
             <td class="px-4 py-2">
               {% if req.status == 'APPROVED' %}
@@ -236,7 +247,18 @@
           {% for req in user_requests %}
           <tr class="border-b">
             <td class="px-4 py-2">{{ req.project.project_name|truncatewords:20 }}</td>
-            <td class="px-4 py-2">{{ req.milestone_title }}</td>
+            <td class="px-4 py-2">
+              <div class="font-semibold text-gray-900">{{ req.milestone_title }}</div>
+              {% if req.justification_notes %}
+              <div class="text-[11px] text-gray-500 font-mono mt-1 whitespace-pre-wrap bg-gray-50 p-1.5 rounded border border-gray-100">{{ req.justification_notes }}</div>
+              {% endif %}
+              {% if req.management_comment %}
+              <div class="text-[11px] text-[#a88d25] font-medium mt-1 whitespace-pre-wrap bg-amber-50 bg-opacity-40 p-1.5 rounded border border-amber-100 flex items-start gap-1">
+                <span class="material-symbols-outlined text-xs mt-0.5">verified_user</span>
+                <div><span class="font-bold">Management:</span> {{ req.management_comment }}</div>
+              </div>
+              {% endif %}
+            </td>
             <td class="px-4 py-2 text-green-600">₦{{ req.amount_requested|intcomma }}</td>
             <td class="px-4 py-2">
               {% if req.status == 'APPROVED' %}

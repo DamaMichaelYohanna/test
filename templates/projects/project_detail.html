@@ -537,10 +537,12 @@
             </thead>
             {% for alloc in allocations %}
             <tbody class="bg-white divide-y divide-gray-200" x-data="{ tranchesOpen: false, addTrancheOpen: false }">
-              <tr class="hover:bg-gray-50 transition">
+              <tr class="hover:bg-gray-50 transition cursor-pointer" 
+                  :class="tranchesOpen || addTrancheOpen ? 'bg-amber-50 bg-opacity-25' : ''"
+                  @click="tranchesOpen = !tranchesOpen">
                 <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
                   <div class="flex items-center gap-2">
-                    <button type="button" @click="tranchesOpen = !tranchesOpen" class="text-gray-400 hover:text-gray-600 focus:outline-none flex items-center">
+                    <button type="button" @click.stop="tranchesOpen = !tranchesOpen" class="text-gray-400 hover:text-gray-600 focus:outline-none flex items-center">
                       <span class="material-symbols-outlined text-sm" x-text="tranchesOpen ? 'expand_less' : 'expand_more'">expand_more</span>
                     </button>
                     <span>{{ alloc.subcontractor.name }}</span>
@@ -557,20 +559,20 @@
                 <td class="px-6 py-4 whitespace-nowrap font-bold text-red-600">₦{{ alloc.remaining_balance }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-center space-x-1">
                   {% if alloc.sub_contractor_drawing_design %}
-                  <a href="{{ alloc.sub_contractor_drawing_design.url }}" target="_blank"
+                  <a href="{{ alloc.sub_contractor_drawing_design.url }}" target="_blank" @click.stop=""
                     class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200 hover:bg-blue-100 transition">Drawing</a>
                   {% endif %}
                   {% if alloc.supplier_contractor_price_boq %}
-                  <a href="{{ alloc.supplier_contractor_price_boq.url }}" target="_blank"
+                  <a href="{{ alloc.supplier_contractor_price_boq.url }}" target="_blank" @click.stop=""
                     class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-200 hover:bg-indigo-100 transition">Price BOQ</a>
                   {% endif %}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center text-xs space-x-2">
-                  <button type="button" @click="addTrancheOpen = !addTrancheOpen" class="text-[#bfa12c] hover:underline font-semibold">Pay Tranche</button>
+                  <button type="button" @click.stop="addTrancheOpen = !addTrancheOpen" class="text-[#bfa12c] hover:underline font-semibold">Pay Tranche</button>
                   <span class="text-gray-300">|</span>
-                  <a href="{% url 'projects:allocation_update' alloc.pk %}" class="text-indigo-600 hover:text-indigo-900 font-semibold">Edit</a>
+                  <a href="{% url 'projects:allocation_update' alloc.pk %}" @click.stop="" class="text-indigo-600 hover:text-indigo-900 font-semibold">Edit</a>
                   <span class="text-gray-300">|</span>
-                  <a href="{% url 'projects:allocation_delete' alloc.pk %}" class="text-red-600 hover:text-red-900 font-semibold">Remove</a>
+                  <a href="{% url 'projects:allocation_delete' alloc.pk %}" @click.stop="" class="text-red-600 hover:text-red-900 font-semibold">Remove</a>
                 </td>
               </tr>
 

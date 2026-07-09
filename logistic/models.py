@@ -54,6 +54,7 @@ class MilestoneCashRequest(models.Model):
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='PENDING')
     date_requested = models.DateTimeField(auto_now_add=True)
     date_actioned = models.DateTimeField(blank=True, null=True)
+    management_comment = models.TextField(blank=True, null=True, help_text="Reviewer comments or reasons for decision.")
 
     def __str__(self):
         return f"₦{self.amount_requested} Request for {self.milestone_title} ({self.project.project_code})"

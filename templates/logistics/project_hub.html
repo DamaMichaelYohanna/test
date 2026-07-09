@@ -123,10 +123,15 @@
               {% for item in inventory_items %}
               <tr class="hover:bg-gray-50/60 transition">
                 <td class="py-3 px-6 font-semibold text-gray-900">{{ item.material_name }}</td>
-                <td
-                  class="py-3 px-6 text-right font-bold
-                  {% if item.quantity_on_site <= 5 %}text-red-600{% elif item.quantity_on_site <= 20 %}text-amber-600{% else %}text-gray-900{% endif %}">
-                  {{ item.quantity_on_site }}
+                <td class="py-3 px-6 text-right">
+                  <span class="font-bold {% if item.quantity_on_site <= 5 %}text-red-600{% elif item.quantity_on_site <= 20 %}text-amber-600{% else %}text-gray-900{% endif %}">
+                    {{ item.quantity_on_site }}
+                  </span>
+                  {% if item.quantity_on_site == 0 %}
+                  <span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-50 text-red-700 border border-red-200">OUT OF STOCK</span>
+                  {% elif item.quantity_on_site <= 5 %}
+                  <span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">CRITICAL</span>
+                  {% endif %}
                 </td>
                 <td class="py-3 px-6 text-gray-500">{{ item.unit_of_measurement }}</td>
                 <td class="py-3 px-6 text-right text-gray-400 text-xs">{{ item.last_restocked|date:"j N Y, P" }}</td>

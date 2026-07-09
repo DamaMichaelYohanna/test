@@ -254,9 +254,7 @@ class ProcessCashRequestView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         cash_request.date_actioned = timezone.now()
         if management_comment:
-            cash_request.justification_notes += (
-                f"\n\n[Management Note — {timezone.now().date()}]: {management_comment}"
-            )
+            cash_request.management_comment = management_comment
         cash_request.save()
         
         next_url = request.POST.get('next')
