@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.db.models import Sum
 from projects.models import Project
 from .models import SiteStore, MilestoneCashRequest, SiteUsageLog
+from core.permissions import Level2RequiredMixin, Level3RequiredMixin, Level4RequiredMixin
 from django.views import View
 
 
@@ -57,7 +58,7 @@ class ProjectLogisticsDashboardView(LoginRequiredMixin, ListView):
         return context
 
 
-class AddSiteStoreInventoryView(LoginRequiredMixin, View):
+class AddSiteStoreInventoryView(Level2RequiredMixin, View):
     """
     Handles adding a new material line or restocking an existing one.
     Uses get_or_create so engineers can keep adding to the same material
@@ -125,7 +126,7 @@ def _render_inventory_form(request, project, existing_items):
     })
 
 
-class MilestoneCashRequestCreateView(LoginRequiredMixin, CreateView):
+class MilestoneCashRequestCreateView(Level2RequiredMixin, CreateView):
     """
     Handles Civil Engineers submitting field tranches linked to specific milestones.
     """
@@ -159,7 +160,7 @@ class MilestoneCashRequestCreateView(LoginRequiredMixin, CreateView):
         return reverse_lazy('logistic:cash_requests_dashboard')
 
 
-class LogSiteUsageCreateView(LoginRequiredMixin, CreateView):
+class LogSiteUsageCreateView(Level2RequiredMixin, CreateView):
     """
     Records material consumption on site and subtracts from local stock.
     """
@@ -212,17 +213,11 @@ class LogSiteUsageCreateView(LoginRequiredMixin, CreateView):
         return reverse_lazy('logistic:project_logistics_hub', kwargs={'project_id': self.kwargs['project_id']})
 
 
-class ProcessCashRequestView(LoginRequiredMixin, UserPassesTestMixin, View):
+class ProcessCashRequestView(Level3RequiredMixin, View):
     """
     Approves or rejects a pending milestone cash request.
     Restricted to Executive / Management group members (Level 3/4) and superusers.
     """
-
-    def test_func(self):
-        return (
-            self.request.user.groups.filter(name__in=['Level 3', 'Level 4']).exists()
-            or self.request.user.is_superuser
-        )
 
     def post(self, request, request_id):
         cash_request = get_object_or_404(MilestoneCashRequest, pk=request_id)
@@ -321,6 +316,11 @@ class CashRequestDashboardView(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
 
     def post(self, request):
+        # Level 1/read-only user cannot request cash
+        if not (request.user.is_superuser or request.user.groups.filter(name__in=['Level 2', 'Level 3', 'Level 4']).exists()):
+            messages.error(request, "You do not have permission to submit cash requests.")
+            return redirect('logistic:cash_requests_dashboard')
+
         # Staff can create a request here; managers should not use this endpoint
         if request.user.is_superuser or request.user.groups.filter(name__in=['Level 3', 'Level 4']).exists():
             messages.error(request, "Managers cannot submit cash requests on this page.")

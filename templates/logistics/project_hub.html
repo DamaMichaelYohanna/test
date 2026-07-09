@@ -28,6 +28,7 @@
       </div>
       <p class="text-sm text-gray-500 mt-0.5">Site Logistics Hub &mdash; Inventory, Cash Requests &amp; Usage Logs</p>
     </div>
+    {% if request.user.is_superuser or request.user|has_group:'Level 2' or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}
     <div class="flex flex-wrap gap-2">
       <a href="{% url 'logistic:add_inventory' project.pk %}"
         class="inline-flex items-center px-4 py-2 rounded-lg shadow-sm text-sm font-semibold text-white gold-bg gold-bg-hover transition">
@@ -39,6 +40,7 @@
         <span class="material-symbols-outlined mr-1.5 text-lg">construction</span> Log Material Usage
       </a>
     </div>
+    {% endif %}
   </div>
 
   <!-- Flash Messages -->
@@ -103,10 +105,12 @@
           <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center">
             <span class="material-symbols-outlined mr-2 text-gray-500">warehouse</span> Site Store Inventory
           </h2>
+          {% if request.user.is_superuser or request.user|has_group:'Level 2' or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}
           <a href="{% url 'logistic:add_inventory' project.pk %}"
             class="inline-flex items-center text-xs font-semibold text-[#bfa12c] hover:underline">
             <span class="material-symbols-outlined text-sm mr-0.5">add</span> Add Material
           </a>
+          {% endif %}
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm text-left">
@@ -156,10 +160,12 @@
           <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center">
             <span class="material-symbols-outlined mr-2 text-gray-500">construction</span> Recent Material Usage
           </h2>
+          {% if request.user.is_superuser or request.user|has_group:'Level 2' or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}
           <a href="{% url 'logistic:log_usage' project.pk %}"
             class="inline-flex items-center text-xs font-semibold text-[#bfa12c] hover:underline">
             <span class="material-symbols-outlined text-sm mr-0.5">add</span> Log Usage
           </a>
+          {% endif %}
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm text-left">

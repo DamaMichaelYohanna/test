@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load group_tags %}
 
 {% block title %}Project Details: {{ project.project_name }}{% endblock %}
 
@@ -24,6 +25,7 @@
         <span class="material-symbols-outlined text-sm mr-1.5">warehouse</span> Site Logistics Hub
       </a>
       {% endif %}
+      {% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}
       <a href="{% url 'projects:project_update' project.pk %}"
         class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition">
         Edit Project
@@ -32,6 +34,7 @@
         class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-4 py-2 rounded-lg text-sm font-semibold transition">
         Delete
       </a>
+      {% endif %}
     </div>
   </div>
   {% if messages %}
@@ -351,10 +354,12 @@
           <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center">
             <span class="material-symbols-outlined mr-2 text-[#bfa12c]">trending_up</span> Project Progress Logs
           </h2>
+          {% if request.user.is_superuser or request.user|has_group:'Level 2' or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}
           <button @click="logOpen = !logOpen"
             class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center">
             <span class="material-symbols-outlined text-xs mr-1" x-text="logOpen ? 'remove' : 'add'">add</span> Log Progress
           </button>
+          {% endif %}
         </div>
 
         <!-- Add Monitoring Log Panel -->
@@ -463,11 +468,13 @@
           <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center">
             <span class="material-symbols-outlined mr-2 text-gray-500">handshake</span> Subcontractor Allocations
           </h2>
+          {% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}
           <button @click="addOpen = !addOpen"
             class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition flex items-center">
             <span class="material-symbols-outlined text-xs mr-1" x-text="addOpen ? 'remove' : 'add'">add</span> Allocate
             Subcontractor
           </button>
+          {% endif %}
         </div>
 
         <!-- Add Allocation Panel -->
@@ -568,11 +575,15 @@
                   {% endif %}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center text-xs space-x-2">
+                  {% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}
                   <button type="button" @click.stop="addTrancheOpen = !addTrancheOpen" class="text-[#bfa12c] hover:underline font-semibold">Pay Tranche</button>
                   <span class="text-gray-300">|</span>
                   <a href="{% url 'projects:allocation_update' alloc.pk %}" @click.stop="" class="text-indigo-600 hover:text-indigo-900 font-semibold">Edit</a>
                   <span class="text-gray-300">|</span>
                   <a href="{% url 'projects:allocation_delete' alloc.pk %}" @click.stop="" class="text-red-600 hover:text-red-900 font-semibold">Remove</a>
+                  {% else %}
+                  <span class="text-gray-400 font-semibold italic">No actions</span>
+                  {% endif %}
                 </td>
               </tr>
 
@@ -700,8 +711,8 @@
 
                   <div class="relative flex space-x-3 items-start">
                     <div>
-                      <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white cursor-pointer transition
-                        {% if stage.is_completed %}bg-green-500 text-white{% else %}bg-gray-100 text-gray-400 border border-gray-300{% endif %}" @click="editOpen = !editOpen">
+                      <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white transition {% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}cursor-pointer{% endif %}
+                        {% if stage.is_completed %}bg-green-500 text-white{% else %}bg-gray-100 text-gray-400 border border-gray-300{% endif %}" @click="{% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}editOpen = !editOpen{% else %}false{% endif %}">
                         {% if stage.is_completed %}
                         <span class="material-symbols-outlined text-sm">done</span>
                         {% else %}
@@ -712,10 +723,12 @@
 
                     <div class="flex-1 min-w-0">
                       <div class="text-xs font-semibold text-gray-800 flex justify-between items-center leading-normal">
-                        <span class="cursor-pointer hover:text-[#bfa12c]" @click="editOpen = !editOpen">{{ stage.stage_name }}</span>
+                        <span class="{% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}cursor-pointer hover:text-[#bfa12c]{% endif %}" @click="{% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}editOpen = !editOpen{% else %}false{% endif %}">{{ stage.stage_name }}</span>
+                        {% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}
                         <button type="button" @click="editOpen = !editOpen" class="text-gray-400 hover:text-gray-700 ml-1 flex-shrink-0">
                           <span class="material-symbols-outlined text-xs">edit</span>
                         </button>
+                        {% endif %}
                       </div>
 
                       <div class="text-xs text-gray-500 mt-1 space-y-1">
@@ -791,8 +804,8 @@
 
                   <div class="relative flex space-x-3 items-start">
                     <div>
-                      <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white cursor-pointer transition
-                        {% if stage.is_completed %}bg-green-500 text-white{% else %}bg-gray-100 text-gray-400 border border-gray-300{% endif %}" @click="editOpen = !editOpen">
+                      <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white transition {% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}cursor-pointer{% endif %}
+                        {% if stage.is_completed %}bg-green-500 text-white{% else %}bg-gray-100 text-gray-400 border border-gray-300{% endif %}" @click="{% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}editOpen = !editOpen{% else %}false{% endif %}">
                         {% if stage.is_completed %}
                         <span class="material-symbols-outlined text-sm">done</span>
                         {% else %}
@@ -803,10 +816,12 @@
 
                     <div class="flex-1 min-w-0">
                       <div class="text-xs font-semibold text-gray-800 flex justify-between items-center leading-normal">
-                        <span class="cursor-pointer hover:text-[#bfa12c]" @click="editOpen = !editOpen">{{ stage.stage_name }}</span>
+                        <span class="{% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}cursor-pointer hover:text-[#bfa12c]{% endif %}" @click="{% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}editOpen = !editOpen{% else %}false{% endif %}">{{ stage.stage_name }}</span>
+                        {% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}
                         <button type="button" @click="editOpen = !editOpen" class="text-gray-400 hover:text-gray-700 ml-1 flex-shrink-0">
                           <span class="material-symbols-outlined text-xs">edit</span>
                         </button>
+                        {% endif %}
                       </div>
 
                       <div class="text-xs text-gray-500 mt-1 space-y-1">
@@ -882,8 +897,8 @@
 
                   <div class="relative flex space-x-3 items-start">
                     <div>
-                      <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white cursor-pointer transition
-                        {% if stage.is_completed %}bg-green-500 text-white{% else %}bg-gray-100 text-gray-400 border border-gray-300{% endif %}" @click="editOpen = !editOpen">
+                      <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white transition {% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}cursor-pointer{% endif %}
+                        {% if stage.is_completed %}bg-green-500 text-white{% else %}bg-gray-100 text-gray-400 border border-gray-300{% endif %}" @click="{% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}editOpen = !editOpen{% else %}false{% endif %}">
                         {% if stage.is_completed %}
                         <span class="material-symbols-outlined text-sm">done</span>
                         {% else %}
@@ -894,10 +909,12 @@
 
                     <div class="flex-1 min-w-0">
                       <div class="text-xs font-semibold text-gray-800 flex justify-between items-center leading-normal">
-                        <span class="cursor-pointer hover:text-[#bfa12c]" @click="editOpen = !editOpen">{{ stage.stage_name }}</span>
+                        <span class="{% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}cursor-pointer hover:text-[#bfa12c]{% endif %}" @click="{% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}editOpen = !editOpen{% else %}false{% endif %}">{{ stage.stage_name }}</span>
+                        {% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}
                         <button type="button" @click="editOpen = !editOpen" class="text-gray-400 hover:text-gray-700 ml-1 flex-shrink-0">
                           <span class="material-symbols-outlined text-xs">edit</span>
                         </button>
+                        {% endif %}
                       </div>
 
                       <div class="text-xs text-gray-500 mt-1 space-y-1">

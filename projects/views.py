@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 from django.utils.timezone import now
 from django.db.models import Q
 
+from core.permissions import Level2RequiredMixin, Level3RequiredMixin, Level4RequiredMixin
 from .models import (
     Project, ProjectCategory, ProjectAllocation, ProjectLifecycleStage, 
     ProjectFee, FeeType, ProjectMonitoringLog, ProjectMonitoringImage,
@@ -62,7 +63,7 @@ class ProjectListView(LoginRequiredMixin, ListView):
         return context
 
 
-class ProjectCreateView(LoginRequiredMixin, CreateView):
+class ProjectCreateView(Level3RequiredMixin, CreateView):
     model = Project
     form_class = ProjectForm
     template_name = 'projects/project_form.html'
@@ -88,7 +89,7 @@ class ProjectCreateView(LoginRequiredMixin, CreateView):
         else:
             return self.render_to_response(self.get_context_data(form=form))
 
-class ProjectUpdateView(LoginRequiredMixin, UpdateView):
+class ProjectUpdateView(Level3RequiredMixin, UpdateView):
     model = Project
     form_class = ProjectForm
     template_name = 'projects/project_form.html'
@@ -116,7 +117,7 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
         else:
             return self.render_to_response(self.get_context_data(form=form))
 
-class ProjectDeleteView(LoginRequiredMixin, DeleteView):
+class ProjectDeleteView(Level3RequiredMixin, DeleteView):
     model = Project
     template_name = 'projects/confirm_delete.html'
     success_url = reverse_lazy('projects:project_list')
@@ -177,7 +178,7 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
         context['monitoring_form'] = ProjectMonitoringLogForm()
         return context
 
-class ProjectAllocationCreateView(LoginRequiredMixin, View):
+class ProjectAllocationCreateView(Level3RequiredMixin, View):
     def post(self, request, project_pk):
         project = get_object_or_404(Project, pk=project_pk)
         form = ProjectAllocationForm(request.POST, request.FILES)
@@ -193,7 +194,7 @@ class ProjectAllocationCreateView(LoginRequiredMixin, View):
             messages.error(request, "Invalid form submission.")
         return redirect('projects:project_detail', pk=project.pk)
 
-class ProjectAllocationUpdateView(LoginRequiredMixin, UpdateView):
+class ProjectAllocationUpdateView(Level3RequiredMixin, UpdateView):
     model = ProjectAllocation
     form_class = ProjectAllocationForm
     template_name = 'projects/allocation_form.html'
@@ -205,14 +206,14 @@ class ProjectAllocationUpdateView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, "Allocation updated successfully!")
         return super().form_valid(form)
 
-class ProjectAllocationDeleteView(LoginRequiredMixin, DeleteView):
+class ProjectAllocationDeleteView(Level3RequiredMixin, DeleteView):
     model = ProjectAllocation
     template_name = 'confirm_delete.html'
 
     def get_success_url(self):
         return reverse_lazy('projects:project_detail', kwargs={'pk': self.object.project.pk})
 
-class UpdateLifecycleStageView(LoginRequiredMixin, View):
+class UpdateLifecycleStageView(Level3RequiredMixin, View):
     def post(self, request, pk):
         stage = get_object_or_404(ProjectLifecycleStage, pk=pk)
         is_completed = request.POST.get('is_completed') == 'true'
@@ -236,12 +237,7 @@ class UpdateLifecycleStageView(LoginRequiredMixin, View):
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
-class ProjectSettingsView(LoginRequiredMixin, View):
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_staff and not request.user.is_superuser:
-            messages.error(request, "Access denied. Admins only.")
-            return redirect('core:dashboard')
-        return super().dispatch(request, *args, **kwargs)
+class ProjectSettingsView(Level3RequiredMixin, View):
 
     def get_context_data(self, request, cat_form=None, fee_form=None, active_tab='categories'):
         edit_cat_id = request.GET.get('edit_cat')
@@ -321,7 +317,7 @@ class ProjectSettingsView(LoginRequiredMixin, View):
             return redirect('projects:settings')
 
 
-class ProjectMonitoringLogCreateView(LoginRequiredMixin, View):
+class ProjectMonitoringLogCreateView(Level2RequiredMixin, View):
     def post(self, request, project_pk):
         project = get_object_or_404(Project, pk=project_pk)
         form = ProjectMonitoringLogForm(request.POST)
@@ -364,6 +360,10 @@ class ProjectMonitoringDashboardView(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
 
     def post(self, request):
+        if not (request.user.is_superuser or request.user.groups.filter(name__in=['Level 2', 'Level 3', 'Level 4']).exists()):
+            messages.error(request, "You do not have permission to submit progress logs.")
+            return redirect('projects:monitoring_dashboard')
+
         form = ProjectMonitoringLogGlobalForm(request.POST, request.FILES)
         if form.is_valid():
             log_entry = form.save(commit=False)
@@ -383,7 +383,7 @@ class ProjectMonitoringDashboardView(LoginRequiredMixin, View):
         return redirect('projects:monitoring_dashboard')
 
 
-class SubcontractorPaymentTrancheCreateView(LoginRequiredMixin, View):
+class SubcontractorPaymentTrancheCreateView(Level3RequiredMixin, View):
     def post(self, request, allocation_pk):
         allocation = get_object_or_404(ProjectAllocation, pk=allocation_pk)
         form = SubcontractorPaymentTrancheForm(request.POST)
