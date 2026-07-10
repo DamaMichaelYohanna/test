@@ -16,6 +16,11 @@ class ProjectRestructuringTests(TestCase):
         # Create user
         self.user = User.objects.create_user(username="testuser", password="testpassword")
         self.staff_user = User.objects.create_user(username="staffuser", password="testpassword", is_staff=True)
+        
+        # Add staff_user to Level 3 group to satisfy Level3RequiredMixin checks
+        from django.contrib.auth.models import Group
+        level3_group, _ = Group.objects.get_or_create(name='Level 3')
+        self.staff_user.groups.add(level3_group)
 
         # Create parent project
         self.parent_project = Project.objects.create(
@@ -28,20 +33,20 @@ class ProjectRestructuringTests(TestCase):
         )
 
     def test_project_creation_and_attributes(self):
-        # Create child project linked to parent
+        # Create child project rolled over from parent
         project = Project.objects.create(
             project_code="PRJ-001",
             mda="Ministry of Works",
             project_name="Bridge Rehabilitation",
             location="Lagos",
             category=self.category_const,
-            linked_project=self.parent_project,
+            rolled_over_from=self.parent_project,
             budget_amount=15000000.00,
             current_phase="POST_AWARD"
         )
         
         self.assertEqual(project.category.name, "Construction")
-        self.assertEqual(project.linked_project.project_code, "PRJ-PARENT")
+        self.assertEqual(project.rolled_over_from.project_code, "PRJ-PARENT")
         self.assertEqual(project.current_phase, "POST_AWARD")
         self.assertEqual(project.get_current_phase_display(), "Post-Award Phase")
 
@@ -64,7 +69,7 @@ class ProjectRestructuringTests(TestCase):
         self.assertEqual(fees_dict["VAT"], 375000.00)
 
     def test_project_form_and_views(self):
-        self.client.login(username="testuser", password="testpassword")
+        self.client.login(username="staffuser", password="testpassword")
         
         # Test project creation via POST with fees formset
         url = reverse('projects:project_create')
@@ -73,9 +78,13 @@ class ProjectRestructuringTests(TestCase):
             'mda': 'Ministry of Environment',
             'project_name': 'Erosion Control',
             'project_type': 'CONSTRUCTION',
+            'execution_mode': 'SELF_EXECUTED',
             'location': 'Anambra',
             'category': self.category_const.pk,
-            'linked_project': '',
+            'rolled_over_from': '',
+            'parent_project': '',
+            'part_name': '',
+            'part_percentage': '100.00',
             'budget_amount': '8000000.00',
             'current_phase': 'PRE_AWARD',
             'execution_level_percentage': 0,
@@ -150,3 +159,46 @@ class ProjectRestructuringTests(TestCase):
         # (We check that a message warning user is present)
         response_get = self.client.get(url)
         self.assertContains(response_get, "Cannot delete category")
+
+    def test_project_split_parts_inheritance_and_rollups(self):
+        # 1. Verify inheritance when saving a child project part
+        child_part1 = Project.objects.create(
+            parent_project=self.parent_project,
+            project_name="Grid Expansion Part A",
+            part_name="Part A",
+            part_percentage=60.00,
+            budget_amount=30000000.00,
+            actual_contract_amount=35000000.00,
+            mobilization_received=10000000.00,
+            final_payment_received=0.00,
+            execution_level_percentage=80
+        )
+        # Verify inherited fields
+        self.assertEqual(child_part1.project_code, self.parent_project.project_code)
+        self.assertEqual(child_part1.mda, self.parent_project.mda)
+        self.assertEqual(child_part1.location, self.parent_project.location)
+        self.assertEqual(child_part1.category, self.parent_project.category)
+
+        # 2. Verify non-unique project code is allowed
+        child_part2 = Project.objects.create(
+            parent_project=self.parent_project,
+            project_name="Grid Expansion Part B",
+            part_name="Part B",
+            part_percentage=40.00,
+            budget_amount=20000000.00,
+            actual_contract_amount=25000000.00,
+            mobilization_received=5000000.00,
+            final_payment_received=15000000.00,
+            execution_level_percentage=30
+        )
+        self.assertEqual(child_part2.project_code, self.parent_project.project_code)
+
+        # 3. Verify rollup values on the parent project
+        self.assertTrue(self.parent_project.is_parent)
+        self.assertEqual(self.parent_project.total_budget_amount, 50000000.00)
+        self.assertEqual(self.parent_project.total_actual_contract_amount, 60000000.00)
+        self.assertEqual(self.parent_project.total_mobilization_received, 15000000.00)
+        self.assertEqual(self.parent_project.total_final_payment_received, 15000000.00)
+        
+        # 4. Verify weighted average execution level: (80% * 60 + 30% * 40) / 100 = (4800 + 1200) / 100 = 60%
+        self.assertEqual(self.parent_project.average_execution_percentage, 60)

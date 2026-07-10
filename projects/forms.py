@@ -10,7 +10,8 @@ class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
         fields = [
-            'project_code', 'mda', 'project_name', 'project_type', 'execution_mode', 'lot', 'location', 'category', 'linked_project',
+            'project_code', 'mda', 'project_name', 'project_type', 'execution_mode', 'lot', 'location', 'category', 
+            'rolled_over_from', 'parent_project', 'part_name', 'part_percentage',
             'budget_amount', 'technical_status', 'financial_status', 'final_companies', 'back_up_companies', 'updated_recommended_companies',
             'plain_boq', 'drawing_design',
             'actual_contract_amount', 'in_house_benchmark', 'cost_percentage', 'staff_assigned', 'current_phase',
@@ -29,7 +30,8 @@ class ProjectForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
-            self.fields['linked_project'].queryset = Project.objects.exclude(pk=self.instance.pk)
+            self.fields['rolled_over_from'].queryset = Project.objects.exclude(pk=self.instance.pk)
+            self.fields['parent_project'].queryset = Project.objects.exclude(pk=self.instance.pk)
         
         # Style form fields using modern Tailwind classes
         for name, field in self.fields.items():

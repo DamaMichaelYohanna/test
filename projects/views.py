@@ -69,6 +69,32 @@ class ProjectCreateView(Level3RequiredMixin, CreateView):
     template_name = 'projects/project_form.html'
     success_url = reverse_lazy('projects:project_list')
 
+    def get_initial(self):
+        initial = super().get_initial()
+        parent_id = self.request.GET.get('parent_project')
+        if parent_id:
+            try:
+                parent = Project.objects.get(pk=parent_id)
+                initial.update({
+                    'parent_project': parent.pk,
+                    'project_code': parent.project_code,
+                    'project_name': parent.project_name,
+                    'mda': parent.mda,
+                    'location': parent.location,
+                    'category': parent.category_id,
+                    'project_type': parent.project_type,
+                    'execution_mode': parent.execution_mode,
+                    'lot': parent.lot,
+                    'budget_amount': parent.budget_amount,
+                    'actual_contract_amount': parent.actual_contract_amount,
+                })
+                # Calculate remaining percentage
+                existing_parts_sum = sum(p.part_percentage for p in parent.project_parts.all())
+                initial['part_percentage'] = max(0, 100 - existing_parts_sum)
+            except Project.DoesNotExist:
+                pass
+        return initial
+
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         if self.request.POST:

@@ -100,75 +100,92 @@
           </button>
         </div>
 
-        <nav class="space-y-1 px-3">
-          <a href="{% url 'core:dashboard' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if request.resolver_match.url_name == 'dashboard' or request.resolver_match.url_name == 'home' %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">dashboard</span>
-            Dashboard
-          </a>
+        <nav class="space-y-6 px-3">
+          <!-- Overview Section -->
+          <div class="space-y-1">
+            <span class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Overview</span>
+            <a href="{% url 'core:dashboard' %}"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if request.resolver_match.url_name == 'dashboard' or request.resolver_match.url_name == 'home' %}active-nav-item{% endif %}">
+              <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">dashboard</span>
+              Dashboard
+            </a>
+            <a href="{% url 'users:profile' %}"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'profile' in request.path %}active-nav-item{% endif %}">
+              <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">person</span>
+              My Profile
+            </a>
+          </div>
 
-          <a href="{% url 'logistic:cash_requests_dashboard' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if request.resolver_match.url_name == 'cash_requests_dashboard' %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">payments</span>
-            Cash Requests
-          </a>
+          <!-- Operations Section -->
+          <div class="space-y-1">
+            <span class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Projects & Contractors</span>
+            <a href="{% url 'projects:project_list' %}"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'projects' in request.path and 'compliance' not in request.path and 'settings' not in request.path and 'monitoring' not in request.path %}active-nav-item{% endif %}">
+              <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">workspaces</span>
+              Projects
+            </a>
+            <a href="{% url 'projects:monitoring_dashboard' %}"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'monitoring' in request.path %}active-nav-item{% endif %}">
+              <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">trending_up</span>
+              Progress Logs
+            </a>
+            <a href="{% url 'contractors:compliance_matrix' %}"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'compliance' in request.path %}active-nav-item{% endif %}">
+              <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">fact_check</span>
+              Compliance Matrix
+            </a>
+            <a href="{% url 'contractors:company_list' %}"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'companies' in request.path %}active-nav-item{% endif %}">
+              <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">business</span>
+              Companies
+            </a>
+            <a href="{% url 'contractors:contractor_list' %}"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'contractors' in request.path and 'companies' not in request.path and 'compliance' not in request.path %}active-nav-item{% endif %}">
+              <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">people</span>
+              Sub-Contractors
+            </a>
+          </div>
 
-          <a href="{% url 'projects:project_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'projects' in request.path and 'compliance' not in request.path and 'settings' not in request.path and 'monitoring' not in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">workspaces</span>
-            Projects
-          </a>
+          <!-- Logistics & Finance -->
+          <div class="space-y-1">
+            <span class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Logistics & Finance</span>
+            <a href="{% url 'logistic:cash_requests_dashboard' %}"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if request.resolver_match.url_name == 'cash_requests_dashboard' %}active-nav-item{% endif %}">
+              <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">payments</span>
+              Cash Requests
+            </a>
+            <a href="{% url 'logistic:site_logistics_landing' %}"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'logistics' in request.path %}active-nav-item{% endif %}">
+              <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">warehouse</span>
+              Site Logistics
+            </a>
+            <a href="{% url 'core:expenses_dashboard' %}"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if request.resolver_match.url_name == 'expenses_dashboard' %}active-nav-item{% endif %}">
+              <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">receipt_long</span>
+              Expenses
+            </a>
+          </div>
 
-          <a href="{% url 'projects:monitoring_dashboard' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'monitoring' in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">trending_up</span>
-            Progress Logs
-          </a>
-          {% if user.is_superuser or user|has_group:'Level 3' or user|has_group:'Level 4' %}
-          <a href="{% url 'projects:settings' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'projects/settings' in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">settings</span>
-            Project Settings
-          </a>
+          <!-- Administration Section -->
+          {% if user.is_superuser or user|has_group:'Level 3' or user|has_group:'Level 4' or can_manage_users %}
+          <div class="space-y-1">
+            <span class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Administration</span>
+            {% if user.is_superuser or user|has_group:'Level 3' or user|has_group:'Level 4' %}
+            <a href="{% url 'projects:settings' %}"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'projects/settings' in request.path %}active-nav-item{% endif %}">
+              <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">settings</span>
+              Project Settings
+            </a>
+            {% endif %}
+            {% if can_manage_users %}
+            <a href="{% url 'users:user_list' %}"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'users' in request.path %}active-nav-item{% endif %}">
+              <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">group</span>
+              Staff Management
+            </a>
+            {% endif %}
+          </div>
           {% endif %}
-          <a href="{% url 'logistic:site_logistics_landing' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'logistics' in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">warehouse</span>
-            Site Logistics
-          </a>
-          
-          <a href="{% url 'core:expenses_dashboard' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if request.resolver_match.url_name == 'expenses_dashboard' %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">receipt_long</span>
-            Expenses
-          </a>
-          <a href="{% url 'users:profile' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'profile' in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">person</span>
-            My Profile
-          </a>
-          {% if can_manage_users %}
-          <a href="{% url 'users:user_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'users' in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">group</span>
-            Staff Management
-          </a>
-          {% endif %}
-          <a href="{% url 'contractors:compliance_matrix' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'compliance' in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">fact_check</span>
-            Compliance Documents
-          </a>
-          <a href="{% url 'contractors:company_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'companies' in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">business</span>
-            Companies
-          </a>
-          <a href="{% url 'contractors:contractor_list' %}"
-            class="flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'contractors' in request.path and 'companies' not in request.path and 'compliance' not in request.path %}active-nav-item{% endif %}">
-            <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500">people</span>
-            Sub-Contractors
-          </a>
         </nav>
       </div>
 

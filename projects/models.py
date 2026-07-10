@@ -43,13 +43,16 @@ class Project(models.Model):
     # --- Core Identifiers ---
     sn = models.AutoField(primary_key=True, verbose_name="S/N")
     mda = models.CharField(max_length=255, verbose_name="MDA", help_text="Ministry, Department, or Agency")
-    project_code = models.CharField(max_length=100, unique=True, verbose_name="Project Code")
+    project_code = models.CharField(max_length=100, verbose_name="Project Code")
     project_name = models.CharField(max_length=512, verbose_name="Project Name")
     lot = models.CharField(max_length=50, blank=True, null=True, verbose_name="Lot")
     project_type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default='CONSTRUCTION', verbose_name="Type")
     location = models.CharField(max_length=255, verbose_name="Location")
     category = models.ForeignKey(ProjectCategory, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Category")
-    linked_project = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='linked_projects', verbose_name="Linked Project")
+    rolled_over_from = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='rolled_over_to', verbose_name="Rolled Over From")
+    parent_project = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='project_parts', verbose_name="Parent Project (for Split Parts)")
+    part_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="Part Name", help_text="e.g. Phase 1, Phase 2, Part A")
+    part_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=100.00, verbose_name="Part Percentage", help_text="e.g. 60.00 for 60%")
     
     # --- Documents & Attachments ---
     plain_boq = models.FileField(upload_to='projects/boq/plain/', blank=True, null=True, verbose_name="Plain BOQ")
@@ -105,6 +108,56 @@ class Project(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def is_parent(self):
+        return self.project_parts.exists()
+
+    @property
+    def total_budget_amount(self):
+        if self.is_parent:
+            return sum(part.budget_amount for part in self.project_parts.all())
+        return self.budget_amount
+
+    @property
+    def total_actual_contract_amount(self):
+        if self.is_parent:
+            return sum(part.actual_contract_amount for part in self.project_parts.all())
+        return self.actual_contract_amount
+
+    @property
+    def total_mobilization_received(self):
+        if self.is_parent:
+            return sum(part.mobilization_received for part in self.project_parts.all())
+        return self.mobilization_received
+
+    @property
+    def total_final_payment_received(self):
+        if self.is_parent:
+            return sum(part.final_payment_received for part in self.project_parts.all())
+        return self.final_payment_received
+
+    @property
+    def average_execution_percentage(self):
+        if self.is_parent:
+            parts = self.project_parts.all()
+            total_parts = parts.count()
+            if total_parts > 0:
+                total_percentage = sum(part.part_percentage for part in parts)
+                if total_percentage > 0:
+                    weighted_sum = sum(part.execution_level_percentage * part.part_percentage for part in parts)
+                    return int(weighted_sum / total_percentage)
+                return int(sum(part.execution_level_percentage for part in parts) / total_parts)
+            return 0
+        return self.execution_level_percentage
+
+    def save(self, *args, **kwargs):
+        if self.parent_project:
+            self.project_code = self.parent_project.project_code
+            self.mda = self.parent_project.mda
+            self.location = self.parent_project.location
+            self.category = self.parent_project.category
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ['-created_at']
