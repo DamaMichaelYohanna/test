@@ -179,3 +179,118 @@ class UserUpdateForm(BaseUserForm):
         if commit:
             user.save()
         return user
+
+
+class SelfProfileUpdateForm(forms.ModelForm):
+    first_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#bfa12c] focus:ring-2 focus:ring-[#bfa12c]/20 outline-none',
+                'placeholder': 'First Name',
+            }
+        )
+    )
+    last_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#bfa12c] focus:ring-2 focus:ring-[#bfa12c]/20 outline-none',
+                'placeholder': 'Last Name',
+            }
+        )
+    )
+    email = forms.EmailField(
+        required=False,
+        widget=forms.EmailInput(
+            attrs={
+                'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#bfa12c] focus:ring-2 focus:ring-[#bfa12c]/20 outline-none',
+                'placeholder': 'name@company.com',
+            }
+        )
+    )
+    phone_number = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#bfa12c] focus:ring-2 focus:ring-[#bfa12c]/20 outline-none',
+                'placeholder': '0801 234 5678',
+            }
+        )
+    )
+
+    # Password Change Section
+    current_password = forms.CharField(
+        label='Current Password',
+        required=False,
+        widget=forms.PasswordInput(
+            attrs={
+                'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#bfa12c] focus:ring-2 focus:ring-[#bfa12c]/20 outline-none',
+                'placeholder': 'Enter current password (if changing)',
+            }
+        )
+    )
+    new_password = forms.CharField(
+        label='New Password',
+        required=False,
+        widget=forms.PasswordInput(
+            attrs={
+                'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#bfa12c] focus:ring-2 focus:ring-[#bfa12c]/20 outline-none',
+                'placeholder': 'Enter new password',
+            }
+        )
+    )
+    confirm_new_password = forms.CharField(
+        label='Confirm New Password',
+        required=False,
+        widget=forms.PasswordInput(
+            attrs={
+                'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm focus:border-[#bfa12c] focus:ring-2 focus:ring-[#bfa12c]/20 outline-none',
+                'placeholder': 'Confirm new password',
+            }
+        )
+    )
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        profile = getattr(self.instance, 'profile', None)
+        if profile:
+            self.fields['phone_number'].initial = profile.phone_number
+
+    def clean(self):
+        cleaned_data = super().clean()
+        curr_pass = cleaned_data.get('current_password')
+        new_pass = cleaned_data.get('new_password')
+        confirm_pass = cleaned_data.get('confirm_new_password')
+
+        if curr_pass or new_pass or confirm_pass:
+            if not curr_pass:
+                self.add_error('current_password', 'Current password is required to change your password.')
+            elif not self.instance.check_password(curr_pass):
+                self.add_error('current_password', 'Current password is incorrect.')
+
+            if not new_pass:
+                self.add_error('new_password', 'Please enter a new password.')
+            
+            if new_pass and not confirm_pass:
+                self.add_error('confirm_new_password', 'Please confirm your new password.')
+            elif new_pass and confirm_pass and new_pass != confirm_pass:
+                self.add_error('confirm_new_password', 'New passwords do not match.')
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        new_pass = self.cleaned_data.get('new_password')
+        if new_pass:
+            user.set_password(new_pass)
+        if commit:
+            user.save()
+            profile, _ = Profile.objects.get_or_create(user=user)
+            profile.phone_number = self.cleaned_data.get('phone_number')
+            profile.save()
+        return user

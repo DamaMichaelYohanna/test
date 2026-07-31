@@ -1,11 +1,12 @@
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
 
-from .forms import JobTitleForm, UserCreateForm, UserUpdateForm
+from .forms import JobTitleForm, SelfProfileUpdateForm, UserCreateForm, UserUpdateForm
 from .models import JobTitle, Profile
 
 
@@ -21,14 +22,35 @@ class ManagementAccessMixin(LoginRequiredMixin, UserPassesTestMixin):
         return user.groups.filter(name__in=MANAGEMENT_LEVELS).exists()
 
 
-class ProfileView(LoginRequiredMixin, TemplateView):
+class ProfileView(LoginRequiredMixin, View):
     template_name = 'users/profile.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        profile, _ = Profile.objects.select_related('job_title', 'last_active_project').get_or_create(user=self.request.user)
-        context['profile'] = profile
-        return context
+    def get(self, request):
+        profile, _ = Profile.objects.select_related('job_title', 'last_active_project').get_or_create(user=request.user)
+        form = SelfProfileUpdateForm(instance=request.user)
+        context = {
+            'profile': profile,
+            'form': form,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        profile, _ = Profile.objects.select_related('job_title', 'last_active_project').get_or_create(user=request.user)
+        form = SelfProfileUpdateForm(request.POST, instance=request.user)
+        if form.is_valid():
+            user = form.save()
+            if form.cleaned_data.get('new_password'):
+                update_session_auth_hash(request, user)
+                messages.success(request, 'Your profile details and password have been successfully updated!')
+            else:
+                messages.success(request, 'Your profile details have been successfully updated!')
+            return redirect('users:profile')
+
+        context = {
+            'profile': profile,
+            'form': form,
+        }
+        return render(request, self.template_name, context)
 
 
 def toggle_2fa_view(request):
