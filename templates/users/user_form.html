@@ -95,6 +95,30 @@
         {% endif %}
       </div>
       {% endif %}
+
+      {% if form.new_password %}
+      <div class="col-span-1 md:col-span-2 border-t border-gray-100 pt-4 mt-2">
+        <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-1">Reset / Change Password</h3>
+        <p class="text-xs text-gray-500 mb-4">Leave blank if you do not wish to change this user's password.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="{{ form.new_password.id_for_label }}" class="mb-2 block text-sm font-semibold text-gray-800">New Password (Optional)</label>
+            {{ form.new_password }}
+            {% if form.new_password.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.new_password.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label for="{{ form.confirm_new_password.id_for_label }}" class="mb-2 block text-sm font-semibold text-gray-800">Confirm New Password</label>
+            {{ form.confirm_new_password }}
+            {% if form.confirm_new_password.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.confirm_new_password.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </div>
 
     <div class="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">

@@ -140,4 +140,42 @@ class UserCreateForm(BaseUserForm):
 
 
 class UserUpdateForm(BaseUserForm):
-    pass
+    new_password = forms.CharField(
+        label='New Password',
+        required=False,
+        widget=forms.PasswordInput(
+            attrs={
+                'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm focus:border-[#bfa12c] focus:ring-4 focus:ring-[#bfa12c]/15 outline-none',
+                'placeholder': 'Leave blank to keep current password',
+            }
+        ),
+        help_text='Leave empty if you do not wish to change the user password.'
+    )
+    confirm_new_password = forms.CharField(
+        label='Confirm New Password',
+        required=False,
+        widget=forms.PasswordInput(
+            attrs={
+                'class': 'w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 shadow-sm focus:border-[#bfa12c] focus:ring-4 focus:ring-[#bfa12c]/15 outline-none',
+                'placeholder': 'Confirm new password',
+            }
+        ),
+    )
+
+    def clean_confirm_new_password(self):
+        new_password = self.cleaned_data.get('new_password')
+        confirm = self.cleaned_data.get('confirm_new_password')
+        if new_password and not confirm:
+            raise forms.ValidationError('Please confirm the new password.')
+        if new_password and confirm and new_password != confirm:
+            raise forms.ValidationError('Passwords do not match.')
+        return confirm
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        new_password = self.cleaned_data.get('new_password')
+        if new_password:
+            user.set_password(new_password)
+        if commit:
+            user.save()
+        return user
