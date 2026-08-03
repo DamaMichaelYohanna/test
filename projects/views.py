@@ -610,3 +610,148 @@ def export_project_expense_breakdown(request, pk):
     return response
 
 
+def export_projects_excel(request):
+    """
+    Generates an Excel spreadsheet (.xlsx) of projects matching the active filters
+    (search query 'q', year, mda/agency, category, project_type).
+    """
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from django.http import HttpResponse
+
+    qs = Project.objects.select_related('category').prefetch_related('fees', 'lifecycle_stages', 'unplanned_expenses', 'projectallocation_set').all()
+
+    # Apply same filtering logic as ProjectListView
+    q = request.GET.get('q', '').strip()
+    year = request.GET.get('year', '').strip()
+    mda = request.GET.get('mda', '').strip()
+    category = request.GET.get('category', '').strip()
+    project_type = request.GET.get('project_type', '').strip()
+
+    if q:
+        qs = qs.filter(Q(project_code__icontains=q) | Q(project_name__icontains=q))
+    if year:
+        qs = qs.filter(created_at__year=year)
+    if mda:
+        qs = qs.filter(mda__icontains=mda)
+    if category:
+        qs = qs.filter(category_id=category)
+    if project_type:
+        qs = qs.filter(project_type=project_type)
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Projects Directory"
+    ws.views.sheetView[0].showGridLines = True
+
+    # Styling definitions
+    title_font = Font(name="Arial", size=14, bold=True, color="1F2937")
+    sub_font = Font(name="Arial", size=10, italic=True, color="4B5563")
+    header_font = Font(name="Arial", size=10, bold=True, color="FFFFFF")
+    regular_font = Font(name="Arial", size=10, color="1F2937")
+    bold_font = Font(name="Arial", size=10, bold=True, color="1F2937")
+
+    header_fill = PatternFill(start_color="BFA12C", end_color="BFA12C", fill_type="solid")
+    summary_fill = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")
+
+    # Title Block
+    ws.append(["PROJECTS DIRECTORY FINANCIAL & OPERATIONAL EXPORT"])
+    ws.cell(row=1, column=1).font = title_font
+    
+    filter_info = []
+    if year: filter_info.append(f"Year: {year}")
+    if mda: filter_info.append(f"Agency/MDA: {mda}")
+    if category: filter_info.append(f"Category ID: {category}")
+    if project_type: filter_info.append(f"Type: {project_type}")
+    if q: filter_info.append(f"Search: '{q}'")
+    
+    filter_str = " | ".join(filter_info) if filter_info else "All Projects (Unfiltered)"
+    ws.append([f"Filters Applied: {filter_str} | Generated: {now().strftime('%Y-%m-%d %H:%M')}"])
+    ws.cell(row=2, column=1).font = sub_font
+    ws.append([])
+
+    # Table Headers
+    headers = [
+        "SN", "Project Code", "Project Name", "MDA / Agency", "Lot", "Location", 
+        "Category", "Project Type", "Execution Mode", "Completion %",
+        "Budget Amount (NGN)", "Contract Amount (NGN)", "Total Fees (NGN)", 
+        "Total Stage Costs (NGN)", "Unplanned Costs (NGN)", "Subcontractor Agreed (NGN)",
+        "Consolidated Expenses (NGN)", "Net Projected Margin (NGN)", "Technical Status", "Payment Status"
+    ]
+    ws.append(headers)
+    hdr_row = ws.max_row
+    for c_idx in range(1, len(headers) + 1):
+        cell = ws.cell(row=hdr_row, column=c_idx)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center" if c_idx in [1, 9, 10, 19, 20] else "left", vertical="center")
+
+    total_budget_sum = 0.0
+    total_contract_sum = 0.0
+    total_fees_sum = 0.0
+    total_expenses_sum = 0.0
+    total_margin_sum = 0.0
+
+    for idx, p in enumerate(qs, start=1):
+        cat_name = p.category.name if p.category else "-"
+        p_type = p.get_project_type_display() if hasattr(p, 'get_project_type_display') else str(p.project_type or "-")
+        e_mode = p.get_execution_mode_display() if hasattr(p, 'get_execution_mode_display') else str(p.execution_mode or "-")
+        
+        b_amt = float(p.budget_amount or 0.0)
+        c_amt = float(p.actual_contract_amount or 0.0)
+        f_amt = float(p.total_fees_amount or 0.0)
+        s_amt = float(p.total_lifecycle_expenses or 0.0)
+        u_amt = float(p.total_unplanned_expenses or 0.0)
+        sub_amt = float(p.total_subcontractor_commitments or 0.0)
+        tot_exp = float(p.total_project_expenses or 0.0)
+        net_marg = float(p.net_project_margin or 0.0)
+
+        total_budget_sum += b_amt
+        total_contract_sum += c_amt
+        total_fees_sum += f_amt
+        total_expenses_sum += tot_exp
+        total_margin_sum += net_marg
+
+        row_data = [
+            idx, p.project_code, p.project_name, p.mda, p.lot or "-", p.location or "-",
+            cat_name, p_type, e_mode, f"{p.execution_level_percentage}%",
+            b_amt, c_amt, f_amt, s_amt, u_amt, sub_amt, tot_exp, net_marg,
+            p.technical_status or "-", p.payment_status or "-"
+        ]
+        ws.append(row_data)
+        curr_row = ws.max_row
+        
+        # Formatting numbers
+        for num_col in range(11, 19):
+            ws.cell(row=curr_row, column=num_col).number_format = '₦#,##0.00'
+
+    # Summary Row at Bottom
+    ws.append([])
+    summary_row = [
+        "TOTALS", "", "", f"Total Records: {qs.count()}", "", "", "", "", "", "",
+        total_budget_sum, total_contract_sum, total_fees_sum, "", "", "", total_expenses_sum, total_margin_sum, "", ""
+    ]
+    ws.append(summary_row)
+    sum_r = ws.max_row
+    for c_idx in range(1, len(summary_row) + 1):
+        cell = ws.cell(row=sum_r, column=c_idx)
+        cell.font = bold_font
+        cell.fill = summary_fill
+        if c_idx in [11, 12, 13, 17, 18]:
+            cell.number_format = '₦#,##0.00'
+
+    # Auto-fit column widths
+    for col in ws.columns:
+        max_len = max(len(str(cell.value or '')) for cell in col)
+        col_letter = openpyxl.utils.get_column_letter(col[0].column)
+        ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    filename = f"Projects_Export_{year if year else 'All'}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
+
+

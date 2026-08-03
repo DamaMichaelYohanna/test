@@ -26,14 +26,18 @@
       <p class="text-sm text-gray-500 mt-1">Track bidding status, execution metrics, and subcontractor allocations
         across active contracts.</p>
     </div>
-    {% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}
-    <div class="self-start md:self-auto">
-      <a href="{% url 'projects:project_create' %}"
-        class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-4 sm:px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition inline-flex items-center">
-        <span class="material-symbols-outlined text-sm mr-2">add</span> Add New Project
+    <div class="flex items-center space-x-2 self-start md:self-auto flex-wrap gap-2">
+      <a href="{% url 'projects:export_projects_excel' %}{% if querystring %}?{{ querystring }}{% endif %}"
+        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition inline-flex items-center">
+        <span class="material-symbols-outlined text-sm mr-1.5">download</span> Export Projects (Excel)
       </a>
+      {% if request.user.is_superuser or request.user|has_group:'Level 3' or request.user|has_group:'Level 4' %}
+      <a href="{% url 'projects:project_create' %}"
+        class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition inline-flex items-center">
+        <span class="material-symbols-outlined text-sm mr-1.5">add</span> Add New Project
+      </a>
+      {% endif %}
     </div>
-    {% endif %}
   </div>
 
   <!-- Search & Filter bar -->

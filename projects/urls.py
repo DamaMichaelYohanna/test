@@ -5,6 +5,7 @@ app_name = 'projects'
 
 urlpatterns = [
     path('', views.ProjectListView.as_view(), name='project_list'),
+    path('export/excel/', views.export_projects_excel, name='export_projects_excel'),
     path('create/', views.ProjectCreateView.as_view(), name='project_create'),
     path('settings/', views.ProjectSettingsView.as_view(), name='settings'),
     path('monitoring/', views.ProjectMonitoringDashboardView.as_view(), name='monitoring_dashboard'),
