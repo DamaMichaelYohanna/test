@@ -444,3 +444,169 @@ class SubcontractorPaymentTrancheCreateView(Level3RequiredMixin, View):
         return redirect('projects:project_detail', pk=allocation.project.pk)
 
 
+class ProjectExpenseBreakdownView(LoginRequiredMixin, DetailView):
+    model = Project
+    template_name = 'projects/project_expense_breakdown.html'
+    context_object_name = 'project'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.object
+        
+        fees = project.fees.select_related('fee_type').all()
+        lifecycle_stages = project.lifecycle_stages.all()
+        unplanned_expenses = project.unplanned_expenses.select_related('reported_by').all()
+        allocations = project.projectallocation_set.select_related('subcontractor').prefetch_related('payment_tranches').all()
+        
+        context.update({
+            'fees': fees,
+            'lifecycle_stages': lifecycle_stages,
+            'unplanned_expenses': unplanned_expenses,
+            'allocations': allocations,
+            'page_title': f"Expense Breakdown - {project.project_code}",
+        })
+        return context
+
+
+def export_project_expense_breakdown(request, pk):
+    """Generates an itemized Excel workbook of all incurred expenses for the project."""
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from django.http import HttpResponse
+
+    project = get_object_or_404(Project, pk=pk)
+    
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Expense Breakdown"
+    ws.views.sheetView[0].showGridLines = True
+
+    # Styles
+    title_font = Font(name="Arial", size=14, bold=True, color="1F2937")
+    section_font = Font(name="Arial", size=11, bold=True, color="FFFFFF")
+    header_font = Font(name="Arial", size=10, bold=True, color="374151")
+    regular_font = Font(name="Arial", size=10, color="1F2937")
+    bold_font = Font(name="Arial", size=10, bold=True, color="1F2937")
+
+    gold_fill = PatternFill(start_color="BFA12C", end_color="BFA12C", fill_type="solid")
+    header_fill = PatternFill(start_color="F3F4F6", end_color="F3F4F6", fill_type="solid")
+
+    # Title Block
+    ws.append([f"PROJECT FINANCIAL EXPENSE BREAKDOWN: {project.project_code}"])
+    ws.cell(row=1, column=1).font = title_font
+    ws.append([f"Project Name: {project.project_name} | MDA: {project.mda}"])
+    ws.append([])
+
+    # KPI Summary Section
+    ws.append(["EXECUTIVE FINANCIAL FOOTPRINT SUMMARY"])
+    ws.cell(row=4, column=1).font = section_font
+    ws.cell(row=4, column=1).fill = gold_fill
+
+    ws.append(["Metric", "Amount (NGN)"])
+    ws.cell(row=5, column=1).font = header_font
+    ws.cell(row=5, column=2).font = header_font
+    
+    summary_data = [
+        ("Total Contract Amount", float(project.total_actual_contract_amount)),
+        ("Total Project Fees (Deductions)", float(project.total_fees_amount)),
+        ("Total Fees Paid to Date", float(project.total_fees_paid)),
+        ("Total Lifecycle Stage Costs", float(project.total_lifecycle_expenses)),
+        ("Total Unplanned / Ad-Hoc Costs", float(project.total_unplanned_expenses)),
+        ("Total Subcontractor Agreed Commitments", float(project.total_subcontractor_commitments)),
+        ("Total Subcontractor Disbursed Payouts", float(project.total_subcontractor_paid)),
+        ("Consolidated Total Project Expenses", float(project.total_project_expenses)),
+        ("Net Projected Margin (Profit/Deficit)", float(project.net_project_margin)),
+    ]
+
+    for item, val in summary_data:
+        ws.append([item, val])
+        r = ws.max_row
+        ws.cell(row=r, column=2).number_format = '₦#,##0.00'
+        ws.cell(row=r, column=1).font = bold_font if "Total" in item or "Consolidated" in item or "Net" in item else regular_font
+
+    ws.append([])
+
+    # Section 1: Project Fees
+    ws.append(["1. PROJECT FEES & DEDUCTIONS"])
+    ws.cell(row=ws.max_row, column=1).font = section_font
+    ws.cell(row=ws.max_row, column=1).fill = gold_fill
+
+    ws.append(["Fee Type", "Status", "Date Paid", "Payment Reference", "Amount (NGN)"])
+    r_hdr = ws.max_row
+    for c in range(1, 6):
+        ws.cell(row=r_hdr, column=c).font = header_font
+        ws.cell(row=r_hdr, column=c).fill = header_fill
+
+    for fee in project.fees.select_related('fee_type').all():
+        d_paid = fee.date_paid.strftime('%Y-%m-%d') if fee.date_paid else "-"
+        ws.append([fee.fee_type.name, fee.get_status_display(), d_paid, fee.payment_reference or "-", float(fee.amount)])
+        ws.cell(row=ws.max_row, column=5).number_format = '₦#,##0.00'
+
+    ws.append([])
+
+    # Section 2: Lifecycle Expenses
+    ws.append(["2. WORKFLOW LIFECYCLE STAGE EXPENSES"])
+    ws.cell(row=ws.max_row, column=1).font = section_font
+    ws.cell(row=ws.max_row, column=1).fill = gold_fill
+
+    ws.append(["Sequence", "Stage Name", "Completion Status", "Completed Date", "Notes/Updates", "Incurred Cost (NGN)"])
+    r_hdr = ws.max_row
+    for c in range(1, 7):
+        ws.cell(row=r_hdr, column=c).font = header_font
+        ws.cell(row=r_hdr, column=c).fill = header_fill
+
+    for st in project.lifecycle_stages.all():
+        c_date = st.completed_date.strftime('%Y-%m-%d') if st.completed_date else "-"
+        ws.append([st.sequence_order, st.stage_name, "Completed" if st.is_completed else "Pending", c_date, st.notes_or_updates or "-", float(st.incurred_cost)])
+        ws.cell(row=ws.max_row, column=6).number_format = '₦#,##0.00'
+
+    ws.append([])
+
+    # Section 3: Unplanned Expenses
+    ws.append(["3. UNPLANNED & AD-HOC EXPENSES"])
+    ws.cell(row=ws.max_row, column=1).font = section_font
+    ws.cell(row=ws.max_row, column=1).fill = gold_fill
+
+    ws.append(["Date Incurred", "Description", "Reported By", "Amount (NGN)"])
+    r_hdr = ws.max_row
+    for c in range(1, 5):
+        ws.cell(row=r_hdr, column=c).font = header_font
+        ws.cell(row=r_hdr, column=c).fill = header_fill
+
+    for exp in project.unplanned_expenses.select_related('reported_by').all():
+        r_by = exp.reported_by.get_full_name() if exp.reported_by else "Staff"
+        ws.append([exp.date_incurred.strftime('%Y-%m-%d'), exp.description, r_by, float(exp.amount)])
+        ws.cell(row=ws.max_row, column=4).number_format = '₦#,##0.00'
+
+    ws.append([])
+
+    # Section 4: Subcontractor Allocations & Payouts
+    ws.append(["4. SUBCONTRACTOR ALLOCATIONS & PAYMENT TRANCHES"])
+    ws.cell(row=ws.max_row, column=1).font = section_font
+    ws.cell(row=ws.max_row, column=1).fill = gold_fill
+
+    ws.append(["Subcontractor", "Company", "Agreed Cost (NGN)", "Advance Paid (NGN)", "Tranches Total (NGN)", "Total Paid (NGN)"])
+    r_hdr = ws.max_row
+    for c in range(1, 7):
+        ws.cell(row=r_hdr, column=c).font = header_font
+        ws.cell(row=r_hdr, column=c).fill = header_fill
+
+    for alloc in project.projectallocation_set.select_related('subcontractor').all():
+        ws.append([alloc.subcontractor.name, "-", float(alloc.amount_agreed_with_supplier_contractor), float(alloc.advance_received_by_supplier_contractor), float(sum(t.amount for t in alloc.payment_tranches.all())), float(alloc.total_paid)])
+        for col_idx in range(3, 7):
+            ws.cell(row=ws.max_row, column=col_idx).number_format = '₦#,##0.00'
+
+    # Auto-fit column widths
+    for col in ws.columns:
+        max_len = max(len(str(cell.value or '')) for cell in col)
+        col_letter = openpyxl.utils.get_column_letter(col[0].column)
+        ws.column_dimensions[col_letter].width = max(max_len + 3, 14)
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response['Content-Disposition'] = f'attachment; filename="Expense_Breakdown_{project.project_code}.xlsx"'
+    wb.save(response)
+    return response
+
+

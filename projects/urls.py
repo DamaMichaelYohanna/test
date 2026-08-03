@@ -11,6 +11,8 @@ urlpatterns = [
     path('<int:pk>/', views.ProjectDetailView.as_view(), name='project_detail'),
     path('<int:pk>/update/', views.ProjectUpdateView.as_view(), name='project_update'),
     path('<int:pk>/delete/', views.ProjectDeleteView.as_view(), name='project_delete'),
+    path('<int:pk>/expenses/', views.ProjectExpenseBreakdownView.as_view(), name='project_expense_breakdown'),
+    path('<int:pk>/expenses/export/', views.export_project_expense_breakdown, name='export_project_expense_breakdown'),
     
     # Subcontractor Allocation routes
     path('<int:project_pk>/allocate/', views.ProjectAllocationCreateView.as_view(), name='allocation_create'),

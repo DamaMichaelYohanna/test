@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Expense Breakdown - {{ project.project_code }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6" x-data="{ activeTab: 'all' }">
+  
+  <!-- Header Banner & Action Bar -->
+  <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center space-x-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+        <a href="{% url 'projects:project_detail' project.pk %}" class="hover:text-[#bfa12c] transition flex items-center">
+          <span class="material-symbols-outlined text-sm mr-1">arrow_back</span> {{ project.project_code }}
+        </a>
+        <span>/</span>
+        <span class="text-gray-900">Financial Expense Ledger</span>
+      </div>
+      <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 flex items-center">
+        <span class="material-symbols-outlined text-3xl text-[#bfa12c] mr-2.5">receipt_long</span>
+        Itemized Project Expense Breakdown
+      </h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Project: <span class="font-bold text-gray-800">{{ project.project_name }}</span> | MDA: <span class="font-medium text-gray-700">{{ project.mda }}</span>
+      </p>
+    </div>
+
+    <div class="flex items-center space-x-3">
+      <a href="{% url 'projects:project_detail' project.pk %}"
+         class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition flex items-center">
+        <span class="material-symbols-outlined text-sm mr-1.5">visibility</span> View Project Detail
+      </a>
+
+      <a href="{% url 'projects:export_project_expense_breakdown' project.pk %}"
+         class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition flex items-center">
+        <span class="material-symbols-outlined text-sm mr-1.5">download</span> Export Excel Statement
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Summary Financial Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+      <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Contract Revenue</div>
+      <div class="text-xl md:text-2xl font-black text-gray-900 mt-1">₦{{ project.total_actual_contract_amount|default:0|intcomma }}</div>
+      <div class="text-[11px] text-gray-500 mt-1">Awarded Contract Value</div>
+    </div>
+
+    <div class="bg-amber-50/70 p-5 rounded-2xl border border-amber-200 shadow-sm">
+      <div class="text-xs font-bold text-amber-800 uppercase tracking-wider">Total Fees Deducted</div>
+      <div class="text-xl md:text-2xl font-black text-amber-950 mt-1">₦{{ project.total_fees_amount|default:0|intcomma }}</div>
+      <div class="text-[11px] text-amber-800 font-medium mt-1">₦{{ project.total_fees_paid|default:0|intcomma }} Disbursed</div>
+    </div>
+
+    <div class="bg-rose-50/70 p-5 rounded-2xl border border-rose-200 shadow-sm">
+      <div class="text-xs font-bold text-rose-800 uppercase tracking-wider">Consolidated Expenses</div>
+      <div class="text-xl md:text-2xl font-black text-rose-950 mt-1">₦{{ project.total_project_expenses|default:0|intcomma }}</div>
+      <div class="text-[11px] text-rose-800 font-medium mt-1">Fees + Stage + Subcontractor</div>
+    </div>
+
+    <div class="{% if project.net_project_margin >= 0 %}bg-emerald-50/70 border-emerald-200 text-emerald-950{% else %}bg-red-50/70 border-red-200 text-red-950{% endif %} p-5 rounded-2xl border shadow-sm">
+      <div class="text-xs font-bold uppercase tracking-wider opacity-75">Net Projected Margin</div>
+      <div class="text-xl md:text-2xl font-black mt-1">₦{{ project.net_project_margin|default:0|intcomma }}</div>
+      <div class="text-[11px] opacity-80 font-medium mt-1">Revenue - Total Expenses</div>
+    </div>
+  </div>
+
+  <!-- Navigation Filter Tabs -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="border-b border-gray-200 bg-gray-50/60 px-6 py-3 flex items-center space-x-2 overflow-x-auto">
+      <button @click="activeTab = 'all'"
+              :class="activeTab === 'all' ? 'bg-[#bfa12c] text-white shadow-sm font-bold' : 'text-gray-600 hover:bg-gray-100 font-medium'"
+              class="px-4 py-2 rounded-xl text-xs transition flex items-center shrink-0">
+        <span class="material-symbols-outlined text-sm mr-1.5">readiness_score</span> All Expenses
+      </button>
+
+      <button @click="activeTab = 'fees'"
+              :class="activeTab === 'fees' ? 'bg-[#bfa12c] text-white shadow-sm font-bold' : 'text-gray-600 hover:bg-gray-100 font-medium'"
+              class="px-4 py-2 rounded-xl text-xs transition flex items-center shrink-0">
+        <span class="material-symbols-outlined text-sm mr-1.5">payments</span> Fees & Statutory ({{ fees|length }})
+      </button>
+
+      <button @click="activeTab = 'lifecycle'"
+              :class="activeTab === 'lifecycle' ? 'bg-[#bfa12c] text-white shadow-sm font-bold' : 'text-gray-600 hover:bg-gray-100 font-medium'"
+              class="px-4 py-2 rounded-xl text-xs transition flex items-center shrink-0">
+        <span class="material-symbols-outlined text-sm mr-1.5">account_tree</span> Stage Costs ({{ lifecycle_stages|length }})
+      </button>
+
+      <button @click="activeTab = 'unplanned'"
+              :class="activeTab === 'unplanned' ? 'bg-[#bfa12c] text-[#bfa12c] text-white shadow-sm font-bold' : 'text-gray-600 hover:bg-gray-100 font-medium'"
+              class="px-4 py-2 rounded-xl text-xs transition flex items-center shrink-0">
+        <span class="material-symbols-outlined text-sm mr-1.5">add_shopping_cart</span> Unplanned ({{ unplanned_expenses|length }})
+      </button>
+
+      <button @click="activeTab = 'subcontractors'"
+              :class="activeTab === 'subcontractors' ? 'bg-[#bfa12c] text-white shadow-sm font-bold' : 'text-gray-600 hover:bg-gray-100 font-medium'"
+              class="px-4 py-2 rounded-xl text-xs transition flex items-center shrink-0">
+        <span class="material-symbols-outlined text-sm mr-1.5">engineering</span> Subcontractors ({{ allocations|length }})
+      </button>
+    </div>
+
+    <div class="p-6 space-y-8">
+
+      <!-- SECTION 1: Fees & Statutory Charges -->
+      <div x-show="activeTab === 'all' || activeTab === 'fees'" class="space-y-3">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+          <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center">
+            <span class="material-symbols-outlined text-base mr-1.5 text-[#bfa12c]">payments</span> 
+            1. Project Fees & Statutory Deductions
+          </h2>
+          <span class="text-xs font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+            Total Fees: ₦{{ project.total_fees_amount|default:0|intcomma }}
+          </span>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+          <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50 text-gray-700 text-xs font-semibold uppercase">
+              <tr>
+                <th class="px-4 py-3 text-left">Fee Type</th>
+                <th class="px-4 py-3 text-left">Status</th>
+                <th class="px-4 py-3 text-left">Date Paid</th>
+                <th class="px-4 py-3 text-left">Ref / Receipt #</th>
+                <th class="px-4 py-3 text-right">Amount (NGN)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              {% for fee in fees %}
+              <tr class="hover:bg-gray-50 transition">
+                <td class="px-4 py-3 text-gray-900 font-semibold">{{ fee.fee_type.name }}</td>
+                <td class="px-4 py-3">
+                  {% if fee.status == 'PAID' %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                      <span class="material-symbols-outlined text-[12px] mr-1">check_circle</span> Paid
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                      <span class="material-symbols-outlined text-[12px] mr-1">schedule</span> Pending
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3 text-gray-600 text-xs">{{ fee.date_paid|date:"M d, Y"|default:"-" }}</td>
+                <td class="px-4 py-3 text-gray-600 text-xs font-mono">{{ fee.payment_reference|default:"-" }}</td>
+                <td class="px-4 py-3 text-right font-bold text-gray-900">₦{{ fee.amount|default:0|intcomma }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="px-4 py-4 text-center text-gray-400">No project fees recorded.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECTION 2: Lifecycle Stage Expenses -->
+      <div x-show="activeTab === 'all' || activeTab === 'lifecycle'" class="space-y-3">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+          <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center">
+            <span class="material-symbols-outlined text-base mr-1.5 text-[#bfa12c]">account_tree</span> 
+            2. Workflow Lifecycle Stage Incurred Costs
+          </h2>
+          <span class="text-xs font-bold text-blue-800 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+            Stage Costs: ₦{{ project.total_lifecycle_expenses|default:0|intcomma }}
+          </span>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+          <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50 text-gray-700 text-xs font-semibold uppercase">
+              <tr>
+                <th class="px-4 py-3 text-left">Step</th>
+                <th class="px-4 py-3 text-left">Pipeline Stage</th>
+                <th class="px-4 py-3 text-left">Status</th>
+                <th class="px-4 py-3 text-left">Completed Date</th>
+                <th class="px-4 py-3 text-left">Notes / Details</th>
+                <th class="px-4 py-3 text-right">Incurred Cost (NGN)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              {% for stage in lifecycle_stages %}
+              <tr class="hover:bg-gray-50 transition">
+                <td class="px-4 py-3 text-gray-500 font-mono text-xs">{{ stage.sequence_order }}</td>
+                <td class="px-4 py-3 text-gray-900 font-semibold">{{ stage.stage_name }}</td>
+                <td class="px-4 py-3">
+                  {% if stage.is_completed %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                      Completed
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                      Pending
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3 text-gray-600 text-xs">{{ stage.completed_date|date:"M d, Y"|default:"-" }}</td>
+                <td class="px-4 py-3 text-gray-600 text-xs max-w-xs truncate">{{ stage.notes_or_updates|default:"-" }}</td>
+                <td class="px-4 py-3 text-right font-bold text-gray-900">₦{{ stage.incurred_cost|default:0|intcomma }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="px-4 py-4 text-center text-gray-400">No stage costs recorded.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECTION 3: Unplanned Expenses -->
+      <div x-show="activeTab === 'all' || activeTab === 'unplanned'" class="space-y-3">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+          <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center">
+            <span class="material-symbols-outlined text-base mr-1.5 text-[#bfa12c]">add_shopping_cart</span> 
+            3. Unplanned & Ad-Hoc Operational Outlays
+          </h2>
+          <span class="text-xs font-bold text-purple-800 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
+            Unplanned Total: ₦{{ project.total_unplanned_expenses|default:0|intcomma }}
+          </span>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+          <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50 text-gray-700 text-xs font-semibold uppercase">
+              <tr>
+                <th class="px-4 py-3 text-left">Date Incurred</th>
+                <th class="px-4 py-3 text-left">Description</th>
+                <th class="px-4 py-3 text-left">Logged By</th>
+                <th class="px-4 py-3 text-right">Amount (NGN)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              {% for exp in unplanned_expenses %}
+              <tr class="hover:bg-gray-50 transition">
+                <td class="px-4 py-3 text-gray-900 font-medium text-xs">{{ exp.date_incurred|date:"M d, Y" }}</td>
+                <td class="px-4 py-3 text-gray-800 font-semibold">{{ exp.description }}</td>
+                <td class="px-4 py-3 text-gray-600 text-xs">{{ exp.reported_by.get_full_name|default:exp.reported_by.username }}</td>
+                <td class="px-4 py-3 text-right font-bold text-gray-900">₦{{ exp.amount|default:0|intcomma }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="px-4 py-4 text-center text-gray-400">No unplanned expenses logged.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECTION 4: Subcontractors -->
+      <div x-show="activeTab === 'all' || activeTab === 'subcontractors'" class="space-y-3">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+          <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center">
+            <span class="material-symbols-outlined text-base mr-1.5 text-[#bfa12c]">engineering</span> 
+            4. Subcontractor Commitments & Disbursed Payouts
+          </h2>
+          <span class="text-xs font-bold text-indigo-800 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200">
+            Subcontractor Commitments: ₦{{ project.total_subcontractor_commitments|default:0|intcomma }}
+          </span>
+        </div>
+
+        <div class="space-y-4">
+          {% for alloc in allocations %}
+          <div class="border border-gray-200 rounded-xl bg-white p-4 shadow-sm space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+              <div>
+                <h3 class="font-bold text-gray-900 text-base">{{ alloc.subcontractor.name }}</h3>
+                <p class="text-xs text-gray-500">Type: <span class="font-semibold text-gray-700">{{ alloc.subcontractor.get_company_type_display|default:"Direct" }}</span></p>
+              </div>
+              <div class="flex items-center space-x-4 text-xs">
+                <div>
+                  <span class="text-gray-400 uppercase font-semibold">Agreed:</span>
+                  <span class="font-bold text-gray-900">₦{{ alloc.amount_agreed_with_supplier_contractor|default:0|intcomma }}</span>
+                </div>
+                <div>
+                  <span class="text-gray-400 uppercase font-semibold">Paid:</span>
+                  <span class="font-bold text-emerald-700">₦{{ alloc.total_paid|default:0|intcomma }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Itemized Payment Tranches -->
+            <div class="text-xs">
+              <span class="font-bold text-gray-700 uppercase tracking-wider block mb-2">Disbursed Payment Tranches:</span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                <div class="bg-gray-50 p-2.5 rounded-lg border border-gray-200">
+                  <span class="text-gray-500 font-medium">Initial Advance:</span>
+                  <span class="font-bold text-gray-900 block mt-0.5">₦{{ alloc.advance_received_by_supplier_contractor|default:0|intcomma }}</span>
+                </div>
+                {% for tr in alloc.payment_tranches.all %}
+                <div class="bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-200">
+                  <div class="flex justify-between items-center text-gray-500 font-medium">
+                    <span>Tranche #{{ forloop.counter }}</span>
+                    <span>{{ tr.payment_date|date:"M d, Y" }}</span>
+                  </div>
+                  <span class="font-bold text-emerald-900 block mt-0.5">₦{{ tr.amount|default:0|intcomma }}</span>
+                  {% if tr.reference_number %}
+                  <span class="text-[10px] text-gray-500 font-mono block">Ref: {{ tr.reference_number }}</span>
+                  {% endif %}
+                </div>
+                {% empty %}
+                <div class="text-gray-400 italic py-1">No additional tranches recorded.</div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="p-6 text-center text-gray-400 bg-gray-50 rounded-xl border border-gray-200">No subcontractor allocations found for this project.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
