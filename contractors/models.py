@@ -3,7 +3,7 @@ from django.db import models
 
 class Company(models.Model):
     name = models.CharField(max_length=255, unique=True, help_text='Company name')
-    director_name = models.CharField(max_length=255, help_text='Director name')
+    director_name = models.CharField(max_length=255, blank=True, default='', help_text='Director name')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
