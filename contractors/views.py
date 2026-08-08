@@ -9,6 +9,9 @@ from .forms import CompanyForm, ComplianceRequirementForm, ComplianceUpdateForm,
 from .models import Company, CompanyCompliance, ComplianceRequirement, Subcontractor
 
 
+from django.core.paginator import EmptyPage, InvalidPage
+from django.http import Http404
+
 class CompanyListView(ListView):
     model = Company
     template_name = 'contractors/list_company.html'
@@ -19,8 +22,19 @@ class CompanyListView(ListView):
         queryset = super().get_queryset()
         search_query = self.request.GET.get('q', '').strip()
         if search_query:
-            queryset = queryset.filter(Q(name__icontains=search_query) | Q(contact__icontains=search_query))
+            queryset = queryset.filter(Q(name__icontains=search_query) | Q(director_name__icontains=search_query))
         return queryset
+
+    def paginate_queryset(self, queryset, page_size):
+        try:
+            return super().paginate_queryset(queryset, page_size)
+        except (EmptyPage, InvalidPage, Http404):
+            paginator = self.get_paginator(
+                queryset, page_size, orphans=self.get_paginate_orphans(),
+                allow_empty_first_page=self.get_allow_empty()
+            )
+            page_obj = paginator.page(paginator.num_pages if paginator.num_pages > 0 else 1)
+            return (paginator, page_obj, page_obj.object_list, page_obj.has_other_pages())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -33,6 +47,7 @@ class SubcontractorListView(ListView):
     template_name = 'contractors/list_contractor.html'
     context_object_name = 'subcontractors'
     paginate_by = 10
+
     def get_queryset(self):
         queryset = super().get_queryset()
         search_query = self.request.GET.get('q', '').strip()
@@ -42,6 +57,18 @@ class SubcontractorListView(ListView):
         if search_query:
             queryset = queryset.filter(name__icontains=search_query)
         return queryset
+
+    def paginate_queryset(self, queryset, page_size):
+        try:
+            return super().paginate_queryset(queryset, page_size)
+        except (EmptyPage, InvalidPage, Http404):
+            paginator = self.get_paginator(
+                queryset, page_size, orphans=self.get_paginate_orphans(),
+                allow_empty=self.get_allow_empty()
+            )
+            page_obj = paginator.page(paginator.num_pages if paginator.num_pages > 0 else 1)
+            return (paginator, page_obj, page_obj.object_list, page_obj.has_other_pages())
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Subcontractors'
@@ -73,6 +100,9 @@ def edit_subcontractor(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, f"Subcontractor '{sub.name}' updated successfully.")
+            next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+            if next_url:
+                return redirect(next_url)
             return redirect('contractors:contractor_list')
     else:
         form = SubcontractorForm(instance=sub)
@@ -104,6 +134,9 @@ def edit_company(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, f"Company '{company.name}' updated successfully.")
+            next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+            if next_url:
+                return redirect(next_url)
             return redirect('contractors:company_list')
     else:
         form = CompanyForm(instance=company)
@@ -114,12 +147,18 @@ def delete_company(request, pk):
     company = get_object_or_404(Company, pk=pk)
     company.delete()
     messages.success(request, f"Company '{company.name}' deleted successfully.")
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
     return redirect('contractors:company_list')
 
 def delete_subcontractor(request, pk):
     sub = get_object_or_404(Subcontractor, pk=pk)
     sub.delete()  
     messages.success(request, f"Subcontractor '{sub.name}' deleted successfully.")  
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
     return redirect('contractors:contractor_list')  
 
 
