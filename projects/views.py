@@ -24,6 +24,7 @@ class ProjectListView(LoginRequiredMixin, ListView):
     model = Project
     template_name = 'projects/project_list.html'
     context_object_name = 'projects'
+    paginate_by = 30
 
     def get_queryset(self):
         qs = super().get_queryset().select_related('category')
@@ -56,6 +57,19 @@ class ProjectListView(LoginRequiredMixin, ListView):
         context['selected_mda'] = self.request.GET.get('mda', '')
         context['selected_category'] = self.request.GET.get('category', '')
         context['selected_type'] = self.request.GET.get('project_type', '')
+
+        # Preserve filter parameters for pagination links
+        get_copy = self.request.GET.copy()
+        if 'page' in get_copy:
+            del get_copy['page']
+        context['querystring'] = get_copy.urlencode()
+
+        if context.get('is_paginated'):
+            page_obj = context['page_obj']
+            context['page_range'] = page_obj.paginator.get_elided_page_range(
+                number=page_obj.number, on_each_side=1, on_ends=1
+            )
+
         # Build distinct filter option lists from the full table
         context['year_choices'] = (
             Project.objects.dates('created_at', 'year', order='DESC')

@@ -98,20 +98,27 @@
   </form>
 
   <!-- Results count / active filter chips -->
-  <div class="px-6 py-2 bg-white border-b border-gray-100 flex items-center gap-3 text-xs text-gray-500 flex-wrap">
-    <span class="font-semibold text-gray-700">{{ projects|length }} result{{ projects|length|pluralize }}</span>
-    {% if q %}
-    <span class="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full font-medium">Search: "{{ q }}"</span>
-    {% endif %}
-    {% if selected_year %}
-    <span class="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full font-medium">Year: {{ selected_year }}</span>
-    {% endif %}
-    {% if selected_mda %}
-    <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-full font-medium">MDA: {{ selected_mda }}</span>
-    {% endif %}
-    {% if selected_category %}
-    <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full font-medium">Category Filter</span>
-    {% endif %}
+  <div class="px-6 py-3 bg-white border-b border-gray-100 flex items-center justify-between gap-3 text-xs text-gray-500 flex-wrap">
+    <div class="flex items-center gap-2 flex-wrap">
+      {% if is_paginated %}
+      <span class="font-semibold text-gray-700">Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }} project{{ paginator.count|pluralize }}</span>
+      {% else %}
+      <span class="font-semibold text-gray-700">{{ paginator.count|default:projects|length }} project{{ paginator.count|default:projects|length|pluralize }}</span>
+      {% endif %}
+
+      {% if q %}
+      <span class="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full font-medium">Search: "{{ q }}"</span>
+      {% endif %}
+      {% if selected_year %}
+      <span class="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full font-medium">Year: {{ selected_year }}</span>
+      {% endif %}
+      {% if selected_mda %}
+      <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-0.5 rounded-full font-medium">MDA: {{ selected_mda }}</span>
+      {% endif %}
+      {% if selected_category %}
+      <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-medium">Category Filter</span>
+      {% endif %}
+    </div>
   </div>
 
   <!-- Table list -->
@@ -181,5 +188,56 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Pagination Bar -->
+  {% if is_paginated %}
+  <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="text-xs text-gray-600">
+      Showing <span class="font-bold text-gray-900">{{ page_obj.start_index }}</span> to <span class="font-bold text-gray-900">{{ page_obj.end_index }}</span> of <span class="font-bold text-gray-900">{{ paginator.count }}</span> projects
+    </div>
+
+    <div class="flex items-center space-x-1">
+      <!-- Previous Page -->
+      {% if page_obj.has_previous %}
+      <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}"
+        class="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition flex items-center">
+        <span class="material-symbols-outlined text-sm mr-1">chevron_left</span> Previous
+      </a>
+      {% else %}
+      <span class="px-3 py-1.5 text-xs font-semibold text-gray-400 bg-gray-100 border border-gray-200 rounded-md cursor-not-allowed flex items-center">
+        <span class="material-symbols-outlined text-sm mr-1">chevron_left</span> Previous
+      </span>
+      {% endif %}
+
+      <!-- Page Numbers -->
+      {% for page_num in page_range %}
+        {% if page_num == paginator.ELLIPSIS %}
+        <span class="px-3 py-1.5 text-xs font-semibold text-gray-400">…</span>
+        {% elif page_num == page_obj.number %}
+        <span class="px-3 py-1.5 text-xs font-bold text-white bg-[#bfa12c] border border-[#bfa12c] rounded-md shadow-sm">
+          {{ page_num }}
+        </span>
+        {% else %}
+        <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_num }}"
+          class="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition">
+          {{ page_num }}
+        </a>
+        {% endif %}
+      {% endfor %}
+
+      <!-- Next Page -->
+      {% if page_obj.has_next %}
+      <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}"
+        class="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition flex items-center">
+        Next <span class="material-symbols-outlined text-sm ml-1">chevron_right</span>
+      </a>
+      {% else %}
+      <span class="px-3 py-1.5 text-xs font-semibold text-gray-400 bg-gray-100 border border-gray-200 rounded-md cursor-not-allowed flex items-center">
+        Next <span class="material-symbols-outlined text-sm ml-1">chevron_right</span>
+      </span>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
