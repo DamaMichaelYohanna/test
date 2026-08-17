@@ -190,18 +190,18 @@
     </table>
   </div>
 
-  <!-- Pagination Bar -->
-  {% if is_paginated %}
+  <!-- Pagination Bar (Always visible when items exist) -->
+  {% if paginator and paginator.count > 0 %}
   <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
     <div class="text-xs text-gray-600">
-      Showing <span class="font-bold text-gray-900">{{ page_obj.start_index }}</span> to <span class="font-bold text-gray-900">{{ page_obj.end_index }}</span> of <span class="font-bold text-gray-900">{{ paginator.count }}</span> projects
+      Showing <span class="font-bold text-gray-900">{{ page_obj.start_index }}</span> to <span class="font-bold text-gray-900">{{ page_obj.end_index }}</span> of <span class="font-bold text-gray-900">{{ paginator.count }}</span> projects (30 per page)
     </div>
 
     <div class="flex items-center space-x-1">
       <!-- Previous Page -->
       {% if page_obj.has_previous %}
       <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}"
-        class="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition flex items-center">
+        class="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition flex items-center shadow-xs">
         <span class="material-symbols-outlined text-sm mr-1">chevron_left</span> Previous
       </a>
       {% else %}
@@ -229,7 +229,7 @@
       <!-- Next Page -->
       {% if page_obj.has_next %}
       <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}"
-        class="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition flex items-center">
+        class="px-3 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition flex items-center shadow-xs">
         Next <span class="material-symbols-outlined text-sm ml-1">chevron_right</span>
       </a>
       {% else %}

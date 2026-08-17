@@ -66,9 +66,11 @@ class ProjectListView(LoginRequiredMixin, ListView):
 
         if context.get('is_paginated'):
             page_obj = context['page_obj']
-            context['page_range'] = page_obj.paginator.get_elided_page_range(
+            context['page_range'] = list(page_obj.paginator.get_elided_page_range(
                 number=page_obj.number, on_each_side=1, on_ends=1
-            )
+            ))
+        else:
+            context['page_range'] = [1]
 
         # Build distinct filter option lists from the full table
         context['year_choices'] = (
