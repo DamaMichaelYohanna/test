@@ -1,24 +1,28 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}Corporate Executive Dashboard - Azanigroup{% endblock %}
+{% block title %}Executive Summary Dashboard - Azanigroup Logistics{% endblock %}
 
 {% block content %}
-<div class="space-y-8" x-data="{ activeTab: 'finance' }">
+<div class="space-y-8" x-data="{ activeTab: 'summary' }">
   <!-- Top Welcome & State Header -->
-  <div
-    class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 pb-6 border-b border-slate-200">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 pb-6 border-b border-slate-200">
     <div>
-      <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Corporate Portfolio View</h1>
-      <p class="mt-2 text-sm text-slate-500">
-        Real-time financial status, operational timelines, and vendor audit tracking.
+      <div class="flex items-center space-x-3">
+        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Corporate Executive Summary</h1>
+        <span class="px-3 py-1 bg-amber-100 text-[#bfa12c] font-black text-xs rounded-full uppercase tracking-wider">Portfolio View</span>
+      </div>
+      <p class="mt-1.5 text-sm text-slate-500">
+        Aggregated project portfolio metrics, category monitoring parameters, and financial status.
       </p>
     </div>
-    <div class="flex items-center space-x-3">
-      <form method="GET" action="" class="flex items-center shadow-sm">
+    
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+      <!-- Portfolio Selector Dropdown -->
+      <form method="GET" action="" class="flex items-center shadow-xs">
         <select name="project" onchange="this.form.submit()"
-          class="bg-white border border-slate-300 text-slate-800 text-sm rounded-md focus:ring-[#bfa12c] focus:border-[#bfa12c] block w-full px-3 py-2 cursor-pointer transition hover:border-slate-400 font-medium">
-          <option value="0">ALL PORTFOLIO CONTRACTS</option>
+          class="bg-white border border-slate-300 text-slate-800 text-sm rounded-lg focus:ring-[#bfa12c] focus:border-[#bfa12c] block w-full px-3.5 py-2 cursor-pointer transition hover:border-slate-400 font-semibold shadow-xs">
+          <option value="0">ALL PORTFOLIO CONTRACTS ({{ all_projects|length }})</option>
           {% for p in all_projects %}
           <option value="{{ p.pk }}" {% if project and project.pk == p.pk %}selected{% endif %}>{{ p.project_code }} - {{ p.project_name|truncatechars:45 }}</option>
           {% endfor %}
@@ -27,546 +31,227 @@
     </div>
   </div>
 
-  <!-- Layer A: Executive Financial KPI Cards (Top Row Grid) -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    <!-- Card 1: Total Contract Value Portfolio -->
-    <div
-      class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 flex flex-col justify-between">
-      <div class="flex items-center justify-between">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Contract Portfolio</h3>
-        <span
-          class="material-symbols-outlined text-emerald-500 bg-emerald-50 p-2 rounded-lg">account_balance_wallet</span>
+  <!-- Hero KPI Banner (Matches Image 1 Header) -->
+  <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-6 border border-slate-700">
+    <div class="flex items-center space-x-5">
+      <div class="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 font-black text-2xl shadow-inner">
+        {{ total_projects_count }}
       </div>
-      <div class="mt-4">
-        <p class="text-2xl font-black text-slate-950">₦{{ total_contract_value|floatformat:2|intcomma }}</p>
-        <div class="mt-2 flex items-center text-xs text-emerald-600">
-          <span class="material-symbols-outlined text-xs mr-1">trending_up</span>
-          <span>Aggregated actual contract amount</span>
-        </div>
+      <div>
+        <h2 class="text-xl font-bold tracking-tight text-white uppercase">Total Number of Projects</h2>
+        <p class="text-xs text-amber-300/80 font-medium mt-0.5">Appropriation & Supplementary Contracts Portfolio as of August 2026</p>
       </div>
     </div>
 
-    <!-- Card 2: Expected Gross Profit Margin Panel (Role Protected) -->
-    {% if is_executive_or_management %}
-    <div
-      class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 flex flex-col justify-between">
-      <div class="flex items-center justify-between">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Expected Gross Profit Margin</h3>
-        <span class="material-symbols-outlined text-amber-500 bg-amber-50 p-2 rounded-lg">analytics</span>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-6 text-right border-t md:border-t-0 md:border-l border-slate-700/60 pt-4 md:pt-0 md:pl-8">
+      <div>
+        <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Portfolio Budget</span>
+        <span class="text-lg font-black text-emerald-400">₦{{ total_budget_amount|floatformat:0|intcomma }}</span>
       </div>
-      <div class="mt-4">
-        <div class="flex items-baseline space-x-2">
-          <p class="text-2xl font-black text-slate-950">{{ gross_profit_margin }}%</p>
-          <span class="text-xs text-slate-400">(Cost: {{ cost_percentage }}%)</span>
-        </div>
-        <!-- Progress bar -->
-        <div class="w-full bg-slate-100 rounded-full h-2.5 mt-3 overflow-hidden">
-          <div class="bg-[#d97706] h-2.5 rounded-full transition-all duration-500"
-            style="width: {{ gross_profit_margin }}%"></div>
-        </div>
-        <div class="mt-2 flex items-center justify-between text-[10px] text-slate-400">
-          <span>In-House Benchmark: ₦{{ total_in_house_benchmark|floatformat:2|intcomma }}</span>
-        </div>
+      <div>
+        <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Awarded Amount</span>
+        <span class="text-lg font-black text-amber-400">₦{{ total_awarded_amount|floatformat:0|intcomma }}</span>
       </div>
-    </div>
-    {% else %}
-    <!-- Lock screen card for Technical/Field Users -->
-    <div
-      class="bg-slate-50 rounded-xl shadow-sm border border-slate-200 border-dashed p-6 flex flex-col justify-center items-center text-center">
-      <span class="material-symbols-outlined text-slate-300 text-3xl mb-2">lock</span>
-      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Expected Profit Margin</h3>
-      <p class="text-xs text-slate-400 mt-1">Restricted to Executive/Management Groups</p>
-    </div>
-    {% endif %}
-
-    <!-- Card 3: Total Disbursed Capital -->
-    <div
-      class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 flex flex-col justify-between">
-      <div class="flex items-center justify-between">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Disbursed Capital</h3>
-        <span class="material-symbols-outlined text-blue-500 bg-blue-50 p-2 rounded-lg">payments</span>
-      </div>
-      <div class="mt-4">
-        <p class="text-2xl font-black text-slate-950">₦{{ total_disbursed_capital|floatformat:2|intcomma }}</p>
-        <div class="mt-2 flex items-center text-xs text-slate-400">
-          <span>Mobilization & final payments received</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Card 4: Subcontractor Exposure Liability -->
-    <div
-      class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 flex flex-col justify-between">
-      <div class="flex items-center justify-between">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Subcontractor Liability</h3>
-        <span class="material-symbols-outlined text-purple-500 bg-purple-50 p-2 rounded-lg">assignment_ind</span>
-      </div>
-      <div class="mt-4">
-        <p class="text-2xl font-black text-slate-950">₦{{ subcontractor_exposure|floatformat:2|intcomma }}</p>
-        <div class="mt-2 flex items-center text-xs text-slate-400">
-          <span>Allocated subcontractor commitment balance</span>
-        </div>
+      <div class="col-span-2 sm:col-span-1">
+        <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Agencies / MDAs</span>
+        <span class="text-lg font-black text-slate-200">{{ agency_count }} Agencies</span>
       </div>
     </div>
   </div>
 
-  <!-- Middle Row Section: Left Column (Bidding & Steppers), Right Column (Variance & Allocation Chart) -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- Middle Row Left Column: Takes 2 cols in lg layout -->
-    <div class="lg:col-span-2 space-y-8">
-
-      <!-- Table: Active Bidding Pipeline Matrix -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="bg-slate-800 px-6 py-4 flex justify-between items-center text-white">
-          <div class="flex items-center space-x-2">
-            <span class="material-symbols-outlined text-amber-500">assignment</span>
-            <h2 class="text-base font-bold uppercase tracking-wide">Active Bidding Pipeline Matrix</h2>
+  <!-- Main Split Layout: Image 1 Summary Sheet (Left 3/5), Image 2 Category Grid & Quick Cards (Right 2/5) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- LEFT PANEL: PROJECT DETAILS Summary Sheet (Matching Image 1) -->
+    <div class="lg:col-span-7 space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-900 to-slate-900 px-6 py-4 flex items-center justify-between text-white border-b border-blue-800">
+          <div class="flex items-center space-x-3">
+            <span class="material-symbols-outlined text-amber-400">assessment</span>
+            <h2 class="text-base font-extrabold uppercase tracking-wider">PROJECT DETAILS</h2>
           </div>
-          <span class="text-xs px-2.5 py-0.5 bg-slate-700 text-slate-300 rounded font-semibold">PRE-AWARD FILES</span>
+          <span class="text-xs bg-blue-800/80 text-blue-100 font-bold px-3 py-1 rounded-full uppercase border border-blue-700">Executive Summary</span>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase text-slate-500">
-                <th class="px-6 py-3">Lot</th>
-                <th class="px-6 py-3">Code / Name</th>
-                <th class="px-6 py-3">Final Companies</th>
-                <th class="px-6 py-3">Backup Companies</th>
-                <th class="px-6 py-3 text-center">Technical Status</th>
-                <th class="px-6 py-3 text-center">Financial Status</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 text-sm">
-              {% for p in active_bidding_pipeline %}
-              <tr class="hover:bg-slate-50/80 transition duration-150">
-                <td class="px-6 py-4 font-bold text-slate-900">{{ p.lot|default:"-" }}</td>
-                <td class="px-6 py-4">
-                  <div class="font-semibold text-slate-800">{{ p.project_code }}</div>
-                  <div class="text-xs text-slate-500 max-w-[200px] truncate">{{ p.project_name }}</div>
-                </td>
-                <td class="px-6 py-4 text-xs text-slate-600 max-w-[150px] truncate" title="{{ p.final_companies }}">
-                  {{ p.final_companies|default:"-" }}
-                </td>
-                <td class="px-6 py-4 text-xs text-slate-600 max-w-[150px] truncate" title="{{ p.back_up_companies }}">
-                  {{ p.back_up_companies|default:"-" }}
-                </td>
-                <td class="px-6 py-4 text-center">
-                  {% if p.technical_status %}
-                  <span
-                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    {{ p.technical_status }}
-                  </span>
-                  {% else %}
-                  <span class="text-slate-400 text-xs">-</span>
-                  {% endif %}
-                </td>
-                <td class="px-6 py-4 text-center">
-                  {% if p.financial_status %}
-                  <span
-                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                    {{ p.financial_status }}
-                  </span>
-                  {% else %}
-                  <span class="text-slate-400 text-xs">-</span>
-                  {% endif %}
-                </td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="6" class="px-6 py-8 text-center text-slate-400 text-xs">
-                  No active pre-award contracts found in current scope.
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
-      <!-- Roadmap: Federal File Movement Roadmaps -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="bg-slate-800 px-6 py-4 flex justify-between items-center text-white">
-          <div class="flex items-center space-x-2">
-            <span class="material-symbols-outlined text-amber-500">route</span>
-            <h2 class="text-base font-bold uppercase tracking-wide">Federal File Movement Roadmap</h2>
-          </div>
-          <span class="text-xs px-2.5 py-0.5 bg-slate-700 text-slate-300 rounded font-semibold">AGENCY INVOICE
-            PIPELINE</span>
-        </div>
-        <div class="p-6 space-y-8">
-          {% for rm in project_roadmaps %}
-          <div class="p-4 rounded-lg border border-slate-100 bg-slate-50/50 space-y-4">
-            <!-- Project code & Alerts header -->
-            <div
-              class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-3">
-              <div>
-                <span
-                  class="font-extrabold text-sm text-slate-900 tracking-wider uppercase bg-white border border-slate-200 px-2 py-1 rounded shadow-xs">{{ rm.project_code }}</span>
-                <span class="ml-2 text-xs text-slate-500">{{ rm.project_name|truncatechars:45 }}</span>
-              </div>
-              <div class="flex items-center space-x-2">
-                {% if rm.is_alert %}
-                <span
-                  class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200 animate-pulse">
-                  <span class="material-symbols-outlined text-xs mr-0.5">warning</span>
-                  UPLOADED BUT NO BATCH NO.
-                </span>
-                {% endif %}
-                <span class="text-xs font-semibold text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded">
-                  Status: {{ rm.payment_status|default:"Pending" }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Steps (Stepper) -->
-            <div
-              class="relative flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4 md:gap-2">
-              {% for stg in rm.stages %}
-              <div class="flex md:flex-col items-center flex-1 w-full text-left md:text-center relative">
-                <!-- Node Icon/Indicator -->
-                <div class="flex items-center justify-center">
-                  {% if stg.is_completed %}
-                  <div
-                    class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs ring-4 ring-emerald-100 transition-all duration-300">
-                    <span class="material-symbols-outlined text-sm">done</span>
-                  </div>
-                  {% else %}
-                  <div
-                    class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-xs border border-slate-300">
-                    {{ forloop.counter }}
-                  </div>
-                  {% endif %}
-                </div>
-
-                <!-- Label -->
-                <div class="ml-3 md:ml-0 md:mt-2">
-                  <p class="text-xs font-bold text-slate-900 uppercase tracking-wide">{{ stg.name }}</p>
-                  <p class="text-[10px] text-slate-400 max-w-[120px] truncate" title="{{ stg.notes }}">{{ stg.notes|default:"Pending verification" }}</p>
-                </div>
-
-                <!-- Horizontal Connector Line (Only for non-last nodes and in md+ screen size) -->
-                {% if not forloop.last %}
-                <div
-                  class="hidden md:block absolute top-4 left-[calc(50%+1rem)] right-[-1rem] h-0.5 bg-slate-200 -z-10">
-                  <div class="h-full bg-emerald-600 transition-all duration-500"
-                    style="width: {% if stg.is_completed %}100%{% else %}0%{% endif %}"></div>
-                </div>
-                {% endif %}
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-          {% empty %}
-          <p class="text-center text-slate-400 text-xs py-4">No active file tracking pipelines available.</p>
-          {% endfor %}
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Middle Row Right Column: Burn Rate Variance & Allocation spread (1 col width in lg) -->
-    <div class="space-y-8">
-
-      <!-- Table: Progress vs Budget Burn-Rate Variance -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="bg-slate-800 px-6 py-4 flex items-center justify-between text-white">
-          <div class="flex items-center space-x-2">
-            <span class="material-symbols-outlined text-amber-500">query_stats</span>
-            <h2 class="text-base font-bold uppercase tracking-wide">Progress vs Burn-Rate Variance</h2>
-          </div>
-        </div>
-        <div class="p-4 space-y-4">
-          {% for var in project_variances %}
-          <div
-            class="p-3.5 rounded-lg border transition-all duration-200 {% if var.exceeds %}bg-red-50/50 border-red-200{% else %}bg-slate-55/30 border-slate-100{% endif %}">
-            <div class="flex justify-between items-center mb-2">
-              <span
-                class="font-bold text-xs uppercase tracking-wide text-slate-900 bg-white px-2 py-0.5 border border-slate-200 rounded">{{ var.project_code }}</span>
-              {% if var.exceeds %}
-              <span
-                class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-800 animate-pulse border border-rose-200">OVERDRAWN
-                BY {{ var.variance|stringformat:"f"|cut:"-" }}%</span>
-              {% else %}
-              <span
-                class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">SAVINGS:
-                +{{ var.variance }}%</span>
-              {% endif %}
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 text-xs py-1 text-slate-600 border-b border-slate-100">
-              <div>Budget: <span class="font-semibold text-slate-900">₦{{ var.budget_amount|floatformat:0|intcomma }}</span></div>
-              <div>Drawn: <span class="font-semibold text-slate-900">₦{{ var.drawn_down|floatformat:0|intcomma }}</span>
-              </div>
-            </div>
-
-            <!-- Double Progress Bar (Drawdown vs Completion) -->
-            <div class="mt-3 space-y-1.5">
-              <!-- Completion Rate -->
-              <div>
-                <div class="flex justify-between text-[9px] text-slate-400">
-                  <span>Level of Completion</span>
-                  <span>{{ var.completion_rate }}%</span>
-                </div>
-                <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                  <div class="bg-emerald-500 h-1.5 rounded-full" style="width: {{ var.completion_rate }}%"></div>
-                </div>
-              </div>
-
-              <!-- Drawdown Rate -->
-              <div>
-                <div class="flex justify-between text-[9px] text-slate-400">
-                  <span>Milestone Fund Drawdown</span>
-                  <span>{{ var.drawdown_rate }}%</span>
-                </div>
-                <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                  <div class="{% if var.exceeds %}bg-rose-500{% else %}bg-amber-500{% endif %} h-1.5 rounded-full"
-                    style="width: {{ var.drawdown_rate }}%"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          {% empty %}
-          <p class="text-slate-400 text-xs text-center py-4">No budget burn data available.</p>
-          {% endfor %}
-        </div>
-      </div>
-
-      <!-- Spread: Allocation Spread Chart -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="bg-slate-800 px-6 py-4 flex items-center justify-between text-white">
-          <div class="flex items-center space-x-2">
-            <span class="material-symbols-outlined text-amber-500">donut_large</span>
-            <h2 class="text-base font-bold uppercase tracking-wide">Allocation Spread Chart</h2>
-          </div>
-        </div>
-        <div class="p-6 flex flex-col justify-center items-center">
-          <!-- Canvas for Chart.js -->
-          <div class="relative w-48 h-48 mb-6">
-            <canvas id="allocationSpreadChart"></canvas>
-          </div>
-          <!-- Legend list -->
-          <div class="w-full space-y-3">
-            <div class="flex justify-between items-center text-xs border-b border-slate-100 pb-2">
-              <span class="flex items-center font-medium text-slate-700">
-                <span class="inline-block w-3 h-3 bg-amber-500 rounded-sm mr-2.5"></span>
-                In-House Direct Labor
-              </span>
-              <span class="font-extrabold text-slate-900">{{ in_house_pct|floatformat:1 }}%</span>
-            </div>
-            <div class="flex justify-between items-center text-xs">
-              <span class="flex items-center font-medium text-slate-700">
-                <span class="inline-block w-3 h-3 bg-indigo-600 rounded-sm mr-2.5"></span>
-                External Subcontractors
-              </span>
-              <span class="font-extrabold text-slate-900">{{ external_pct|floatformat:1 }}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Bottom Row Grid: Actions & Safeguards (Grid of 3 items on large, 1 on small) -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-    <!-- Item 1: Pending Milestone Cash Requests -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden lg:col-span-1">
-      <div class="bg-slate-800 px-6 py-4 flex items-center justify-between text-white">
-        <div class="flex items-center space-x-2">
-          <span class="material-symbols-outlined text-amber-500">rule</span>
-          <h2 class="text-base font-bold uppercase tracking-wide">Pending Cash Requests</h2>
-        </div>
-        <span class="text-xs px-2 py-0.5 bg-amber-600 text-white rounded font-bold">{{ pending_cash_requests|length }}
-          URGENT</span>
-      </div>
-      <div class="p-4 space-y-4 max-h-[380px] overflow-y-auto">
-        {% for req in pending_cash_requests %}
-        <div
-          class="p-4 rounded-lg bg-slate-50 border border-slate-150 space-y-3 relative hover:border-slate-350 transition duration-150">
-          <div class="flex justify-between items-start">
+        <div class="divide-y divide-slate-100">
+          <!-- Row 1: Total Budget Amount -->
+          <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-amber-50/30 hover:bg-amber-50/60 transition">
             <div>
-              <p class="text-xs font-bold text-slate-400 uppercase">PROJECT code: {{ req.project.project_code }}</p>
-              <h4 class="text-sm font-extrabold text-slate-900 mt-0.5">{{ req.milestone_title }}</h4>
+              <span class="font-extrabold text-xs uppercase tracking-wide text-slate-900">Total Budget Amount</span>
+              <span class="block text-[11px] text-slate-500 font-medium">(Appropriation & Supplementary Combined)</span>
             </div>
-            <span class="text-sm font-black text-amber-700 bg-amber-50 px-2 py-1 rounded">₦{{ req.amount_requested|floatformat:2|intcomma }}</span>
-          </div>
-          <p class="text-xs text-slate-500 italic">"{{ req.justification_notes|truncatechars:90 }}"</p>
-          <div class="flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-200/60 pt-2.5">
-            <span>By: <span class="font-semibold text-slate-600">{{ req.requested_by.username }}</span></span>
-            <span>Date: {{ req.date_requested|date:"Y-m-d H:i" }}</span>
+            <span class="text-xl font-black text-slate-950">₦{{ total_budget_amount|floatformat:2|intcomma }}</span>
           </div>
 
-          <!-- Actions Block (Role Protected approval buttons) -->
-          {% if is_executive_or_management %}
-          <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-250/50">
-            <!-- Reject button form -->
-            <form action="{% url 'logistic:process_cash_request' req.id %}" method="POST" class="inline">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="REJECT">
-              <input type="hidden" name="next" value="{% url 'core:dashboard' %}">
-              <button type="submit"
-                class="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-250 hover:bg-rose-100 transition">
-                <span class="material-symbols-outlined text-xs mr-0.5">close</span>
-                Reject
-              </button>
-            </form>
-            <!-- Approve button form -->
-            <form action="{% url 'logistic:process_cash_request' req.id %}" method="POST" class="inline">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="APPROVE">
-              <input type="hidden" name="next" value="{% url 'core:dashboard' %}">
-              <button type="submit"
-                class="inline-flex items-center px-3 py-1 rounded text-xs font-bold bg-emerald-600 text-white border border-emerald-600 hover:bg-emerald-700 transition shadow-sm">
-                <span class="material-symbols-outlined text-xs mr-0.5">done</span>
-                Approve
-              </button>
-            </form>
+          <!-- Row 2: Total Amount of Awarded Projects -->
+          <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50 transition">
+            <div>
+              <span class="font-extrabold text-xs uppercase tracking-wide text-slate-900">Total Amount of Awarded Projects</span>
+              <span class="block text-[11px] text-slate-500 font-medium">(Actual Awarded Contracts Portfolio)</span>
+            </div>
+            <span class="text-xl font-black text-emerald-700">₦{{ total_awarded_amount|floatformat:2|intcomma }}</span>
           </div>
-          {% endif %}
+
+          <!-- Row 3: Amount of Awarded Projects In-House -->
+          <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50 transition">
+            <div>
+              <span class="font-extrabold text-xs uppercase tracking-wide text-slate-900">Amount of Awarded Projects In-House</span>
+              <span class="block text-[11px] text-slate-500 font-medium">(Award Letters in Custody)</span>
+            </div>
+            <span class="text-lg font-bold text-slate-900">₦{{ total_in_house_awarded|floatformat:2|intcomma }}</span>
+          </div>
+
+          <!-- Row 4: Amount of Awarded Projects Given Out -->
+          <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50 transition">
+            <div>
+              <span class="font-extrabold text-xs uppercase tracking-wide text-slate-900">Amount of Awarded Projects Given Out</span>
+              <span class="block text-[11px] text-slate-500 font-medium">(Award Letters Issued by Agency)</span>
+            </div>
+            <span class="text-lg font-bold text-slate-800">₦{{ total_given_out_awarded|floatformat:2|intcomma }}</span>
+          </div>
+
+          <!-- Row 5: Mobilization Received -->
+          <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50 transition">
+            <div>
+              <span class="font-extrabold text-xs uppercase tracking-wide text-slate-900">Mobilization Received</span>
+              <span class="block text-[11px] text-slate-500 font-medium">(Disbursed Initial Capital)</span>
+            </div>
+            <span class="text-lg font-bold text-blue-700">₦{{ total_mobilization_rec|floatformat:2|intcomma }}</span>
+          </div>
+
+          <!-- Row 6: Local Government Areas -->
+          <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-start justify-between gap-3 hover:bg-slate-50 transition">
+            <div class="sm:w-1/3">
+              <span class="font-extrabold text-xs uppercase tracking-wide text-slate-900">No. of Local Government Areas</span>
+              <span class="block text-2xl font-black text-amber-600 mt-1">9 LGAs</span>
+            </div>
+            <div class="sm:w-2/3 bg-slate-50 p-3 rounded-lg border border-slate-200/80 text-xs text-slate-700 font-medium leading-relaxed">
+              BOSSO, CHANCHAGA, GURARA, MUNYA, PAIKORO, RAFI, SHIRORO, SULEJA, AND TAFA
+            </div>
+          </div>
+
+          <!-- Row 7: Agencies / MDAs Summary -->
+          <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-start justify-between gap-3 hover:bg-slate-50 transition">
+            <div class="sm:w-1/3">
+              <span class="font-extrabold text-xs uppercase tracking-wide text-slate-900">No. of Agencies / MDAs</span>
+              <span class="block text-2xl font-black text-blue-600 mt-1">{{ agency_count }} Agencies</span>
+            </div>
+            <div class="sm:w-2/3 bg-slate-50 p-3 rounded-lg border border-slate-200/80 text-xs text-slate-700 font-medium leading-relaxed uppercase">
+              {{ agency_short_list|default:"NIHORT, FCHTDK, NCWD, FCC OJI RIVER, BCDA, NSPRI, NDE, NPC, FERMA, FMHUD, NALDA, NASRDA, REA, UBEC, ASCL, FMW, HYPPADEC" }}
+            </div>
+          </div>
         </div>
-        {% empty %}
-        <p class="text-center text-slate-400 text-xs py-8">No pending cash approval items.</p>
-        {% endfor %}
+      </div>
+
+      <!-- Financial Liability & Gross Margin Summary Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Expected Profit Margin Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Gross Profit Margin</span>
+            <span class="material-symbols-outlined text-amber-500 bg-amber-50 p-1.5 rounded-lg">trending_up</span>
+          </div>
+          <div class="mt-3">
+            <p class="text-2xl font-black text-slate-900">{{ gross_profit_margin }}%</p>
+            <p class="text-xs text-slate-500 mt-1">In-House Cost Benchmark: ₦{{ total_in_house_benchmark|floatformat:0|intcomma }}</p>
+          </div>
+        </div>
+
+        <!-- Subcontractor Exposure Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Subcontractor Liability</span>
+            <span class="material-symbols-outlined text-purple-500 bg-purple-50 p-1.5 rounded-lg">assignment_ind</span>
+          </div>
+          <div class="mt-3">
+            <p class="text-2xl font-black text-slate-900">₦{{ subcontractor_exposure|floatformat:0|intcomma }}</p>
+            <p class="text-xs text-slate-500 mt-1">Agreed contractor commitments balance</p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Item 2: Material Deficiency Alerts -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden lg:col-span-1">
-      <div class="bg-slate-800 px-6 py-4 flex items-center justify-between text-white">
-        <div class="flex items-center space-x-2">
-          <span class="material-symbols-outlined text-amber-500">warning</span>
-          <h2 class="text-base font-bold uppercase tracking-wide">Material Deficiency Alerts</h2>
-        </div>
-        <span class="text-xs px-2 py-0.5 bg-rose-600 text-white rounded font-bold">{{ material_alerts|length }}
-          DRY</span>
-      </div>
-      <div class="p-4 space-y-3 max-h-[380px] overflow-y-auto">
-        {% for alert in material_alerts %}
-        <div
-          class="p-3.5 rounded-lg border border-red-200 bg-red-50/40 hover:bg-red-50 flex items-start space-x-3 transition duration-150">
-          <span class="material-symbols-outlined text-red-500 bg-red-100 p-1.5 rounded-md mt-0.5">inventory_2</span>
-          <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-center">
-              <span class="font-bold text-[10px] uppercase text-red-800 tracking-wider bg-red-100 px-1.5 rounded">{{ alert.project.project_code }}</span>
-              <span class="text-[9px] text-slate-400 font-medium">Qty: {{ alert.quantity_on_site }} {{ alert.unit_of_measurement }}</span>
-            </div>
-            <h4 class="text-sm font-extrabold text-slate-900 mt-1.5 truncate">{{ alert.material_name }}</h4>
-            <p class="text-xs text-red-700/80 font-medium mt-1 leading-relaxed">
-              Stock completely exhausted on site. Restocking required immediately to prevent site idle time.
-            </p>
+    <!-- RIGHT PANEL: PROJECT MONITORING PARAMETERS Matrix (Matching Image 2) -->
+    <div class="lg:col-span-5 space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-900 px-6 py-4 flex items-center justify-between text-white border-b border-slate-800">
+          <div class="flex items-center space-x-2">
+            <span class="material-symbols-outlined text-amber-400">grid_view</span>
+            <h2 class="text-base font-extrabold uppercase tracking-wider">PROJECT MONITORING PARAMETERS</h2>
           </div>
+          <span class="text-xs bg-slate-800 text-amber-400 font-extrabold px-2.5 py-0.5 rounded border border-amber-400/30 uppercase">Combined Matrix</span>
         </div>
-        {% empty %}
-        <div class="flex flex-col items-center justify-center py-8 text-center text-slate-400">
-          <span class="material-symbols-outlined text-emerald-500 text-3xl mb-1.5">check_circle</span>
-          <p class="text-xs font-semibold text-slate-600">All Project Site Stores Healthy</p>
-          <p class="text-[10px] mt-0.5">No items with 0 stock levels detected.</p>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
 
-    <!-- Item 3: Vendor Compliance Safeguards -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden lg:col-span-1">
-      <div class="bg-slate-800 px-6 py-4 flex items-center justify-between text-white">
-        <div class="flex items-center space-x-2">
-          <span class="material-symbols-outlined text-amber-500">gavel</span>
-          <h2 class="text-base font-bold uppercase tracking-wide">Vendor Compliance Alerts</h2>
+        <div class="p-4 space-y-4">
+          <!-- Category Parameter Cards (Construction, Supply, Empowerment, Power, Training) -->
+          {% for item in monitoring_matrix %}
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-sm transition duration-150 space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+              <span class="font-black text-sm text-slate-900 uppercase tracking-wider flex items-center">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-2"></span>
+                {{ item.category_name }}
+              </span>
+              <span class="text-xs font-extrabold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md shadow-2xs">
+                Total: {{ item.total_count }} Projects
+              </span>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="bg-white p-2.5 rounded-lg border border-slate-150">
+                <span class="text-[10px] text-slate-400 uppercase font-bold block">Awarded Projects</span>
+                <span class="font-extrabold text-emerald-700 text-sm">{{ item.awarded_count }}</span>
+              </div>
+
+              <div class="bg-white p-2.5 rounded-lg border border-slate-150">
+                <span class="text-[10px] text-slate-400 uppercase font-bold block">Awaiting Award</span>
+                <span class="font-extrabold text-amber-700 text-sm">{{ item.awaiting_count }}</span>
+              </div>
+            </div>
+
+            <!-- Financial Totals -->
+            <div class="bg-slate-900 text-white p-3 rounded-lg grid grid-cols-2 gap-2 text-[11px]">
+              <div>
+                <span class="text-[9px] text-slate-400 uppercase font-bold block">Budget Amount</span>
+                <span class="font-bold text-amber-300">₦{{ item.budget_amount|floatformat:0|intcomma }}</span>
+              </div>
+              <div>
+                <span class="text-[9px] text-slate-400 uppercase font-bold block">Amount Awarded</span>
+                <span class="font-bold text-emerald-400">₦{{ item.amount_awarded|floatformat:0|intcomma }}</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
         </div>
-        <span class="text-xs px-2 py-0.5 bg-amber-600 text-white rounded font-bold">{{ compliance_alerts|length }}
-          TASKS</span>
       </div>
-      <div class="p-4 space-y-3 max-h-[380px] overflow-y-auto">
-        {% for alert in compliance_alerts %}
-        <div
-          class="p-3.5 rounded-lg border border-slate-100 bg-slate-50 hover:bg-slate-100/80 transition duration-150 space-y-2">
-          <div class="flex justify-between items-start">
-            <h4 class="text-sm font-extrabold text-slate-950 truncate max-w-[200px]" title="{{ alert.company.name }}">
-              {{ alert.company.name }}
-            </h4>
-            {% if alert.status == 'EXPIRED' %}
-            <span
-              class="text-[9px] font-black uppercase text-red-700 bg-red-50 border border-red-200 px-1.5 rounded">EXPIRED</span>
-            {% elif alert.status == 'PENDING' %}
-            <span
-              class="text-[9px] font-black uppercase text-slate-600 bg-slate-100 border border-slate-250 px-1.5 rounded">MISSING</span>
-            {% else %}
-            <span
-              class="text-[9px] font-black uppercase text-amber-800 bg-amber-50 border border-amber-200 px-1.5 rounded">EXPIRING
-              SOON</span>
-            {% endif %}
+
+      <!-- Quick Operations Alerts Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-3">
+        <h3 class="text-xs font-extrabold uppercase text-slate-900 tracking-wider flex items-center justify-between">
+          <span>Action Items & Alerts</span>
+          <span class="text-[10px] text-slate-400 font-semibold">Live Operational Status</span>
+        </h3>
+        
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-center space-x-2.5">
+            <span class="material-symbols-outlined text-amber-600">rate_review</span>
+            <div>
+              <span class="font-bold text-amber-900 block">{{ pending_cash_requests|length }} Pending</span>
+              <span class="text-[10px] text-amber-700 font-medium">Cash Requests</span>
+            </div>
           </div>
-          <div class="text-xs font-semibold text-slate-700">
-            Requirement: <span class="text-slate-900 font-bold">{{ alert.requirement.name }}</span>
+
+          <div class="p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-center space-x-2.5">
+            <span class="material-symbols-outlined text-rose-600">inventory_2</span>
+            <div>
+              <span class="font-bold text-rose-900 block">{{ material_alerts|length }} Material</span>
+              <span class="text-[10px] text-rose-700 font-medium">Deficiency Alerts</span>
+            </div>
           </div>
-          {% if alert.expiry_date %}
-          <div class="text-[10px] text-slate-400 flex items-center">
-            <span class="material-symbols-outlined text-xs mr-1 text-red-400">calendar_month</span>
-            Expires on: <span class="font-bold ml-1 text-slate-600">{{ alert.expiry_date|date:"Y-m-d" }}</span>
-          </div>
-          {% endif %}
         </div>
-        {% empty %}
-        <div class="flex flex-col items-center justify-center py-8 text-center text-slate-400">
-          <span class="material-symbols-outlined text-emerald-500 text-3xl mb-1.5">verified_user</span>
-          <p class="text-xs font-semibold text-slate-600">Subcontractor Compliance Secure</p>
-          <p class="text-[10px] mt-0.5">All vendor audit files are up-to-date.</p>
-        </div>
-        {% endfor %}
       </div>
     </div>
 
   </div>
 </div>
-
-<!-- Chart.js configuration for Allocation Spread -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const canvas = document.getElementById('allocationSpreadChart');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      const ext = parseFloat("{{ external_pct|default:0.0 }}");
-      const inh = parseFloat("{{ in_house_pct|default:100.0 }}");
-
-      new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: ['In-House Direct Labor', 'External Subcontractors'],
-          datasets: [{
-            data: [inh, ext],
-            backgroundColor: [
-              '#d97706', // Warm Amber
-              '#4f46e5'  // Indigo 600
-            ],
-            borderColor: [
-              '#ffffff',
-              '#ffffff'
-            ],
-            borderWidth: 2,
-            hoverOffset: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            },
-            tooltip: {
-              callbacks: {
-                label: function (context) {
-                  return ` ${context.label}: ${context.raw.toFixed(1)}%`;
-                }
-              }
-            }
-          },
-          cutout: '70%'
-        }
-      });
-    }
-  });
-</script>
 {% endblock %}

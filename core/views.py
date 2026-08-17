@@ -318,8 +318,57 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
             Q(status='APPROVED', expiry_date__lte=thirty_days_later)
         ).select_related('company', 'requirement').order_by('company__name', 'requirement__name')
         
+        # Executive Summary Metrics (Matching User Reference Sheets)
+        total_projects_count = projects_qs.count()
+        total_budget_amount = projects_qs.aggregate(val=Sum('budget_amount'))['val'] or Decimal('0.00')
+        total_awarded_amount = projects_qs.aggregate(val=Sum('actual_contract_amount'))['val'] or Decimal('0.00')
+        total_in_house_awarded = projects_qs.filter(
+            Q(award_letter_and_boq__isnull=False) & ~Q(award_letter_and_boq='')
+        ).aggregate(val=Sum('actual_contract_amount'))['val'] or Decimal('0.00')
+        
+        total_given_out_awarded = max(Decimal('0.00'), total_awarded_amount - total_in_house_awarded)
+        total_mobilization_rec = projects_qs.aggregate(val=Sum('mobilization_received'))['val'] or Decimal('0.00')
+
+        # Distinct Agencies
+        distinct_mdas = [mda for mda in projects_qs.values_list('mda', flat=True).distinct() if mda]
+        agency_count = len(distinct_mdas)
+        agency_short_list = ", ".join([mda.split('(')[-1].replace(')', '').strip() if '(' in mda else mda for mda in distinct_mdas])
+
+        # Category Monitoring Matrix (CONSTRUCTION, SUPPLY, EMPOWERMENT, POWER, TRAINING)
+        monitoring_matrix = []
+        category_list = ['CONSTRUCTION', 'SUPPLY', 'EMPOWERMENT', 'POWER', 'TRAINING']
+        for cat_name in category_list:
+            if cat_name == 'CONSTRUCTION':
+                cat_qs = projects_qs.filter(Q(category__name__iexact='CONSTRUCTION') | Q(category__name__icontains='Civil'))
+            else:
+                cat_qs = projects_qs.filter(category__name__iexact=cat_name)
+            
+            c_total = cat_qs.count()
+            c_awarded = cat_qs.filter(actual_contract_amount__gt=0).count()
+            c_awaiting = c_total - c_awarded
+            c_budget = cat_qs.aggregate(val=Sum('budget_amount'))['val'] or Decimal('0.00')
+            c_awarded_amt = cat_qs.aggregate(val=Sum('actual_contract_amount'))['val'] or Decimal('0.00')
+
+            monitoring_matrix.append({
+                'category_name': cat_name,
+                'total_count': c_total,
+                'awarded_count': c_awarded,
+                'awaiting_count': c_awaiting,
+                'budget_amount': c_budget,
+                'amount_awarded': c_awarded_amt,
+            })
+
         context.update({
             'is_executive_or_management': is_executive_or_management,
+            'total_projects_count': total_projects_count,
+            'total_budget_amount': total_budget_amount,
+            'total_awarded_amount': total_awarded_amount,
+            'total_in_house_awarded': total_in_house_awarded,
+            'total_given_out_awarded': total_given_out_awarded,
+            'total_mobilization_rec': total_mobilization_rec,
+            'agency_count': agency_count,
+            'agency_short_list': agency_short_list,
+            'monitoring_matrix': monitoring_matrix,
             'total_contract_value': total_contract_value,
             'total_in_house_benchmark': total_in_house_benchmark,
             'cost_percentage': round(cost_percentage, 2),
