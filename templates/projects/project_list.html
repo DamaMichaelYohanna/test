@@ -38,9 +38,9 @@
 
   <!-- Search & Filter bar -->
   <form method="GET" action=""
-    class="px-6 py-4 bg-white border-b border-gray-100 flex flex-col md:flex-row gap-3 items-stretch md:items-end">
+    class="px-6 py-4 bg-white border-b border-gray-100 flex flex-col md:flex-row gap-3 items-stretch md:items-center flex-wrap">
     <!-- Search input -->
-    <div class="relative flex-1 min-w-0">
+    <div class="relative flex-1 min-w-[220px]">
       <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none">
         <span class="material-symbols-outlined text-lg">search</span>
       </span>
@@ -49,7 +49,7 @@
     </div>
 
     <!-- Year filter -->
-    <div class="min-w-[130px]">
+    <div class="w-full md:w-32 flex-shrink-0">
       <select name="year"
         class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50">
         <option value="">All Years</option>
@@ -60,21 +60,22 @@
       </select>
     </div>
 
-    <!-- MDA filter -->
-    <div class="min-w-[160px]">
+    <!-- MDA filter (reduced width to prevent collisions) -->
+    <div class="w-full md:w-40 lg:w-44 flex-shrink-0">
       <select name="mda"
-        class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50">
+        class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50 truncate"
+        title="Filter by MDA">
         <option value="">All MDAs</option>
         {% for m in mda_choices %}
-        <option value="{{ m }}" {% if selected_mda == m %}selected{% endif %}>{{ m }}</option>
+        <option value="{{ m }}" {% if selected_mda == m %}selected{% endif %} title="{{ m }}">{{ m|truncatechars:28 }}</option>
         {% endfor %}
       </select>
     </div>
 
     <!-- Category filter -->
-    <div class="min-w-[160px]">
+    <div class="w-full md:w-36 flex-shrink-0">
       <select name="category"
-        class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50">
+        class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50 truncate">
         <option value="">All Categories</option>
         {% for c in category_choices %}
         <option value="{{ c.id }}" {% if selected_category == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
@@ -82,8 +83,8 @@
       </select>
     </div>
 
-    <!-- Submit / Reset -->
-    <div class="flex gap-2">
+    <!-- Submit / Reset buttons -->
+    <div class="flex items-center gap-2 flex-shrink-0">
       <button type="submit"
         class="bg-[#3e5052] hover:bg-[#2c3a3c] text-white px-4 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap">
         Apply
