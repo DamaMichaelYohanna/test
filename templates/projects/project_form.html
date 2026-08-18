@@ -116,17 +116,17 @@
           {{ form.updated_recommended_companies }}
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Plain BOQ File</label>
-          <input type="file" name="plain_boq" class="w-full text-xs">
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Plain BOQ (SharePoint URL)</label>
+          {{ form.plain_boq }}
           {% if form.instance.plain_boq %}
-            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.plain_boq.url }}" target="_blank" class="underline text-[#bfa12c]">Download</a></span>
+            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.plain_boq }}" target="_blank" class="underline text-[#bfa12c]">Open SharePoint BOQ</a></span>
           {% endif %}
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Drawing / Design File</label>
-          <input type="file" name="drawing_design" class="w-full text-xs">
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Drawing / Design (SharePoint URL)</label>
+          {{ form.drawing_design }}
           {% if form.instance.drawing_design %}
-            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.drawing_design.url }}" target="_blank" class="underline text-[#bfa12c]">Download</a></span>
+            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.drawing_design }}" target="_blank" class="underline text-[#bfa12c]">Open SharePoint Drawing</a></span>
           {% endif %}
         </div>
       </div>
@@ -175,10 +175,10 @@
           {{ form.batch_no_final_payment }}
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Award Letter & BOQ File</label>
-          <input type="file" name="award_letter_and_boq" class="w-full text-xs">
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Award Letter & BOQ (SharePoint URL)</label>
+          {{ form.award_letter_and_boq }}
           {% if form.instance.award_letter_and_boq %}
-            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.award_letter_and_boq.url }}" target="_blank" class="underline text-[#bfa12c]">Download</a></span>
+            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.award_letter_and_boq }}" target="_blank" class="underline text-[#bfa12c]">Open SharePoint Award Letter</a></span>
           {% endif %}
         </div>
         

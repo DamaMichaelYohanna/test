@@ -20,6 +20,9 @@ class ProjectForm(forms.ModelForm):
             'execution_level_percentage', 'project_status', 'payment_status', 'comments', 'remarks'
         ]
         widgets = {
+            'plain_boq': forms.URLInput(attrs={'placeholder': 'https://azanigroupn.sharepoint.com/...', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+            'drawing_design': forms.URLInput(attrs={'placeholder': 'https://azanigroupn.sharepoint.com/...', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+            'award_letter_and_boq': forms.URLInput(attrs={'placeholder': 'https://azanigroupn.sharepoint.com/...', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
             'comments': forms.Textarea(attrs={'rows': 3, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
             'remarks': forms.Textarea(attrs={'rows': 3, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
             'final_companies': forms.Textarea(attrs={'rows': 2, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
@@ -35,7 +38,7 @@ class ProjectForm(forms.ModelForm):
         
         # Style form fields using modern Tailwind classes
         for name, field in self.fields.items():
-            if name not in ['comments', 'remarks', 'final_companies', 'back_up_companies', 'updated_recommended_companies', 'plain_boq', 'drawing_design', 'award_letter_and_boq']:
+            if name not in ['comments', 'remarks', 'final_companies', 'back_up_companies', 'updated_recommended_companies']:
                 field.widget.attrs.setdefault('class', 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm')
 
 
