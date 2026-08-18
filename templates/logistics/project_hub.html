@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load group_tags %}
+{% load group_tags humanize %}
 
 {% block title %} {{ page_title }} - Logistics{% endblock %}
 
@@ -220,7 +220,7 @@
             <div class="flex items-start justify-between gap-2">
               <div class="flex-1 min-w-0">
                 <p class="font-semibold text-gray-900 text-sm truncate">{{ req.milestone_title }}</p>
-                <p class="text-lg font-bold text-gray-800 mt-0.5">₦{{ req.amount_requested|floatformat:2 }}</p>
+                <p class="text-lg font-bold text-gray-800 mt-0.5">₦{{ req.amount_requested|floatformat:2|intcomma }}</p>
                 <p class="text-xs text-gray-400 mt-1">{{ req.requested_by.get_full_name|default:req.requested_by.username }} &bull;
                   {{ req.date_requested|date:"j N Y" }}</p>
               </div>

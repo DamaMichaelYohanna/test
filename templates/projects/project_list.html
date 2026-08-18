@@ -71,13 +71,13 @@
       </select>
     </div>
 
-    <!-- Type filter -->
-    <div class="min-w-[180px]">
-      <select name="project_type"
+    <!-- Category filter -->
+    <div class="min-w-[160px]">
+      <select name="category"
         class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50">
-        <option value="">All Types</option>
-        {% for val, label in type_choices %}
-        <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
+        <option value="">All Categories</option>
+        {% for c in category_choices %}
+        <option value="{{ c.id }}" {% if selected_category == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
         {% endfor %}
       </select>
     </div>
@@ -88,7 +88,7 @@
         class="bg-[#3e5052] hover:bg-[#2c3a3c] text-white px-4 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap">
         Apply
       </button>
-      {% if q or selected_year or selected_mda or selected_type %}
+      {% if q or selected_year or selected_mda or selected_category or selected_type %}
       <a href="{% url 'projects:project_list' %}"
         class="bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap flex items-center">
         <span class="material-symbols-outlined text-sm mr-1">close</span> Clear
@@ -101,20 +101,16 @@
   <div class="px-6 py-2 bg-white border-b border-gray-100 flex items-center gap-3 text-xs text-gray-500 flex-wrap">
     <span class="font-semibold text-gray-700">{{ projects|length }} result{{ projects|length|pluralize }}</span>
     {% if q %}
-    <span class="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full font-medium">Search: "{{ q
-      }}"</span>
+    <span class="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full font-medium">Search: "{{ q }}"</span>
     {% endif %}
     {% if selected_year %}
-    <span class="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full font-medium">Year: {{
-      selected_year }}</span>
+    <span class="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full font-medium">Year: {{ selected_year }}</span>
     {% endif %}
     {% if selected_mda %}
-    <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-full font-medium">MDA: {{
-      selected_mda }}</span>
+    <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-full font-medium">MDA: {{ selected_mda }}</span>
     {% endif %}
-    {% if selected_type %}
-    <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full font-medium">Type: {{
-      selected_type }}</span>
+    {% if selected_category %}
+    <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full font-medium">Category Filter</span>
     {% endif %}
   </div>
 
@@ -123,13 +119,13 @@
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-[#3e5052] text-white text-xs font-semibold uppercase tracking-wider">
         <tr>
-          <th scope="col" class="px-6 py-4 text-left">Code</th>
-          <th scope="col" class="px-6 py-4 text-left">Project Name</th>
-          <th scope="col" class="px-6 py-4 text-left">MDA</th>
-          <th scope="col" class="px-6 py-4 text-left">Type</th>
-          <th scope="col" class="px-6 py-4 text-left">Current Phase</th>
-          <th scope="col" class="px-6 py-4 text-left">Execution Level %</th>
-          <th scope="col" class="px-6 py-4 text-center">Actions</th>
+          <th scope="col" class="px-6 py-4 text-left w-32">Code</th>
+          <th scope="col" class="px-6 py-4 text-left w-2/5 min-w-[350px]">Project Name</th>
+          <th scope="col" class="px-6 py-4 text-left w-1/6 max-w-[200px]">MDA</th>
+          <th scope="col" class="px-6 py-4 text-left w-32">Category</th>
+          <th scope="col" class="px-6 py-4 text-left w-36">Current Phase</th>
+          <th scope="col" class="px-6 py-4 text-left w-36">Execution Level %</th>
+          <th scope="col" class="px-6 py-4 text-center w-28">Actions</th>
         </tr>
       </thead>
       <tbody class="bg-white divide-y divide-gray-200 text-sm text-gray-700">
@@ -140,21 +136,18 @@
               {{ proj.project_code }}
             </span>
           </td>
-          <td class="px-6 py-4">
-            <div class="font-medium text-gray-900"><a href="{% url 'projects:project_detail' proj.pk %}"
+          <td class="px-6 py-4 w-2/5 min-w-[350px]">
+            <div class="font-medium text-gray-900 leading-snug"><a href="{% url 'projects:project_detail' proj.pk %}"
                 class="hover:text-[#bfa12c]">{{ proj.project_name }}</a></div>
-            {% if proj.category %}
-            <span class="text-xs text-gray-400 font-normal">{{ proj.category }}</span>
-            {% endif %}
           </td>
-          <td class="px-6 py-4 whitespace-nowrap text-gray-500 font-medium">{{ proj.mda }}</td>
+          <td class="px-6 py-4 w-1/6 max-w-[200px] text-gray-500 font-medium text-xs break-words" title="{{ proj.mda }}">{{ proj.mda }}</td>
           <td class="px-6 py-4 whitespace-nowrap text-xs font-semibold">
-            {% if proj.project_type == 'CONSTRUCTION' %}
-            <span
-              class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">Civil/Construction</span>
+            {% if proj.category %}
+            <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-medium">
+              {{ proj.category.name }}
+            </span>
             {% else %}
-            <span class="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Supply &
-              Training</span>
+            <span class="text-gray-400 font-normal">-</span>
             {% endif %}
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900">

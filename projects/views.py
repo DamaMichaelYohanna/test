@@ -30,6 +30,7 @@ class ProjectListView(LoginRequiredMixin, ListView):
         q = self.request.GET.get('q', '').strip()
         year = self.request.GET.get('year', '').strip()
         mda = self.request.GET.get('mda', '').strip()
+        category = self.request.GET.get('category', '').strip()
         project_type = self.request.GET.get('project_type', '').strip()
 
         if q:
@@ -40,6 +41,8 @@ class ProjectListView(LoginRequiredMixin, ListView):
             qs = qs.filter(created_at__year=year)
         if mda:
             qs = qs.filter(mda__icontains=mda)
+        if category:
+            qs = qs.filter(category_id=category)
         if project_type:
             qs = qs.filter(project_type=project_type)
 
@@ -51,6 +54,7 @@ class ProjectListView(LoginRequiredMixin, ListView):
         context['q'] = self.request.GET.get('q', '')
         context['selected_year'] = self.request.GET.get('year', '')
         context['selected_mda'] = self.request.GET.get('mda', '')
+        context['selected_category'] = self.request.GET.get('category', '')
         context['selected_type'] = self.request.GET.get('project_type', '')
         # Build distinct filter option lists from the full table
         context['year_choices'] = (
@@ -59,6 +63,7 @@ class ProjectListView(LoginRequiredMixin, ListView):
         context['mda_choices'] = (
             Project.objects.values_list('mda', flat=True).distinct().order_by('mda')
         )
+        context['category_choices'] = ProjectCategory.objects.all().order_by('name')
         context['type_choices'] = Project.PROJECT_TYPE_CHOICES
         return context
 

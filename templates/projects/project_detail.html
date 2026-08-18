@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load group_tags %}
+{% load group_tags humanize %}
 
 {% block title %}Project Details: {{ project.project_name }}{% endblock %}
 
@@ -108,7 +108,7 @@
       </div>
       <div>
         <div class="text-xs font-bold text-gray-500 uppercase">Contract Amount</div>
-        <div class="text-sm font-bold text-gray-800 mt-0.5">₦{{ project.actual_contract_amount|default:"0.00" }}</div>
+        <div class="text-sm font-bold text-gray-800 mt-0.5">₦{{ project.actual_contract_amount|default:0|intcomma }}</div>
       </div>
     </div>
 
@@ -118,7 +118,7 @@
       </div>
       <div>
         <div class="text-xs font-bold text-gray-500 uppercase">Lifecycle Costs</div>
-        <div class="text-sm font-bold text-gray-800 mt-0.5">₦{{ total_incurred_cost|default:"0.00" }}</div>
+        <div class="text-sm font-bold text-gray-800 mt-0.5">₦{{ total_incurred_cost|default:0|intcomma }}</div>
       </div>
     </div>
   </div>
@@ -200,7 +200,7 @@
             {% endif %}
             <div>
               <div class="text-xs text-gray-500 uppercase font-semibold">Budget Amount</div>
-              <div class="text-gray-900 font-bold mt-0.5">₦{{ project.budget_amount|default:"0.00" }}</div>
+              <div class="text-gray-900 font-bold mt-0.5">₦{{ project.budget_amount|default:0|intcomma }}</div>
             </div>
             <div>
               <div class="text-xs text-gray-500 uppercase font-semibold">Technical Status</div>
@@ -271,11 +271,11 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
             <div>
               <div class="text-xs text-gray-500 uppercase font-semibold">Actual Contract Amount</div>
-              <div class="text-gray-900 font-bold mt-0.5">₦{{ project.actual_contract_amount|default:"0.00" }}</div>
+              <div class="text-gray-900 font-bold mt-0.5">₦{{ project.actual_contract_amount|default:0|intcomma }}</div>
             </div>
             <div>
               <div class="text-xs text-gray-500 uppercase font-semibold">In-House Benchmark</div>
-              <div class="text-gray-900 font-bold mt-0.5">₦{{ project.in_house_benchmark|default:"0.00" }}</div>
+              <div class="text-gray-900 font-bold mt-0.5">₦{{ project.in_house_benchmark|default:0|intcomma }}</div>
             </div>
             <div>
               <div class="text-xs text-gray-500 uppercase font-semibold">Cost Percentage</div>
@@ -304,14 +304,14 @@
           <div class="border-t border-gray-100 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
             <div>
               <div class="text-xs text-gray-500 uppercase font-semibold">Mobilization Received</div>
-              <div class="text-gray-900 font-bold mt-0.5">₦{{ project.mobilization_received|default:"0.00" }}</div>
+              <div class="text-gray-900 font-bold mt-0.5">₦{{ project.mobilization_received|default:0|intcomma }}</div>
               {% if project.batch_no_mobilization %}
               <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 mt-1 inline-block">Batch: {{ project.batch_no_mobilization }}</span>
               {% endif %}
             </div>
             <div>
               <div class="text-xs text-gray-500 uppercase font-semibold">Final Payment Received</div>
-              <div class="text-gray-900 font-bold mt-0.5">₦{{ project.final_payment_received|default:"0.00" }}</div>
+              <div class="text-gray-900 font-bold mt-0.5">₦{{ project.final_payment_received|default:0|intcomma }}</div>
               {% if project.batch_no_final_payment %}
               <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 mt-1 inline-block">Batch: {{ project.batch_no_final_payment }}</span>
               {% endif %}
@@ -333,7 +333,7 @@
                   {% for fee in project.fees.all %}
                   <tr class="hover:bg-gray-50 transition">
                     <td class="px-4 py-2 text-gray-700 font-medium">{{ fee.fee_type.name }}</td>
-                    <td class="px-4 py-2 text-right font-semibold text-gray-900">₦{{ fee.amount|default:"0.00" }}</td>
+                    <td class="px-4 py-2 text-right font-semibold text-gray-900">₦{{ fee.amount|default:0|intcomma }}</td>
                   </tr>
                   {% empty %}
                   <tr>
@@ -550,10 +550,10 @@
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap font-semibold">
-                  ₦{{ part.budget_amount|default:"0.00" }}
+                  ₦{{ part.budget_amount|default:0|intcomma }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap font-semibold">
-                  ₦{{ part.actual_contract_amount|default:"0.00" }}
+                  ₦{{ part.actual_contract_amount|default:0|intcomma }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center space-x-2">
@@ -670,14 +670,14 @@
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">{{ alloc.sub_contractor_cost_percentage }}%</td>
-                <td class="px-6 py-4 whitespace-nowrap font-semibold">₦{{ alloc.amount_agreed_with_supplier_contractor}}</td>
+                <td class="px-6 py-4 whitespace-nowrap font-semibold">₦{{ alloc.amount_agreed_with_supplier_contractor|default:0|intcomma }}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div>₦{{ alloc.total_paid }}</div>
+                  <div>₦{{ alloc.total_paid|default:0|intcomma }}</div>
                   {% if alloc.advance_received_by_supplier_contractor > 0 %}
-                  <div class="text-[10px] text-gray-500 font-mono">(Adv: ₦{{ alloc.advance_received_by_supplier_contractor }})</div>
+                  <div class="text-[10px] text-gray-500 font-mono">(Adv: ₦{{ alloc.advance_received_by_supplier_contractor|default:0|intcomma }})</div>
                   {% endif %}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap font-bold text-red-600">₦{{ alloc.remaining_balance }}</td>
+                <td class="px-6 py-4 whitespace-nowrap font-bold text-red-600">₦{{ alloc.remaining_balance|default:0|intcomma }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-center space-x-1">
                   {% if alloc.sub_contractor_drawing_design %}
                   <a href="{{ alloc.sub_contractor_drawing_design.url }}" target="_blank" @click.stop=""
@@ -759,7 +759,7 @@
                               <td class="px-4 py-2 font-medium">Initial Setup</td>
                               <td class="px-4 py-2">Advance Payment</td>
                               <td class="px-4 py-2">Agreed allocation advance deposit</td>
-                              <td class="px-4 py-2 text-right font-semibold">₦{{ alloc.advance_received_by_supplier_contractor }}</td>
+                              <td class="px-4 py-2 text-right font-semibold">₦{{ alloc.advance_received_by_supplier_contractor|default:0|intcomma }}</td>
                             </tr>
                             {% endif %}
                             
@@ -768,7 +768,7 @@
                               <td class="px-4 py-2 font-medium">{{ tranche.date_paid|date:"M d, Y" }}</td>
                               <td class="px-4 py-2 font-mono">{{ tranche.payment_reference|default:"-" }}</td>
                               <td class="px-4 py-2">{{ tranche.notes|default:"-" }}</td>
-                              <td class="px-4 py-2 text-right font-semibold text-gray-900">₦{{ tranche.amount }}</td>
+                              <td class="px-4 py-2 text-right font-semibold text-gray-900">₦{{ tranche.amount|default:0|intcomma }}</td>
                             </tr>
                             {% empty %}
                             {% if alloc.advance_received_by_supplier_contractor == 0 %}
@@ -855,7 +855,7 @@
                         <p class="bg-gray-50 p-2 rounded border border-gray-200 italic font-mono text-[10px] leading-normal text-gray-600">{{ stage.notes_or_updates }}</p>
                         {% endif %}
                         {% if stage.incurred_cost > 0 %}
-                        <div class="font-bold text-gray-700">Cost: ₦{{ stage.incurred_cost }}</div>
+                        <div class="font-bold text-gray-700">Cost: ₦{{ stage.incurred_cost|default:0|intcomma }}</div>
                         {% endif %}
                       </div>
 
@@ -948,7 +948,7 @@
                         <p class="bg-gray-50 p-2 rounded border border-gray-200 italic font-mono text-[10px] leading-normal text-gray-600">{{ stage.notes_or_updates }}</p>
                         {% endif %}
                         {% if stage.incurred_cost > 0 %}
-                        <div class="font-bold text-gray-700">Cost: ₦{{ stage.incurred_cost }}</div>
+                        <div class="font-bold text-gray-700">Cost: ₦{{ stage.incurred_cost|default:0|intcomma }}</div>
                         {% endif %}
                       </div>
 
@@ -1041,7 +1041,7 @@
                         <p class="bg-gray-50 p-2 rounded border border-gray-200 italic font-mono text-[10px] leading-normal text-gray-600">{{ stage.notes_or_updates }}</p>
                         {% endif %}
                         {% if stage.incurred_cost > 0 %}
-                        <div class="font-bold text-gray-700">Cost: ₦{{ stage.incurred_cost }}</div>
+                        <div class="font-bold text-gray-700">Cost: ₦{{ stage.incurred_cost|default:0|intcomma }}</div>
                         {% endif %}
                       </div>
 
