@@ -14,7 +14,7 @@ class Company(models.Model):
         verbose_name_plural = 'Companies'
 
     def __str__(self):
-        return f"{self.name} ({self.contact})"
+        return f"{self.name} ({self.director_name})" if self.director_name else self.name
 
 class Subcontractor(models.Model):
     COMPANY_TYPE_CHOICES = [

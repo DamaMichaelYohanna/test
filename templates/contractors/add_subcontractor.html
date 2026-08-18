@@ -49,8 +49,7 @@
                     <select name="company_type" id="{{ form.company_type.id_for_label }}" required
                         class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] text-sm text-gray-900 transition duration-150">
                         {% for value, label in form.fields.company_type.choices %}
-                        <option value="{{ value }}" {% if form.company_type.value==value %}selected{% endif %}>{{ label
-                            }}</option>
+                        <option value="{{ value }}" {% if form.company_type.value == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                     {% if form.company_type.errors %}

@@ -335,6 +335,7 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
             'material_alerts': material_alerts,
             'compliance_alerts': compliance_alerts,
             'project': self.project,
+            'all_projects': Project.objects.all().order_by('project_code'),
             'total_projects': Project.objects.count(),
             'internal_contractors': Subcontractor.objects.filter(company_type='INTERNAL').count(),
             'external_contractors': Subcontractor.objects.filter(company_type='EXTERNAL').count(),

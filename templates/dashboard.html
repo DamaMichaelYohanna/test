@@ -20,8 +20,7 @@
           class="bg-white border border-slate-300 text-slate-800 text-sm rounded-md focus:ring-[#bfa12c] focus:border-[#bfa12c] block w-full px-3 py-2 cursor-pointer transition hover:border-slate-400 font-medium">
           <option value="0">ALL PORTFOLIO CONTRACTS</option>
           {% for p in all_projects %}
-          <option value="{{ p.pk }}" {% if project and project.pk == p.pk %}selected{% endif %}>{{ p.project_title }}
-          </option>
+          <option value="{{ p.pk }}" {% if project and project.pk == p.pk %}selected{% endif %}>{{ p.project_code }} - {{ p.project_name|truncatechars:45 }}</option>
           {% endfor %}
         </select>
       </form>
@@ -202,8 +201,7 @@
               class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-3">
               <div>
                 <span
-                  class="font-extrabold text-sm text-slate-900 tracking-wider uppercase bg-white border border-slate-200 px-2 py-1 rounded shadow-xs">{{
-                  rm.project_code }}</span>
+                  class="font-extrabold text-sm text-slate-900 tracking-wider uppercase bg-white border border-slate-200 px-2 py-1 rounded shadow-xs">{{ rm.project_code }}</span>
                 <span class="ml-2 text-xs text-slate-500">{{ rm.project_name|truncatechars:45 }}</span>
               </div>
               <div class="flex items-center space-x-2">
@@ -243,8 +241,7 @@
                 <!-- Label -->
                 <div class="ml-3 md:ml-0 md:mt-2">
                   <p class="text-xs font-bold text-slate-900 uppercase tracking-wide">{{ stg.name }}</p>
-                  <p class="text-[10px] text-slate-400 max-w-[120px] truncate" title="{{ stg.notes }}">{{
-                    stg.notes|default:"Pending verification" }}</p>
+                  <p class="text-[10px] text-slate-400 max-w-[120px] truncate" title="{{ stg.notes }}">{{ stg.notes|default:"Pending verification" }}</p>
                 </div>
 
                 <!-- Horizontal Connector Line (Only for non-last nodes and in md+ screen size) -->
@@ -284,8 +281,7 @@
             class="p-3.5 rounded-lg border transition-all duration-200 {% if var.exceeds %}bg-red-50/50 border-red-200{% else %}bg-slate-55/30 border-slate-100{% endif %}">
             <div class="flex justify-between items-center mb-2">
               <span
-                class="font-bold text-xs uppercase tracking-wide text-slate-900 bg-white px-2 py-0.5 border border-slate-200 rounded">{{
-                var.project_code }}</span>
+                class="font-bold text-xs uppercase tracking-wide text-slate-900 bg-white px-2 py-0.5 border border-slate-200 rounded">{{ var.project_code }}</span>
               {% if var.exceeds %}
               <span
                 class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-800 animate-pulse border border-rose-200">OVERDRAWN
@@ -298,8 +294,7 @@
             </div>
 
             <div class="grid grid-cols-2 gap-2 text-xs py-1 text-slate-600 border-b border-slate-100">
-              <div>Budget: <span class="font-semibold text-slate-900">₦{{ var.budget_amount|floatformat:0|intcomma
-                  }}</span></div>
+              <div>Budget: <span class="font-semibold text-slate-900">₦{{ var.budget_amount|floatformat:0|intcomma }}</span></div>
               <div>Drawn: <span class="font-semibold text-slate-900">₦{{ var.drawn_down|floatformat:0|intcomma }}</span>
               </div>
             </div>
@@ -394,8 +389,7 @@
               <p class="text-xs font-bold text-slate-400 uppercase">PROJECT code: {{ req.project.project_code }}</p>
               <h4 class="text-sm font-extrabold text-slate-900 mt-0.5">{{ req.milestone_title }}</h4>
             </div>
-            <span class="text-sm font-black text-amber-700 bg-amber-50 px-2 py-1 rounded">₦{{
-              req.amount_requested|floatformat:2|intcomma }}</span>
+            <span class="text-sm font-black text-amber-700 bg-amber-50 px-2 py-1 rounded">₦{{ req.amount_requested|floatformat:2|intcomma }}</span>
           </div>
           <p class="text-xs text-slate-500 italic">"{{ req.justification_notes|truncatechars:90 }}"</p>
           <div class="flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-200/60 pt-2.5">
@@ -454,10 +448,8 @@
           <span class="material-symbols-outlined text-red-500 bg-red-100 p-1.5 rounded-md mt-0.5">inventory_2</span>
           <div class="flex-1 min-w-0">
             <div class="flex justify-between items-center">
-              <span class="font-bold text-[10px] uppercase text-red-800 tracking-wider bg-red-100 px-1.5 rounded">{{
-                alert.project.project_code }}</span>
-              <span class="text-[9px] text-slate-400 font-medium">Qty: {{ alert.quantity_on_site }} {{
-                alert.unit_of_measurement }}</span>
+              <span class="font-bold text-[10px] uppercase text-red-800 tracking-wider bg-red-100 px-1.5 rounded">{{ alert.project.project_code }}</span>
+              <span class="text-[9px] text-slate-400 font-medium">Qty: {{ alert.quantity_on_site }} {{ alert.unit_of_measurement }}</span>
             </div>
             <h4 class="text-sm font-extrabold text-slate-900 mt-1.5 truncate">{{ alert.material_name }}</h4>
             <p class="text-xs text-red-700/80 font-medium mt-1 leading-relaxed">
