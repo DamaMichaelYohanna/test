@@ -197,17 +197,20 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
         from contractors.models import Subcontractor, Company, CompanyCompliance
         from logistic.models import SiteStore, MilestoneCashRequest
         
+        selected_year = self.request.GET.get('year', '').strip()
+
         # 1. Scope determination
         if self.project:
             projects_qs = Project.objects.filter(sn=self.project.sn)
-            allocations_qs = ProjectAllocation.objects.filter(project=self.project)
-            cash_requests_qs = MilestoneCashRequest.objects.filter(project=self.project)
-            stores_qs = SiteStore.objects.filter(project=self.project)
         else:
             projects_qs = Project.objects.all()
-            allocations_qs = ProjectAllocation.objects.all()
-            cash_requests_qs = MilestoneCashRequest.objects.all()
-            stores_qs = SiteStore.objects.all()
+
+        if selected_year:
+            projects_qs = projects_qs.filter(created_at__year=selected_year)
+
+        allocations_qs = ProjectAllocation.objects.filter(project__in=projects_qs)
+        cash_requests_qs = MilestoneCashRequest.objects.filter(project__in=projects_qs)
+        stores_qs = SiteStore.objects.filter(project__in=projects_qs)
             
         # 2. Role-Based Access Guards
         user = self.request.user
@@ -228,7 +231,6 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
         
         if total_contract_value > 0:
             cost_percentage = (Decimal(total_in_house_benchmark) / Decimal(total_contract_value)) * 100
-
         else:
             cost_percentage = 0.0
         gross_profit_margin = 100.0 - float(cost_percentage)
@@ -334,6 +336,12 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
         agency_count = len(distinct_mdas)
         agency_short_list = ", ".join([mda.split('(')[-1].replace(')', '').strip() if '(' in mda else mda for mda in distinct_mdas])
 
+        # Distinct Year Choices for Filter Dropdown
+        year_choices = sorted(
+            set(Project.objects.dates('created_at', 'year').values_list('created_at__year', flat=True)),
+            reverse=True
+        )
+
         # Category Monitoring Matrix (CONSTRUCTION, SUPPLY, EMPOWERMENT, POWER, TRAINING)
         monitoring_matrix = []
         category_list = ['CONSTRUCTION', 'SUPPLY', 'EMPOWERMENT', 'POWER', 'TRAINING']
@@ -359,6 +367,8 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
             })
 
         context.update({
+            'selected_year': selected_year,
+            'year_choices': year_choices,
             'is_executive_or_management': is_executive_or_management,
             'total_projects_count': total_projects_count,
             'total_budget_amount': total_budget_amount,

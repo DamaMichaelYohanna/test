@@ -18,15 +18,37 @@
     </div>
     
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-      <!-- Portfolio Selector Dropdown -->
-      <form method="GET" action="" class="flex items-center shadow-xs">
+      <!-- Dashboard Filters Form (Year & Project) -->
+      <form method="GET" action="" class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        {% if project %}
+        <input type="hidden" name="project" value="{{ project.pk }}">
+        {% endif %}
+
+        <!-- Year Filter Dropdown -->
+        <select name="year" onchange="this.form.submit()"
+          class="bg-white border border-slate-300 text-slate-800 text-sm rounded-lg focus:ring-[#bfa12c] focus:border-[#bfa12c] block px-3.5 py-2 cursor-pointer transition hover:border-slate-400 font-semibold shadow-xs">
+          <option value="">ALL YEARS</option>
+          {% for y in year_choices %}
+          <option value="{{ y }}" {% if selected_year == y|stringformat:"s" %}selected{% endif %}>YEAR {{ y }}</option>
+          {% endfor %}
+        </select>
+
+        <!-- Portfolio Selector Dropdown -->
         <select name="project" onchange="this.form.submit()"
           class="bg-white border border-slate-300 text-slate-800 text-sm rounded-lg focus:ring-[#bfa12c] focus:border-[#bfa12c] block w-full px-3.5 py-2 cursor-pointer transition hover:border-slate-400 font-semibold shadow-xs">
           <option value="0">ALL PORTFOLIO CONTRACTS ({{ all_projects|length }})</option>
           {% for p in all_projects %}
-          <option value="{{ p.pk }}" {% if project and project.pk == p.pk %}selected{% endif %}>{{ p.project_code }} - {{ p.project_name|truncatechars:45 }}</option>
+          <option value="{{ p.pk }}" {% if project and project.pk == p.pk %}selected{% endif %}>{{ p.project_code }} - {{ p.project_name|truncatechars:35 }}</option>
           {% endfor %}
         </select>
+
+        {% if selected_year or project %}
+        <a href="{% url 'core:dashboard' %}"
+          class="px-3 py-2 bg-white border border-slate-300 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-50 transition flex items-center whitespace-nowrap shadow-xs"
+          title="Reset Dashboard Filters">
+          <span class="material-symbols-outlined text-sm mr-1">close</span> Clear
+        </a>
+        {% endif %}
       </form>
     </div>
   </div>
@@ -39,7 +61,9 @@
       </div>
       <div>
         <h2 class="text-lg sm:text-xl font-bold tracking-tight text-white uppercase">Total Number of Projects</h2>
-        <p class="text-xs text-slate-400 font-medium mt-0.5">Appropriation & Supplementary Contracts Portfolio as of August 2026</p>
+        <p class="text-xs text-slate-400 font-medium mt-0.5">
+          {% if selected_year %}Filtered Portfolio for Year <span class="text-[#bfa12c] font-bold">{{ selected_year }}</span>{% else %}Appropriation & Supplementary Contracts Portfolio{% endif %}
+        </p>
       </div>
     </div>
 
