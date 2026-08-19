@@ -213,8 +213,8 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
         context['total_incurred_cost'] = total_incurred_cost
         
         # Fetch completion percentage based on completed stages vs total stages
-        total_stages = context['lifecycle_stages'].count()
-        completed_stages = context['lifecycle_stages'].filter(is_completed=True).count()
+        total_stages = len(lifecycle_stages)
+        completed_stages = sum(1 for s in lifecycle_stages if s.is_completed)
         if total_stages > 0:
             context['calculated_completion_percentage'] = int((completed_stages / total_stages) * 100)
         else:

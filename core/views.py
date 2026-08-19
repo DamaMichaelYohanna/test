@@ -208,6 +208,9 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
         if selected_year:
             projects_qs = projects_qs.filter(created_at__year=selected_year)
 
+        # Prefetch lifecycle stages to eliminate N+1 queries in roadmap rendering
+        projects_qs = projects_qs.prefetch_related('lifecycle_stages')
+
         allocations_qs = ProjectAllocation.objects.filter(project__in=projects_qs)
         cash_requests_qs = MilestoneCashRequest.objects.filter(project__in=projects_qs)
         stores_qs = SiteStore.objects.filter(project__in=projects_qs)
@@ -250,7 +253,7 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
         
         project_roadmaps = []
         for p in projects_qs:
-            stages_list = p.lifecycle_stages.all().order_by('sequence_order')
+            stages_list = p.lifecycle_stages.all()
             audit_stage = next((s for s in stages_list if "Head of Audit" in s.stage_name), None)
             procurement_stage = next((s for s in stages_list if "Procurement Office" in s.stage_name), None)
             store_stage = next((s for s in stages_list if "Store Department" in s.stage_name), None)
@@ -277,10 +280,19 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
             })
             
         # 5. Layer C: Field Operations & Subcontractor Health
+        # Bulk query approved cash requests per project in 1 DB hit
+        drawn_down_map = dict(
+            MilestoneCashRequest.objects.filter(
+                project__in=projects_qs, status='APPROVED'
+            ).values('project_id').annotate(
+                total_drawn=Sum('amount_requested')
+            ).values_list('project_id', 'total_drawn')
+        )
+
         # Progress vs Budget Burn-Rate Variance
         project_variances = []
         for p in projects_qs:
-            drawn_down = MilestoneCashRequest.objects.filter(project=p, status='APPROVED').aggregate(total=Sum('amount_requested'))['total'] or 0.0
+            drawn_down = drawn_down_map.get(p.pk, 0.0) or 0.0
             drawdown_rate = (float(drawn_down) / float(p.budget_amount) * 100) if p.budget_amount > 0 else 0.0
             completion_rate = p.execution_level_percentage
             variance = completion_rate - drawdown_rate
