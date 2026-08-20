@@ -190,9 +190,12 @@
             <table class="min-w-full divide-y divide-gray-200 text-sm">
               <thead class="bg-gray-50 text-gray-700 text-xs font-semibold uppercase tracking-wider">
                 <tr>
-                  <th class="px-4 py-2 text-left">Fee Type</th>
-                  <th class="px-4 py-2 text-left">Amount (NGN)</th>
-                  <th class="px-4 py-2 text-center">Delete?</th>
+                  <th class="px-3 py-2 text-left">Fee Type</th>
+                  <th class="px-3 py-2 text-left">Amount (NGN)</th>
+                  <th class="px-3 py-2 text-left">Status</th>
+                  <th class="px-3 py-2 text-left">Date Paid</th>
+                  <th class="px-3 py-2 text-left">Ref / Receipt #</th>
+                  <th class="px-3 py-2 text-center">Delete?</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200" id="fee-tbody">
@@ -201,19 +204,37 @@
                     {% for hidden in f_form.hidden_fields %}
                       {{ hidden }}
                     {% endfor %}
-                    <td class="px-4 py-2">
+                    <td class="px-3 py-2">
                       {{ f_form.fee_type }}
                       {% if f_form.fee_type.errors %}
                         <div class="text-red-500 text-xs mt-1">{{ f_form.fee_type.errors }}</div>
                       {% endif %}
                     </td>
-                    <td class="px-4 py-2">
+                    <td class="px-3 py-2">
                       {{ f_form.amount }}
                       {% if f_form.amount.errors %}
                         <div class="text-red-500 text-xs mt-1">{{ f_form.amount.errors }}</div>
                       {% endif %}
                     </td>
-                    <td class="px-4 py-2 text-center align-middle">
+                    <td class="px-3 py-2">
+                      {{ f_form.status }}
+                      {% if f_form.status.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ f_form.status.errors }}</div>
+                      {% endif %}
+                    </td>
+                    <td class="px-3 py-2">
+                      {{ f_form.date_paid }}
+                      {% if f_form.date_paid.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ f_form.date_paid.errors }}</div>
+                      {% endif %}
+                    </td>
+                    <td class="px-3 py-2">
+                      {{ f_form.payment_reference }}
+                      {% if f_form.payment_reference.errors %}
+                        <div class="text-red-500 text-xs mt-1">{{ f_form.payment_reference.errors }}</div>
+                      {% endif %}
+                    </td>
+                    <td class="px-3 py-2 text-center align-middle">
                       {% if fee_formset.can_delete %}
                         {{ f_form.DELETE }}
                       {% endif %}
@@ -252,20 +273,23 @@
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Payment Status</label>
           {{ form.payment_status }}
         </div>
-        <div class="md:col-span-2">
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Comments</label>
           {{ form.comments }}
         </div>
-        <div class="md:col-span-2">
+        <div>
           <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Remarks</label>
           {{ form.remarks }}
         </div>
       </div>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-      <a href="{% url 'projects:project_list' %}" class="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-50 transition">
+    <!-- Submit buttons -->
+    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+      <a href="{% if form.instance.pk %}{% url 'projects:project_detail' form.instance.pk %}{% else %}{% url 'projects:project_list' %}{% endif %}" class="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-50 transition">
         Cancel
       </a>
       <button type="submit" class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition">
@@ -281,13 +305,22 @@
     {% for hidden in fee_formset.empty_form.hidden_fields %}
       {{ hidden }}
     {% endfor %}
-    <td class="px-4 py-2">
+    <td class="px-3 py-2">
       {{ fee_formset.empty_form.fee_type }}
     </td>
-    <td class="px-4 py-2">
+    <td class="px-3 py-2">
       {{ fee_formset.empty_form.amount }}
     </td>
-    <td class="px-4 py-2 text-center align-middle">
+    <td class="px-3 py-2">
+      {{ fee_formset.empty_form.status }}
+    </td>
+    <td class="px-3 py-2">
+      {{ fee_formset.empty_form.date_paid }}
+    </td>
+    <td class="px-3 py-2">
+      {{ fee_formset.empty_form.payment_reference }}
+    </td>
+    <td class="px-3 py-2 text-center align-middle">
       {{ fee_formset.empty_form.DELETE }}
     </td>
   </tr>

@@ -45,12 +45,15 @@ class ProjectForm(forms.ModelForm):
 ProjectFeeFormSet = inlineformset_factory(
     Project,
     ProjectFee,
-    fields=('fee_type', 'amount'),
+    fields=('fee_type', 'amount', 'status', 'date_paid', 'payment_reference'),
     extra=1,
     can_delete=True,
     widgets={
         'fee_type': forms.Select(attrs={'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
         'amount': forms.NumberInput(attrs={'step': '0.01', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+        'status': forms.Select(attrs={'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+        'date_paid': forms.DateInput(attrs={'type': 'date', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+        'payment_reference': forms.TextInput(attrs={'placeholder': 'e.g., Transfer ID / Receipt #', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
     }
 )
 

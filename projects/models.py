@@ -168,10 +168,107 @@ class Project(models.Model):
         return f"{self.project_code} - {self.mda} - {self.project_name}"
 
 
+    @property
+    def total_fees_amount(self):
+        """Sum of all fee amounts assigned to the project."""
+        if self.is_parent:
+            return sum(part.total_fees_amount for part in self.project_parts.all())
+        return sum(f.amount for f in self.fees.all())
+
+    @property
+    def total_fees_paid(self):
+        """Sum of fee amounts marked as PAID."""
+        if self.is_parent:
+            return sum(part.total_fees_paid for part in self.project_parts.all())
+        return sum(f.amount for f in self.fees.filter(status='PAID'))
+
+    @property
+    def total_lifecycle_expenses(self):
+        """Sum of incurred costs across lifecycle stages."""
+        if self.is_parent:
+            return sum(part.total_lifecycle_expenses for part in self.project_parts.all())
+        return sum(stage.incurred_cost for stage in self.lifecycle_stages.all())
+
+    @property
+    def total_unplanned_expenses(self):
+        """Sum of unplanned expense outlays."""
+        if self.is_parent:
+            return sum(part.total_unplanned_expenses for part in self.project_parts.all())
+        return sum(exp.amount for exp in self.unplanned_expenses.all())
+
+    @property
+    def total_subcontractor_commitments(self):
+        """Sum of agreed subcontractor amounts across all allocations."""
+        if self.is_parent:
+            return sum(part.total_subcontractor_commitments for part in self.project_parts.all())
+        return sum(alloc.amount_agreed_with_supplier_contractor for alloc in self.projectallocation_set.all())
+
+    @property
+    def total_subcontractor_paid(self):
+        """Sum of advances + tranches paid to subcontractors."""
+        if self.is_parent:
+            return sum(part.total_subcontractor_paid for part in self.project_parts.all())
+        return sum(alloc.total_paid for alloc in self.projectallocation_set.all())
+
+    @property
+    def total_project_expenses(self):
+        """
+        Consolidated total project expenses:
+        Total Fees + Total Lifecycle Expenses + Total Unplanned Expenses + Total Subcontractor Commitments
+        """
+        return (
+            self.total_fees_amount +
+            self.total_lifecycle_expenses +
+            self.total_unplanned_expenses +
+            self.total_subcontractor_commitments
+        )
+
+    @property
+    def total_actual_cash_disbursed(self):
+        """
+        Actual cash paid out to date:
+        Fees Paid + Lifecycle Expenses + Unplanned Expenses + Subcontractor Paid
+        """
+        return (
+            self.total_fees_paid +
+            self.total_lifecycle_expenses +
+            self.total_unplanned_expenses +
+            self.total_subcontractor_paid
+        )
+
+    @property
+    def net_project_margin(self):
+        """
+        Net projected margin (Contract Amount - Total Expenses).
+        """
+        return self.total_actual_contract_amount - self.total_project_expenses
+
+    @property
+    def net_cashflow_balance(self):
+        """
+        Net cashflow balance (Total Inflow Received - Actual Cash Disbursed).
+        """
+        total_inflow = self.total_mobilization_received + self.total_final_payment_received
+        return total_inflow - self.total_actual_cash_disbursed
+
 class ProjectFee(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending / Estimated'),
+        ('PAID', 'Paid / Disbursed'),
+    ]
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='fees')
     fee_type = models.ForeignKey(FeeType, on_delete=models.CASCADE, verbose_name="Fee Type")
     amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Amount")
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='PENDING', verbose_name="Status")
+    date_paid = models.DateField(blank=True, null=True, verbose_name="Date Paid")
+    payment_reference = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True, 
+        verbose_name="Payment Reference",
+        help_text="e.g., Bank transfer ref, receipt #"
+    )
 
     class Meta:
         unique_together = ('project', 'fee_type')
@@ -179,7 +276,7 @@ class ProjectFee(models.Model):
         verbose_name_plural = "Project Fees"
 
     def __str__(self):
-        return f"{self.project.project_code} - {self.fee_type.name}: ₦{self.amount:,.2f}"
+        return f"{self.project.project_code} - {self.fee_type.name}: ₦{self.amount:,.2f} ({self.get_status_display()})"
 
 
 
