@@ -71,12 +71,17 @@
     </div>
 
     <!-- Top Right actions (Project Selector / User profile) -->
-    <div class="flex items-center space-x-2 md:space-x-6">
+    <div class="flex items-center space-x-2 md:space-x-4">
       {% if user.is_authenticated %}
-
+      <!-- Activity Log / Notifications Icon -->
+      <a href="{% url 'projects:activity_log' %}" title="Project Activity & Change Logs"
+        class="text-gray-500 hover:text-[#bfa12c] hover:bg-gray-100 p-2 rounded-xl transition relative flex items-center">
+        <span class="material-symbols-outlined text-xl">notifications</span>
+        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#bfa12c] rounded-full ring-2 ring-white"></span>
+      </a>
 
       <!-- User Menu / Logout Button -->
-      <div class="flex items-center ml-2 md:ml-4 pl-2 md:pl-4 border-l border-gray-200">
+      <div class="flex items-center ml-1 md:ml-2 pl-2 border-l border-gray-200">
         <a href="{% url 'core:logout' %}"
           class="flex items-center px-3 md:px-4 py-2 rounded-lg text-red-600 font-medium text-xs md:text-sm hover:bg-red-50 transition">
           <span class="material-symbols-outlined text-lg mr-1 md:mr-2">logout</span>
@@ -128,6 +133,11 @@
               class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'monitoring' in request.path %}active-nav-item{% endif %}">
               <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">trending_up</span>
               Progress Logs
+            </a>
+            <a href="{% url 'projects:activity_log' %}"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'activity-log' in request.path %}active-nav-item{% endif %}">
+              <span class="material-symbols-outlined mr-3 text-gray-400 group-hover:text-gray-500 text-lg">history</span>
+              Activity Log
             </a>
             <a href="{% url 'contractors:compliance_matrix' %}"
               class="flex items-center px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 group transition {% if 'compliance' in request.path %}active-nav-item{% endif %}">

@@ -558,6 +558,61 @@
         </div>
       </div>
 
+      <!-- Audit Trail & Change Log Timeline -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-6">
+        <div class="border-b border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between">
+          <h2 class="font-bold text-gray-800 text-sm uppercase tracking-wider flex items-center">
+            <span class="material-symbols-outlined mr-2 text-[#bfa12c]">history</span> Audit Trail & Activity Log
+          </h2>
+          <a href="{% url 'projects:activity_log' %}?project={{ project.pk }}" class="text-xs font-bold text-[#bfa12c] hover:underline flex items-center">
+            Full History <span class="material-symbols-outlined text-xs ml-1">arrow_forward</span>
+          </a>
+        </div>
+        
+        <div class="p-6">
+          <div class="relative border-l-2 border-gray-100 pl-5 ml-2 space-y-4">
+            {% for act in recent_activities %}
+            <div class="relative">
+              <!-- Marker -->
+              <div class="absolute -left-[29px] top-0 p-1 rounded-full border-2 border-white shadow-xs
+                {% if act.action_type == 'CREATE' %}bg-emerald-100 text-emerald-700
+                {% elif act.action_type == 'UPDATE' %}bg-blue-100 text-blue-700
+                {% elif act.action_type == 'STAGE' %}bg-indigo-100 text-indigo-700
+                {% elif act.action_type == 'MONITORING' %}bg-teal-100 text-teal-700
+                {% elif act.action_type == 'TRANCHE' %}bg-emerald-100 text-emerald-800
+                {% elif act.action_type == 'SUBCONTRACTOR' %}bg-purple-100 text-purple-700
+                {% else %}bg-amber-100 text-amber-700{% endif %}">
+                <span class="material-symbols-outlined text-xs block">
+                  {% if act.action_type == 'CREATE' %}add_circle
+                  {% elif act.action_type == 'UPDATE' %}edit_note
+                  {% elif act.action_type == 'STAGE' %}fact_check
+                  {% elif act.action_type == 'MONITORING' %}photo_camera
+                  {% elif act.action_type == 'TRANCHE' %}receipt_long
+                  {% elif act.action_type == 'SUBCONTRACTOR' %}engineering
+                  {% else %}payments{% endif %}
+                </span>
+              </div>
+
+              <div class="bg-gray-50/70 border border-gray-200 rounded-lg p-3 text-xs space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-gray-900">{{ act.title }}</span>
+                  <span class="text-[10px] text-gray-400 font-medium">{{ act.created_at|date:"M d, H:i" }}</span>
+                </div>
+                {% if act.description %}
+                <p class="text-gray-600 leading-normal">{{ act.description }}</p>
+                {% endif %}
+                <div class="text-[10px] text-gray-400 font-medium pt-1">
+                  Logged by: <strong class="text-gray-700 font-semibold">{{ act.user.get_full_name|default:act.user.username|default:"System" }}</strong>
+                </div>
+              </div>
+            </div>
+            {% empty %}
+            <div class="text-gray-400 text-xs text-center py-4 italic">No change log history recorded yet.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
       <!-- Project Parts & Phases (Only for Parent Projects) -->
       {% if project.is_parent %}
       <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-6">

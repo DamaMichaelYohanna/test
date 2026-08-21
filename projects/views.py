@@ -12,13 +12,14 @@ from core.permissions import Level2RequiredMixin, Level3RequiredMixin, Level4Req
 from .models import (
     Project, ProjectCategory, ProjectAllocation, ProjectLifecycleStage, 
     ProjectFee, FeeType, ProjectMonitoringLog, ProjectMonitoringImage,
-    SubcontractorPaymentTranche
+    SubcontractorPaymentTranche, ProjectActivityLog
 )
 from .forms import (
     ProjectForm, ProjectAllocationForm, ProjectLifecycleStageForm, 
     ProjectFeeFormSet, ProjectCategoryForm, FeeTypeForm, ProjectMonitoringLogForm,
     ProjectMonitoringLogGlobalForm, SubcontractorPaymentTrancheForm
 )
+from .utils import log_project_activity
 
 class ProjectListView(LoginRequiredMixin, ListView):
     model = Project
@@ -131,10 +132,19 @@ class ProjectCreateView(Level3RequiredMixin, CreateView):
             self.object = form.save()
             fee_formset.instance = self.object
             fee_formset.save()
+            
+            log_project_activity(
+                project=self.object,
+                user=self.request.user,
+                action_type='CREATE',
+                title=f"Project Created ({self.object.project_code})",
+                description=f"Created new project '{self.object.project_name}' for MDA {self.object.mda}."
+            )
             messages.success(self.request, "Project created successfully!")
             return redirect(self.success_url)
         else:
             return self.render_to_response(self.get_context_data(form=form))
+
 
 class ProjectUpdateView(Level3RequiredMixin, UpdateView):
     model = Project
@@ -156,9 +166,45 @@ class ProjectUpdateView(Level3RequiredMixin, UpdateView):
         context = self.get_context_data()
         fee_formset = context['fee_formset']
         if fee_formset.is_valid():
+            # Track field diffs before saving
+            old_proj = Project.objects.get(pk=self.object.pk)
+            changes = {}
+            tracked_fields = [
+                ('project_name', 'Title'),
+                ('mda', 'MDA'),
+                ('lot', 'Lot'),
+                ('budget_amount', 'Budget Amount'),
+                ('actual_contract_amount', 'Contract Amount'),
+                ('execution_level_percentage', 'Execution %'),
+                ('technical_status', 'Technical Status'),
+                ('payment_status', 'Payment Status'),
+                ('current_phase', 'Current Phase'),
+            ]
+            for field_name, label in tracked_fields:
+                old_val = getattr(old_proj, field_name)
+                new_val = form.cleaned_data.get(field_name)
+                if old_val != new_val:
+                    changes[label] = {
+                        'from': str(old_val if old_val is not None else '-'),
+                        'to': str(new_val if new_val is not None else '-')
+                    }
+
             self.object = form.save()
             fee_formset.instance = self.object
             fee_formset.save()
+
+            diff_desc_parts = [f"{lbl}: {d['from']} → {d['to']}" for lbl, d in changes.items()]
+            desc = ", ".join(diff_desc_parts) if diff_desc_parts else "Updated project specifications."
+
+            log_project_activity(
+                project=self.object,
+                user=self.request.user,
+                action_type='UPDATE',
+                title=f"Updated Project Specs ({self.object.project_code})",
+                description=desc,
+                changes_json=changes
+            )
+
             messages.success(self.request, "Project updated successfully!")
             return redirect(self.get_success_url())
         else:
@@ -223,6 +269,7 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
         # Fetch site monitoring logs and their images
         context['monitoring_logs'] = self.object.monitoring_logs.all().select_related('reported_by').prefetch_related('images')
         context['monitoring_form'] = ProjectMonitoringLogForm()
+        context['recent_activities'] = self.object.activity_logs.select_related('user').all()[:25]
         return context
 
 class ProjectAllocationCreateView(Level3RequiredMixin, View):
@@ -234,6 +281,13 @@ class ProjectAllocationCreateView(Level3RequiredMixin, View):
             allocation.project = project
             try:
                 allocation.save()
+                log_project_activity(
+                    project=project,
+                    user=request.user,
+                    action_type='SUBCONTRACTOR',
+                    title=f"Subcontractor Allocated: {allocation.subcontractor.name}",
+                    description=f"Agreed Amount: ₦{allocation.amount_agreed_with_supplier_contractor:,.2f} | Advance: ₦{allocation.advance_received_by_supplier_contractor:,.2f}"
+                )
                 messages.success(request, "Subcontractor allocated successfully!")
             except Exception as e:
                 messages.error(request, f"Failed to allocate subcontractor: {e}")
@@ -280,6 +334,13 @@ class UpdateLifecycleStageView(Level3RequiredMixin, View):
             stage.completed_date = None
 
         stage.save()
+        log_project_activity(
+            project=stage.project,
+            user=request.user,
+            action_type='STAGE',
+            title=f"Stage Progress: {stage.stage_name}",
+            description=f"Status: {'Completed' if is_completed else 'In Progress'} | Cost: ₦{stage.incurred_cost:,.2f}" + (f" | Notes: {notes}" if notes else "")
+        )
         messages.success(request, f"Updated step: {stage.stage_name}")
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -381,6 +442,14 @@ class ProjectMonitoringLogCreateView(Level2RequiredMixin, View):
                     monitoring_log=log_entry,
                     image=img
                 )
+
+            log_project_activity(
+                project=project,
+                user=request.user,
+                action_type='MONITORING',
+                title=f"Site Monitoring Logged ({log_entry.reported_execution_percentage}%)",
+                description=f"Engineer assessment: {log_entry.reported_execution_percentage}% complete. Site Notes: {log_entry.description}"
+            )
             messages.success(request, f"Monitoring log updated. Project progress set to {log_entry.reported_execution_percentage}%.")
         else:
             messages.error(request, "Error creating monitoring log. Please verify details.")
@@ -424,6 +493,14 @@ class ProjectMonitoringDashboardView(LoginRequiredMixin, View):
                     monitoring_log=log_entry,
                     image=img
                 )
+
+            log_project_activity(
+                project=log_entry.project,
+                user=request.user,
+                action_type='MONITORING',
+                title=f"Site Monitoring Logged ({log_entry.reported_execution_percentage}%)",
+                description=f"Engineer assessment: {log_entry.reported_execution_percentage}% complete. Site Notes: {log_entry.description}"
+            )
             messages.success(request, f"Monitoring log submitted for project {log_entry.project.project_code}. Progress updated to {log_entry.reported_execution_percentage}%.")
         else:
             messages.error(request, "Failed to submit monitoring log. Please correct form errors.")
@@ -438,6 +515,14 @@ class SubcontractorPaymentTrancheCreateView(Level3RequiredMixin, View):
             tranche = form.save(commit=False)
             tranche.allocation = allocation
             tranche.save()
+
+            log_project_activity(
+                project=allocation.project,
+                user=request.user,
+                action_type='TRANCHE',
+                title=f"Tranche Paid: ₦{tranche.amount:,.2f}",
+                description=f"Disbursed to {allocation.subcontractor.name} on {tranche.date_paid}. Ref: {tranche.payment_reference or 'N/A'}"
+            )
             messages.success(request, f"Recorded payment tranche of ₦{tranche.amount:,.2f} for {allocation.subcontractor.name} successfully!")
         else:
             messages.error(request, "Failed to record payment tranche. Please check form values.")
@@ -753,5 +838,52 @@ def export_projects_excel(request):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     wb.save(response)
     return response
+
+
+class ProjectActivityLogListView(LoginRequiredMixin, ListView):
+    model = ProjectActivityLog
+    template_name = 'projects/project_activity_log.html'
+    context_object_name = 'activities'
+    paginate_by = 30
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related('project', 'user')
+        action = self.request.GET.get('action', '').strip()
+        project_id = self.request.GET.get('project', '').strip()
+        q = self.request.GET.get('q', '').strip()
+
+        if action:
+            qs = qs.filter(action_type=action)
+        if project_id:
+            qs = qs.filter(project_id=project_id)
+        if q:
+            qs = qs.filter(
+                Q(title__icontains=q) | Q(description__icontains=q) | Q(project__project_code__icontains=q) | Q(project__project_name__icontains=q)
+            )
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['action_choices'] = ProjectActivityLog.ACTION_CHOICES
+        context['projects'] = Project.objects.all().order_by('project_code')
+        context['selected_action'] = self.request.GET.get('action', '')
+        context['selected_project'] = self.request.GET.get('project', '')
+        context['q'] = self.request.GET.get('q', '')
+
+        # Preserve query string for pagination links
+        get_copy = self.request.GET.copy()
+        if 'page' in get_copy:
+            del get_copy['page']
+        context['querystring'] = get_copy.urlencode()
+
+        if context.get('is_paginated'):
+            page_obj = context['page_obj']
+            context['page_range'] = list(page_obj.paginator.get_elided_page_range(
+                number=page_obj.number, on_each_side=1, on_ends=1
+            ))
+        else:
+            context['page_range'] = [1]
+
+        return context
 
 

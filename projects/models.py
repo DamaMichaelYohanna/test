@@ -481,3 +481,38 @@ class ProjectMonitoringImage(models.Model):
     def __str__(self):
         return f"Image for {self.monitoring_log.project.project_code} log on {self.monitoring_log.start_date}"
 
+
+class ProjectActivityLog(models.Model):
+    """
+    Audit log / change notifications for projects.
+    Tracks project creation, field modifications, stage updates, financial changes,
+    subcontractor allocations, and site monitoring logs.
+    """
+    ACTION_CHOICES = [
+        ('CREATE', 'Project Created'),
+        ('UPDATE', 'Project Details Updated'),
+        ('FEE', 'Fee Schedule Updated'),
+        ('STAGE', 'Lifecycle Stage Progressed'),
+        ('EXPENSE', 'Unplanned Expense Logged'),
+        ('SUBCONTRACTOR', 'Subcontractor Allocated'),
+        ('TRANCHE', 'Payment Tranche Disbursed'),
+        ('MONITORING', 'Site Monitoring Logged'),
+    ]
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='activity_logs')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='project_activity_logs')
+    action_type = models.CharField(max_length=20, choices=ACTION_CHOICES, default='UPDATE')
+    title = models.CharField(max_length=255, help_text="Short headline summary of the change")
+    description = models.TextField(blank=True, null=True, help_text="Detailed summary of updates or observations")
+    changes_json = models.JSONField(default=dict, blank=True, help_text="Before & after field value diffs")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Project Activity Log"
+        verbose_name_plural = "Project Activity Logs"
+
+    def __str__(self):
+        user_str = self.user.username if self.user else "System"
+        return f"[{self.get_action_type_display()}] {self.project.project_code} by {user_str} on {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
