@@ -31,6 +31,24 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         return context
 
 
+def toggle_2fa_view(request):
+    """Allows authenticated user to toggle or activate 2FA on their profile."""
+    if not request.user.is_authenticated:
+        return redirect('core:login')
+    
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    profile.is_2fa_enabled = not profile.is_2fa_enabled
+    profile.save()
+    
+    if profile.is_2fa_enabled:
+        messages.success(request, "Two-Factor Authentication (2FA) has been successfully activated for your account.")
+    else:
+        messages.warning(request, "Two-Factor Authentication (2FA) is currently deactivated.")
+        
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or reverse_lazy('users:profile')
+    return redirect(next_url)
+
+
 class UserListView(ManagementAccessMixin, ListView):
     model = User
     template_name = 'users/user_list.html'

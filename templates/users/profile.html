@@ -35,5 +35,44 @@
       <p class="text-lg font-semibold text-gray-900">{{ profile.last_active_project|default:'-' }}</p>
     </div>
   </div>
+
+  <!-- Security & 2FA Activation Section -->
+  <div class="px-6 md:px-8 py-5 border-t border-gray-100 bg-gray-50/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    <div class="flex items-center space-x-3">
+      <div class="{% if profile.is_2fa_enabled %}bg-emerald-100 text-emerald-700{% else %}bg-amber-100 text-amber-700{% endif %} p-3 rounded-xl">
+        <span class="material-symbols-outlined text-2xl">verified_user</span>
+      </div>
+      <div>
+        <div class="text-sm font-bold text-gray-900 flex items-center gap-2">
+          Two-Factor Authentication (2FA)
+          {% if profile.is_2fa_enabled %}
+            <span class="bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">Activated</span>
+          {% else %}
+            <span class="bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold px-2.5 py-0.5 rounded-full">Not Activated</span>
+          {% endif %}
+        </div>
+        <p class="text-xs text-gray-500 mt-0.5">
+          {% if profile.is_2fa_enabled %}
+            Your account is secured with Two-Factor Authentication.
+          {% else %}
+            Protect your staff account by enabling 2FA security verification.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <form method="POST" action="{% url 'users:toggle_2fa' %}">
+      {% csrf_token %}
+      {% if profile.is_2fa_enabled %}
+        <button type="submit" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition flex items-center">
+          <span class="material-symbols-outlined text-xs mr-1 text-red-500">do_not_disturb_on</span> Deactivate 2FA
+        </button>
+      {% else %}
+        <button type="submit" class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition flex items-center">
+          <span class="material-symbols-outlined text-sm mr-1.5">shield_lock</span> Activate 2FA Now
+        </button>
+      {% endif %}
+    </form>
+  </div>
 </div>
 {% endblock %}

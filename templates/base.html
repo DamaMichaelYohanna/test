@@ -48,7 +48,7 @@
   </style>
 </head>
 
-<body class="flex flex-col min-h-screen text-gray-800 bg-gray-50" x-data="{ sidebarOpen: false }">
+<body class="flex flex-col min-h-screen text-gray-800 bg-gray-50" x-data="{ sidebarOpen: false, show2FaModal: {% if user.is_authenticated and not has_2fa_enabled %}!sessionStorage.getItem('2fa_modal_dismissed_session'){% else %}false{% endif %} }">
   <!-- Top brand navbar -->
   <header
     class="bg-white border-b border-gray-200 flex justify-between items-center h-16 px-4 md:px-6 sticky top-0 z-50">
@@ -220,6 +220,78 @@
       {% block content %}{% endblock %}
     </main>
   </div>
+
+  {% if user.is_authenticated and not has_2fa_enabled %}
+  <!-- Beautiful 2FA Activation Warning Popup Modal -->
+  <div x-show="show2FaModal"
+       x-transition:enter="transition ease-out duration-300"
+       x-transition:enter-start="opacity-0 scale-95"
+       x-transition:enter-end="opacity-100 scale-100"
+       x-transition:leave="transition ease-in duration-200"
+       x-transition:leave-start="opacity-100 scale-100"
+       x-transition:leave-end="opacity-0 scale-95"
+       class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-900/75 backdrop-blur-md"
+       style="display: none;">
+    
+    <div class="bg-white rounded-3xl shadow-2xl border border-amber-100 max-w-lg w-full overflow-hidden transform transition-all relative">
+      
+      <!-- Top Decorative Banner -->
+      <div class="h-2.5 bg-gradient-to-r from-amber-400 via-[#bfa12c] to-amber-600"></div>
+
+      <div class="p-6 sm:p-8 text-center">
+        <!-- Animated / Glowing Icon Badge -->
+        <div class="mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-amber-50 border-2 border-amber-200 rounded-full flex items-center justify-center mb-5 shadow-inner relative">
+          <span class="material-symbols-outlined text-3xl sm:text-4xl text-[#bfa12c]">shield_lock</span>
+          <span class="absolute -top-1 -right-1 flex h-4 w-4">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-4 w-4 bg-amber-500"></span>
+          </span>
+        </div>
+
+        <!-- Title & Status Badge -->
+        <h3 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight mb-2">
+          2FA Security Recommendation
+        </h3>
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200 mb-4">
+          <span class="material-symbols-outlined text-sm">warning</span> Two-Factor Authentication Inactive
+        </div>
+
+        <!-- Descriptive Body -->
+        <p class="text-gray-600 text-sm leading-relaxed mb-6">
+          Hello <span class="font-bold text-gray-900">{{ user.get_full_name|default:user.username }}</span>! Your account does not have <span class="font-bold text-gray-900">Two-Factor Authentication (2FA)</span> activated. To protect company financial data and project records, please activate 2FA in your account settings.
+        </p>
+
+        <!-- Security Callout Box -->
+        <div class="bg-amber-50/80 border-l-4 border-[#bfa12c] p-4 rounded-r-xl text-left text-xs text-amber-950 mb-6 flex items-start space-x-3">
+          <span class="material-symbols-outlined text-lg text-[#bfa12c] shrink-0 mt-0.5">info</span>
+          <div>
+            <strong class="font-semibold block mb-0.5">Notice:</strong>
+            You can proceed to your dashboard now, but we strongly advise enabling 2FA for enhanced account security.
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <form method="POST" action="{% url 'users:toggle_2fa' %}" class="w-full sm:w-auto">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'users:profile' %}">
+            <button type="submit"
+                    class="w-full sm:w-auto bg-[#bfa12c] hover:bg-[#a88d25] text-white font-bold px-5 py-3 rounded-xl text-sm shadow-md transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-lg mr-2">shield_lock</span>
+              Enable 2FA Now
+            </button>
+          </form>
+
+          <button @click="sessionStorage.setItem('2fa_modal_dismissed_session', 'true'); show2FaModal = false;"
+                  class="w-full sm:w-auto bg-gray-900 hover:bg-black text-white font-bold px-6 py-3 rounded-xl text-sm shadow-md transition flex items-center justify-center">
+            Proceed to Dashboard
+            <span class="material-symbols-outlined text-lg ml-2">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </body>
 
 </html>

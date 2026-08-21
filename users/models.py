@@ -47,6 +47,11 @@ class Profile(models.Model):
         null=True,
         blank=True,
     )
+    is_2fa_enabled = models.BooleanField(
+        default=False, 
+        verbose_name="2FA Activated",
+        help_text="Designates whether Two-Factor Authentication is activated for this account."
+    )
 
     def __str__(self):
         title = self.job_title.name if self.job_title else 'No Title Assigned'
