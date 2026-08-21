@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}Executive Summary Dashboard - Azanigroup Logistics{% endblock %}
+{% block title %}Executive Summary - Azanigroup Logistics{% endblock %}
 
 {% block content %}
 <div class="space-y-8" x-data="{ activeTab: 'summary' }">
@@ -9,8 +9,7 @@
   <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 pb-6 border-b border-slate-200">
     <div>
       <div class="flex items-center space-x-3">
-        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Corporate Executive Summary</h1>
-        <span class="px-3 py-1 bg-slate-100 text-slate-700 font-bold text-xs rounded-full uppercase tracking-wider border border-slate-200">Portfolio View</span>
+        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Executive Summary</h1>
       </div>
       <p class="mt-1.5 text-sm text-slate-500">
         Aggregated project portfolio metrics, category monitoring parameters, and financial status.
@@ -18,7 +17,7 @@
     </div>
     
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-      <!-- Dashboard Filters Form (Year & Project) -->
+      <!-- Dashboard Filters Form (Year, Agency/MDA & Project) -->
       <form method="GET" action="" class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
         {% if project %}
         <input type="hidden" name="project" value="{{ project.pk }}">
@@ -33,6 +32,16 @@
           {% endfor %}
         </select>
 
+        <!-- Agency / MDA Filter Dropdown -->
+        <select name="mda" onchange="this.form.submit()"
+          class="bg-white border border-slate-300 text-slate-800 text-sm rounded-lg focus:ring-[#bfa12c] focus:border-[#bfa12c] block px-3.5 py-2 cursor-pointer transition hover:border-slate-400 font-semibold shadow-xs max-w-[200px] truncate"
+          title="Filter by Agency / MDA">
+          <option value="">ALL AGENCIES / MDAs</option>
+          {% for m in mda_choices %}
+          <option value="{{ m }}" {% if selected_mda == m %}selected{% endif %} title="{{ m }}">{{ m|truncatechars:26 }}</option>
+          {% endfor %}
+        </select>
+
         <!-- Portfolio Selector Dropdown -->
         <select name="project" onchange="this.form.submit()"
           class="bg-white border border-slate-300 text-slate-800 text-sm rounded-lg focus:ring-[#bfa12c] focus:border-[#bfa12c] block w-full px-3.5 py-2 cursor-pointer transition hover:border-slate-400 font-semibold shadow-xs">
@@ -42,7 +51,7 @@
           {% endfor %}
         </select>
 
-        {% if selected_year or project %}
+        {% if selected_year or selected_mda or project %}
         <a href="{% url 'core:dashboard' %}"
           class="px-3 py-2 bg-white border border-slate-300 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-50 transition flex items-center whitespace-nowrap shadow-xs"
           title="Reset Dashboard Filters">

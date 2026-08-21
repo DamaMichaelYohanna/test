@@ -198,6 +198,7 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
         from logistic.models import SiteStore, MilestoneCashRequest
         
         selected_year = self.request.GET.get('year', '').strip()
+        selected_mda = self.request.GET.get('mda', '').strip()
 
         # 1. Scope determination
         if self.project:
@@ -207,6 +208,8 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
 
         if selected_year:
             projects_qs = projects_qs.filter(created_at__year=selected_year)
+        if selected_mda:
+            projects_qs = projects_qs.filter(mda__icontains=selected_mda)
 
         # Prefetch lifecycle stages to eliminate N+1 queries in roadmap rendering
         projects_qs = projects_qs.prefetch_related('lifecycle_stages')
@@ -353,6 +356,7 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
             set(Project.objects.dates('created_at', 'year').values_list('created_at__year', flat=True)),
             reverse=True
         )
+        mda_choices = [m for m in Project.objects.values_list('mda', flat=True).distinct().order_by('mda') if m]
 
         # Category Monitoring Matrix (CONSTRUCTION, SUPPLY, EMPOWERMENT, POWER, TRAINING)
         monitoring_matrix = []
@@ -368,19 +372,29 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
             c_awaiting = c_total - c_awarded
             c_budget = cat_qs.aggregate(val=Sum('budget_amount'))['val'] or Decimal('0.00')
             c_awarded_amt = cat_qs.aggregate(val=Sum('actual_contract_amount'))['val'] or Decimal('0.00')
-
+            c_in_house = cat_qs.filter(
+                Q(award_letter_and_boq__isnull=False) & ~Q(award_letter_and_boq='')
+            ).aggregate(val=Sum('actual_contract_amount'))['val'] or Decimal('0.00')
+            c_given_out = max(Decimal('0.00'), c_awarded_amt - c_in_house)
+            c_mob_rec = cat_qs.aggregate(val=Sum('mobilization_received'))['val'] or Decimal('0.00')
+            
             monitoring_matrix.append({
                 'category_name': cat_name,
                 'total_count': c_total,
                 'awarded_count': c_awarded,
                 'awaiting_count': c_awaiting,
                 'budget_amount': c_budget,
-                'amount_awarded': c_awarded_amt,
+                'awarded_amount': c_awarded_amt,
+                'in_house_awarded': c_in_house,
+                'given_out_awarded': c_given_out,
+                'mobilization_received': c_mob_rec,
             })
 
         context.update({
             'selected_year': selected_year,
+            'selected_mda': selected_mda,
             'year_choices': year_choices,
+            'mda_choices': mda_choices,
             'is_executive_or_management': is_executive_or_management,
             'total_projects_count': total_projects_count,
             'total_budget_amount': total_budget_amount,
@@ -412,4 +426,3 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
             'external_contractors': Subcontractor.objects.filter(company_type='EXTERNAL').count(),
         })
         return context
-
