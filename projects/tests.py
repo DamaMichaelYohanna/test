@@ -105,6 +105,7 @@ class ProjectRestructuringTests(TestCase):
             # Formset data fields
             'fees-0-fee_type': self.fee_admin.pk,
             'fees-0-amount': '150000.00',
+            'fees-0-status': 'PENDING',
             'fees-0-id': '',
         }
         
@@ -202,3 +203,63 @@ class ProjectRestructuringTests(TestCase):
         
         # 4. Verify weighted average execution level: (80% * 60 + 30% * 40) / 100 = (4800 + 1200) / 100 = 60%
         self.assertEqual(self.parent_project.average_execution_percentage, 60)
+
+    def test_project_list_view_awarded_filter(self):
+        self.client.login(username="staffuser", password="testpassword")
+
+        # Create an awarded project with actual contract amount
+        awarded_project = Project.objects.create(
+            project_code="PRJ-AWARDED",
+            mda="Ministry of Water",
+            project_name="Dam Construction",
+            location="Kano",
+            category=self.category_const,
+            budget_amount=20000000.00,
+            actual_contract_amount=18000000.00,
+            current_phase="POST_AWARD"
+        )
+
+        # Create a pre-award project
+        pre_award_project = Project.objects.create(
+            project_code="PRJ-PRE",
+            mda="Ministry of Water",
+            project_name="Feasibility Study",
+            location="Kano",
+            category=self.category_const,
+            budget_amount=5000000.00,
+            actual_contract_amount=0.00,
+            current_phase="PRE_AWARD"
+        )
+
+        url = reverse('projects:project_list')
+
+        # Test filtering for awarded projects
+        response_awarded = self.client.get(url, {'awarded': 'awarded'})
+        self.assertEqual(response_awarded.status_code, 200)
+        projects_awarded = response_awarded.context['projects']
+        self.assertIn(awarded_project, projects_awarded)
+        self.assertNotIn(pre_award_project, projects_awarded)
+
+        # Test filtering for pre-award projects
+        response_pre = self.client.get(url, {'awarded': 'pre_award'})
+        self.assertEqual(response_pre.status_code, 200)
+        projects_pre = response_pre.context['projects']
+        self.assertIn(pre_award_project, projects_pre)
+        self.assertNotIn(awarded_project, projects_pre)
+
+        # Test filtering by Category Name (e.g. POWER from dashboard click)
+        response_cat = self.client.get(url, {'category': 'POWER'})
+        self.assertEqual(response_cat.status_code, 200)
+        projects_cat = response_cat.context['projects']
+        self.assertIn(self.parent_project, projects_cat)
+        self.assertNotIn(awarded_project, projects_cat)
+
+        # Test combined category and MDA filter
+        response_combined = self.client.get(url, {'category': 'Construction', 'mda': 'Ministry of Water'})
+        self.assertEqual(response_combined.status_code, 200)
+        projects_combined = response_combined.context['projects']
+        self.assertIn(awarded_project, projects_combined)
+        self.assertIn(pre_award_project, projects_combined)
+        self.assertNotIn(self.parent_project, projects_combined)
+
+

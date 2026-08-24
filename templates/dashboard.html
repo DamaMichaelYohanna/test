@@ -64,27 +64,32 @@
 
   <!-- Hero KPI Banner (Minimal Monochromatic Dark Theme) -->
   <div class="bg-slate-900 rounded-2xl shadow-lg p-5 sm:p-6 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-slate-800">
-    <div class="flex items-center space-x-4 sm:space-x-5">
-      <div class="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-[#bfa12c] font-black text-xl sm:text-2xl shadow-inner">
+    <a href="{% url 'projects:project_list' %}{% if selected_year or selected_mda %}?{% if selected_year %}year={{ selected_year }}{% endif %}{% if selected_year and selected_mda %}&{% endif %}{% if selected_mda %}mda={{ selected_mda }}{% endif %}{% endif %}"
+       class="flex items-center space-x-4 sm:space-x-5 group hover:opacity-95 transition">
+      <div class="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl bg-white/10 border border-white/15 group-hover:border-[#bfa12c]/50 flex items-center justify-center text-[#bfa12c] font-black text-xl sm:text-2xl shadow-inner transition">
         {{ total_projects_count }}
       </div>
       <div>
-        <h2 class="text-lg sm:text-xl font-bold tracking-tight text-white uppercase">Total Number of Projects</h2>
+        <h2 class="text-lg sm:text-xl font-bold tracking-tight text-white uppercase group-hover:text-[#bfa12c] transition flex items-center">
+          Total Number of Projects
+          <span class="material-symbols-outlined text-sm ml-1.5 opacity-0 group-hover:opacity-100 transition text-[#bfa12c]">arrow_forward</span>
+        </h2>
         <p class="text-xs text-slate-400 font-medium mt-0.5">
           {% if selected_year %}Filtered Portfolio for Year <span class="text-[#bfa12c] font-bold">{{ selected_year }}</span>{% else %}Appropriation & Supplementary Contracts Portfolio{% endif %}
         </p>
       </div>
-    </div>
+    </a>
 
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 text-left sm:text-right border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-8 w-full md:w-auto">
-      <div>
-        <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Portfolio Budget</span>
-        <span class="text-base sm:text-lg font-black text-white">₦{{ total_budget_amount|floatformat:0|intcomma }}</span>
-      </div>
-      <div>
-        <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total Awarded Amount</span>
+      <a href="{% url 'projects:project_list' %}{% if selected_year or selected_mda %}?{% if selected_year %}year={{ selected_year }}{% endif %}{% if selected_year and selected_mda %}&{% endif %}{% if selected_mda %}mda={{ selected_mda }}{% endif %}{% endif %}"
+         class="group block hover:opacity-90 transition">
+        <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider group-hover:text-slate-200">Total Portfolio Budget</span>
+        <span class="text-base sm:text-lg font-black text-white group-hover:text-[#bfa12c] transition">₦{{ total_budget_amount|floatformat:0|intcomma }}</span>
+      </a>
+      <a href="{% url 'projects:project_list' %}?awarded=awarded{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_mda %}&mda={{ selected_mda }}{% endif %}" class="group block hover:opacity-90 transition">
+        <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider group-hover:text-[#bfa12c]">Total Awarded Amount</span>
         <span class="text-base sm:text-lg font-black text-[#bfa12c]">₦{{ total_awarded_amount|floatformat:0|intcomma }}</span>
-      </div>
+      </a>
       <div class="col-span-2 sm:col-span-1">
         <span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Agencies / MDAs</span>
         <span class="text-base sm:text-lg font-black text-slate-300">{{ agency_count }} Agencies</span>
@@ -108,22 +113,23 @@
 
         <div class="divide-y divide-slate-100">
           <!-- Row 1: Total Budget Amount -->
-          <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50 hover:bg-slate-100/60 transition">
+          <a href="{% url 'projects:project_list' %}{% if selected_year or selected_mda %}?{% if selected_year %}year={{ selected_year }}{% endif %}{% if selected_year and selected_mda %}&{% endif %}{% if selected_mda %}mda={{ selected_mda }}{% endif %}{% endif %}"
+             class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50 hover:bg-slate-100/60 transition group block">
             <div>
-              <span class="font-extrabold text-xs uppercase tracking-wide text-slate-900">Total Budget Amount</span>
+              <span class="font-extrabold text-xs uppercase tracking-wide text-slate-900 group-hover:text-[#bfa12c] transition">Total Budget Amount</span>
               <span class="block text-[11px] text-slate-500 font-medium">(Appropriation & Supplementary Combined)</span>
             </div>
-            <span class="text-xl font-black text-slate-950">₦{{ total_budget_amount|floatformat:2|intcomma }}</span>
-          </div>
+            <span class="text-xl font-black text-slate-950 group-hover:text-[#bfa12c] transition">₦{{ total_budget_amount|floatformat:2|intcomma }}</span>
+          </a>
 
           <!-- Row 2: Total Amount of Awarded Projects -->
-          <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50 transition">
+          <a href="{% url 'projects:project_list' %}?awarded=awarded{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_mda %}&mda={{ selected_mda }}{% endif %}" class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50 transition group block">
             <div>
-              <span class="font-extrabold text-xs uppercase tracking-wide text-slate-900">Total Amount of Awarded Projects</span>
+              <span class="font-extrabold text-xs uppercase tracking-wide text-slate-900 group-hover:text-[#bfa12c] transition">Total Amount of Awarded Projects</span>
               <span class="block text-[11px] text-slate-500 font-medium">(Actual Awarded Contracts Portfolio)</span>
             </div>
-            <span class="text-xl font-black text-slate-900">₦{{ total_awarded_amount|floatformat:2|intcomma }}</span>
-          </div>
+            <span class="text-xl font-black text-slate-900 group-hover:text-[#bfa12c] transition">₦{{ total_awarded_amount|floatformat:2|intcomma }}</span>
+          </a>
 
           <!-- Row 3: Amount of Awarded Projects In-House -->
           <div class="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50 transition">
@@ -218,41 +224,58 @@
         <div class="p-4 space-y-4">
           <!-- Category Parameter Cards -->
           {% for item in monitoring_matrix %}
-          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/40 hover:bg-white hover:shadow-xs transition duration-150 space-y-3">
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/40 hover:bg-white hover:shadow-md transition duration-200 space-y-3">
             <div class="flex justify-between items-center border-b border-slate-200/80 pb-2">
-              <span class="font-bold text-sm text-slate-900 uppercase tracking-wider flex items-center">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#bfa12c] mr-2"></span>
+              <a href="{% url 'projects:project_list' %}?category={{ item.category_name }}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_mda %}&mda={{ selected_mda }}{% endif %}"
+                 class="font-bold text-sm text-slate-900 uppercase tracking-wider flex items-center hover:text-[#bfa12c] transition group"
+                 title="View all {{ item.category_name }} projects">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#bfa12c] mr-2 group-hover:scale-125 transition"></span>
                 {{ item.category_name }}
-              </span>
-              <span class="text-xs font-bold text-slate-700 bg-white border border-slate-200 px-2 py-0.5 rounded-md">
-                Total: {{ item.total_count }} Projects
-              </span>
+                <span class="material-symbols-outlined text-xs ml-1 opacity-0 group-hover:opacity-100 transition text-[#bfa12c]">arrow_forward</span>
+              </a>
+              <a href="{% url 'projects:project_list' %}?category={{ item.category_name }}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_mda %}&mda={{ selected_mda }}{% endif %}"
+                 class="text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:border-[#bfa12c] hover:text-[#bfa12c] px-2 py-0.5 rounded-md transition shadow-2xs"
+                 title="View all {{ item.category_name }} projects">
+                Total: {{ item.total_count }} Project{{ item.total_count|pluralize }}
+              </a>
             </div>
 
             <!-- Stats Grid -->
             <div class="grid grid-cols-2 gap-2 text-xs">
-              <div class="bg-white p-2.5 rounded-lg border border-slate-200">
-                <span class="text-[10px] text-slate-400 uppercase font-bold block">Awarded Projects</span>
-                <span class="font-extrabold text-slate-900 text-sm">{{ item.awarded_count }}</span>
-              </div>
+              <a href="{% url 'projects:project_list' %}?category={{ item.category_name }}&awarded=awarded{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_mda %}&mda={{ selected_mda }}{% endif %}"
+                 class="bg-white hover:bg-emerald-50/70 p-2.5 rounded-lg border border-slate-200 hover:border-emerald-300 transition group block"
+                 title="Filter for Awarded {{ item.category_name }} projects">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] text-slate-400 group-hover:text-emerald-700 uppercase font-bold block transition">Awarded Projects</span>
+                  <span class="material-symbols-outlined text-xs text-slate-300 group-hover:text-emerald-600 transition">chevron_right</span>
+                </div>
+                <span class="font-extrabold text-slate-900 group-hover:text-emerald-700 text-sm transition">{{ item.awarded_count }}</span>
+              </a>
 
-              <div class="bg-white p-2.5 rounded-lg border border-slate-200">
-                <span class="text-[10px] text-slate-400 uppercase font-bold block">Awaiting Award</span>
-                <span class="font-extrabold text-slate-700 text-sm">{{ item.awaiting_count }}</span>
-              </div>
+              <a href="{% url 'projects:project_list' %}?category={{ item.category_name }}&awarded=pre_award{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_mda %}&mda={{ selected_mda }}{% endif %}"
+                 class="bg-white hover:bg-amber-50/70 p-2.5 rounded-lg border border-slate-200 hover:border-amber-300 transition group block"
+                 title="Filter for Awaiting Award {{ item.category_name }} projects">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] text-slate-400 group-hover:text-amber-700 uppercase font-bold block transition">Awaiting Award</span>
+                  <span class="material-symbols-outlined text-xs text-slate-300 group-hover:text-amber-600 transition">chevron_right</span>
+                </div>
+                <span class="font-extrabold text-slate-700 group-hover:text-amber-700 text-sm transition">{{ item.awaiting_count }}</span>
+              </a>
             </div>
 
             <!-- Financial Totals -->
-            <div class="bg-slate-900 text-white p-3 rounded-lg grid grid-cols-2 gap-2 text-[11px]">
+            <a href="{% url 'projects:project_list' %}?category={{ item.category_name }}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_mda %}&mda={{ selected_mda }}{% endif %}"
+               class="bg-slate-900 hover:bg-slate-800 text-white p-3 rounded-lg grid grid-cols-2 gap-2 text-[11px] transition block group"
+               title="View {{ item.category_name }} projects financial portfolio">
               <div>
                 <span class="text-[9px] text-slate-400 uppercase font-bold block">Budget Amount</span>
                 <span class="font-bold text-slate-200">₦{{ item.budget_amount|floatformat:0|intcomma }}</span>
               </div>
               <div>
                 <span class="text-[9px] text-slate-400 uppercase font-bold block">Amount Awarded</span>
-                <span class="font-bold text-[#bfa12c]">₦{{ item.amount_awarded|floatformat:0|intcomma }}</span>
+                <span class="font-bold text-[#bfa12c] group-hover:text-[#ffd700] transition">₦{{ item.awarded_amount|floatformat:0|intcomma }}</span>
               </div>
-            </div>
+            </a>
           </div>
           {% endfor %}
         </div>

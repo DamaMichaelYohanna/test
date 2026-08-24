@@ -34,6 +34,7 @@ class ProjectListView(LoginRequiredMixin, ListView):
         mda = self.request.GET.get('mda', '').strip()
         category = self.request.GET.get('category', '').strip()
         project_type = self.request.GET.get('project_type', '').strip()
+        awarded = self.request.GET.get('awarded', '').strip().lower()
 
         if q:
             qs = qs.filter(
@@ -44,20 +45,49 @@ class ProjectListView(LoginRequiredMixin, ListView):
         if mda:
             qs = qs.filter(mda__icontains=mda)
         if category:
-            qs = qs.filter(category_id=category)
+            if category.isdigit():
+                qs = qs.filter(category_id=category)
+            else:
+                if category.upper() == 'CONSTRUCTION':
+                    qs = qs.filter(Q(category__name__iexact='CONSTRUCTION') | Q(category__name__icontains='Civil'))
+                else:
+                    qs = qs.filter(category__name__iexact=category)
         if project_type:
             qs = qs.filter(project_type=project_type)
+        if awarded in ['awarded', 'yes', '1', 'true']:
+            qs = qs.filter(
+                Q(actual_contract_amount__gt=0) |
+                Q(current_phase__in=['POST_AWARD', 'EXECUTION']) |
+                (Q(award_letter_and_boq__isnull=False) & ~Q(award_letter_and_boq=''))
+            )
+        elif awarded in ['pre_award', 'no', '0', 'false']:
+            qs = qs.filter(
+                Q(actual_contract_amount=0) &
+                Q(current_phase='PRE_AWARD') &
+                (Q(award_letter_and_boq__isnull=True) | Q(award_letter_and_boq=''))
+            )
 
         return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Pass current filter values back so the form stays populated
+        selected_cat = self.request.GET.get('category', '').strip()
+        cat_display = ''
+        if selected_cat:
+            if selected_cat.isdigit():
+                c = ProjectCategory.objects.filter(pk=selected_cat).first()
+                cat_display = c.name if c else selected_cat
+            else:
+                cat_display = selected_cat
+
         context['q'] = self.request.GET.get('q', '')
         context['selected_year'] = self.request.GET.get('year', '')
         context['selected_mda'] = self.request.GET.get('mda', '')
-        context['selected_category'] = self.request.GET.get('category', '')
+        context['selected_category'] = selected_cat
+        context['selected_category_display'] = cat_display
         context['selected_type'] = self.request.GET.get('project_type', '')
+        context['selected_awarded'] = self.request.GET.get('awarded', '')
 
         # Preserve filter parameters for pagination links
         get_copy = self.request.GET.copy()
@@ -712,6 +742,7 @@ def export_projects_excel(request):
     mda = request.GET.get('mda', '').strip()
     category = request.GET.get('category', '').strip()
     project_type = request.GET.get('project_type', '').strip()
+    awarded = request.GET.get('awarded', '').strip().lower()
 
     if q:
         qs = qs.filter(Q(project_code__icontains=q) | Q(project_name__icontains=q))
@@ -720,9 +751,27 @@ def export_projects_excel(request):
     if mda:
         qs = qs.filter(mda__icontains=mda)
     if category:
-        qs = qs.filter(category_id=category)
+        if category.isdigit():
+            qs = qs.filter(category_id=category)
+        else:
+            if category.upper() == 'CONSTRUCTION':
+                qs = qs.filter(Q(category__name__iexact='CONSTRUCTION') | Q(category__name__icontains='Civil'))
+            else:
+                qs = qs.filter(category__name__iexact=category)
     if project_type:
         qs = qs.filter(project_type=project_type)
+    if awarded in ['awarded', 'yes', '1', 'true']:
+        qs = qs.filter(
+            Q(actual_contract_amount__gt=0) |
+            Q(current_phase__in=['POST_AWARD', 'EXECUTION']) |
+            (Q(award_letter_and_boq__isnull=False) & ~Q(award_letter_and_boq=''))
+        )
+    elif awarded in ['pre_award', 'no', '0', 'false']:
+        qs = qs.filter(
+            Q(actual_contract_amount=0) &
+            Q(current_phase='PRE_AWARD') &
+            (Q(award_letter_and_boq__isnull=True) | Q(award_letter_and_boq=''))
+        )
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -748,6 +797,8 @@ def export_projects_excel(request):
     if mda: filter_info.append(f"Agency/MDA: {mda}")
     if category: filter_info.append(f"Category ID: {category}")
     if project_type: filter_info.append(f"Type: {project_type}")
+    if awarded in ['awarded', 'yes', '1', 'true']: filter_info.append("Status: Awarded Projects")
+    elif awarded in ['pre_award', 'no', '0', 'false']: filter_info.append("Status: Pre-Award Projects")
     if q: filter_info.append(f"Search: '{q}'")
     
     filter_str = " | ".join(filter_info) if filter_info else "All Projects (Unfiltered)"

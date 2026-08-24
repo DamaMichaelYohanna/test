@@ -82,8 +82,19 @@
         class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50 truncate">
         <option value="">All Categories</option>
         {% for c in category_choices %}
-        <option value="{{ c.id }}" {% if selected_category == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+        <option value="{{ c.name }}" {% if selected_category == c.id|stringformat:"s" or selected_category|lower == c.name|lower %}selected{% endif %}>{{ c.name }}</option>
         {% endfor %}
+      </select>
+    </div>
+
+    <!-- Awarded filter -->
+    <div class="w-full md:w-40 flex-shrink-0">
+      <select name="awarded"
+        class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50 truncate"
+        title="Filter by Award Status">
+        <option value="">All Statuses</option>
+        <option value="awarded" {% if selected_awarded == 'awarded' or selected_awarded == 'yes' or selected_awarded == '1' or selected_awarded == 'true' %}selected{% endif %}>Awarded Projects</option>
+        <option value="pre_award" {% if selected_awarded == 'pre_award' or selected_awarded == 'no' or selected_awarded == '0' or selected_awarded == 'false' %}selected{% endif %}>Pre-Award / Pending</option>
       </select>
     </div>
 
@@ -93,7 +104,7 @@
         class="bg-[#3e5052] hover:bg-[#2c3a3c] text-white px-4 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap flex-1 md:flex-none text-center">
         Apply
       </button>
-      {% if q or selected_year or selected_mda or selected_category or selected_type %}
+      {% if q or selected_year or selected_mda or selected_category or selected_type or selected_awarded %}
       <a href="{% url 'projects:project_list' %}"
         class="bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap flex items-center justify-center flex-1 md:flex-none">
         <span class="material-symbols-outlined text-sm mr-1">close</span> Clear
@@ -108,7 +119,7 @@
       {% if is_paginated %}
       <span class="font-semibold text-gray-700">Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }} project{{ paginator.count|pluralize }}</span>
       {% else %}
-      <span class="font-semibold text-gray-700">{{ paginator.count|default:projects|length }} project{{ paginator.count|default:projects|length|pluralize }}</span>
+      <span class="font-semibold text-gray-700">{{ projects|length }} project{{ projects|length|pluralize }}</span>
       {% endif %}
 
       {% if q %}
@@ -121,7 +132,12 @@
       <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-0.5 rounded-full font-medium">MDA: {{ selected_mda }}</span>
       {% endif %}
       {% if selected_category %}
-      <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-medium">Category Filter</span>
+      <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-medium">Category: {{ selected_category_display|default:selected_category }}</span>
+      {% endif %}
+      {% if selected_awarded == 'awarded' or selected_awarded == 'yes' or selected_awarded == '1' or selected_awarded == 'true' %}
+      <span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full font-medium">Status: Awarded</span>
+      {% elif selected_awarded == 'pre_award' or selected_awarded == 'no' or selected_awarded == '0' or selected_awarded == 'false' %}
+      <span class="bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-full font-medium">Status: Pre-Award</span>
       {% endif %}
     </div>
   </div>
