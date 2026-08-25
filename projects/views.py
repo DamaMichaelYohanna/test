@@ -249,7 +249,8 @@ class ProjectUpdateView(Level3RequiredMixin, UpdateView):
                 ('budget_amount', 'Budget Amount'),
                 ('actual_contract_amount', 'Contract Amount'),
                 ('execution_level_percentage', 'Execution %'),
-                ('technical_status', 'Technical Status'),
+                ('technical_submission_date', 'Technical Submission Date'),
+                ('financial_submission_date', 'Financial Submission Date'),
                 ('payment_status', 'Payment Status'),
                 ('current_phase', 'Current Phase'),
             ]
@@ -875,7 +876,7 @@ def export_projects_excel(request):
         "Category", "Staff Assigned", "Project Type", "Execution Mode", "Completion %",
         "Budget Amount (NGN)", "Contract Amount (NGN)", "Total Fees (NGN)", 
         "Total Stage Costs (NGN)", "Unplanned Costs (NGN)", "Subcontractor Agreed (NGN)",
-        "Consolidated Expenses (NGN)", "Net Projected Margin (NGN)", "Technical Status", "Payment Status"
+        "Consolidated Expenses (NGN)", "Net Projected Margin (NGN)", "Technical Submission Date", "Financial Submission Date", "Payment Status"
     ]
     ws.append(headers)
     hdr_row = ws.max_row
@@ -883,7 +884,7 @@ def export_projects_excel(request):
         cell = ws.cell(row=hdr_row, column=c_idx)
         cell.font = header_font
         cell.fill = header_fill
-        cell.alignment = Alignment(horizontal="center" if c_idx in [1, 10, 11, 20, 21] else "left", vertical="center")
+        cell.alignment = Alignment(horizontal="center" if c_idx in [1, 10, 11, 20, 21, 22] else "left", vertical="center")
 
     total_budget_sum = 0.0
     total_contract_sum = 0.0
@@ -912,11 +913,14 @@ def export_projects_excel(request):
         total_expenses_sum += tot_exp
         total_margin_sum += net_marg
 
+        tech_date = p.technical_submission_date.strftime('%Y-%m-%d') if p.technical_submission_date else "-"
+        fin_date = p.financial_submission_date.strftime('%Y-%m-%d') if p.financial_submission_date else "-"
+
         row_data = [
             idx, p.project_code, p.project_name, p.short_mda, p.lot or "-", p.location or "-",
             cat_name, staff_name, p_type, e_mode, f"{p.execution_level_percentage}%",
             b_amt, c_amt, f_amt, s_amt, u_amt, sub_amt, tot_exp, net_marg,
-            p.technical_status or "-", p.payment_status or "-"
+            tech_date, fin_date, p.payment_status or "-"
         ]
         ws.append(row_data)
         curr_row = ws.max_row
@@ -929,7 +933,7 @@ def export_projects_excel(request):
     ws.append([])
     summary_row = [
         "TOTALS", "", "", f"Total Records: {qs.count()}", "", "", "", "", "", "", "",
-        total_budget_sum, total_contract_sum, total_fees_sum, "", "", "", total_expenses_sum, total_margin_sum, "", ""
+        total_budget_sum, total_contract_sum, total_fees_sum, "", "", "", total_expenses_sum, total_margin_sum, "", "", ""
     ]
     ws.append(summary_row)
     sum_r = ws.max_row

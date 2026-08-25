@@ -203,12 +203,12 @@
               <div class="text-gray-900 font-bold mt-0.5">₦{{ project.budget_amount|default:0|intcomma }}</div>
             </div>
             <div>
-              <div class="text-xs text-gray-500 uppercase font-semibold">Technical Status</div>
-              <div class="text-gray-900 mt-0.5">{{ project.technical_status|default:"-" }}</div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Technical Submission Date</div>
+              <div class="text-gray-900 mt-0.5">{{ project.technical_submission_date|date:"M d, Y"|default:"-" }}</div>
             </div>
             <div>
-              <div class="text-xs text-gray-500 uppercase font-semibold">Financial Status</div>
-              <div class="text-gray-900 mt-0.5">{{ project.financial_status|default:"-" }}</div>
+              <div class="text-xs text-gray-500 uppercase font-semibold">Financial Submission Date</div>
+              <div class="text-gray-900 mt-0.5">{{ project.financial_submission_date|date:"M d, Y"|default:"-" }}</div>
             </div>
           </div>
           

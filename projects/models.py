@@ -82,8 +82,8 @@ class Project(models.Model):
     final_companies = models.TextField(blank=True, null=True, verbose_name="Final Companies")
     back_up_companies = models.TextField(blank=True, null=True, verbose_name="Back up Companies")
     updated_recommended_companies = models.TextField(blank=True, null=True, verbose_name="Updated Recommended Companies")
-    technical_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="Technical")
-    financial_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="Financials")
+    technical_submission_date = models.DateField(blank=True, null=True, verbose_name="Technical Submission Date")
+    financial_submission_date = models.DateField(blank=True, null=True, verbose_name="Financial Submission Date")
 
     # --- Company Financial Pillars ---
     budget_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Budget Amount")
