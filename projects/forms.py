@@ -13,16 +13,17 @@ class ProjectForm(forms.ModelForm):
             'project_code', 'mda', 'project_name', 'project_type', 'execution_mode', 'lot', 'location', 'category', 
             'rolled_over_from', 'parent_project', 'part_name', 'part_percentage',
             'budget_amount', 'technical_status', 'financial_status', 'final_companies', 'back_up_companies', 'updated_recommended_companies',
-            'plain_boq', 'drawing_design',
+            'plain_boq', 'priced_boq', 'drawing_design',
             'actual_contract_amount', 'in_house_benchmark', 'cost_percentage', 'staff_assigned', 'current_phase',
             'mobilization_received', 'batch_no_mobilization', 'final_payment_received', 'batch_no_final_payment',
             'award_letter_and_boq',
             'execution_level_percentage', 'project_status', 'payment_status', 'comments', 'remarks'
         ]
         widgets = {
-            'plain_boq': forms.URLInput(attrs={'placeholder': 'https://azanigroupn.sharepoint.com/...', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
-            'drawing_design': forms.URLInput(attrs={'placeholder': 'https://azanigroupn.sharepoint.com/...', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
-            'award_letter_and_boq': forms.URLInput(attrs={'placeholder': 'https://azanigroupn.sharepoint.com/...', 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
+            'plain_boq': forms.FileInput(attrs={'class': 'w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 border border-gray-300 rounded-md shadow-sm'}),
+            'priced_boq': forms.FileInput(attrs={'class': 'w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 border border-gray-300 rounded-md shadow-sm'}),
+            'drawing_design': forms.FileInput(attrs={'class': 'w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 border border-gray-300 rounded-md shadow-sm'}),
+            'award_letter_and_boq': forms.FileInput(attrs={'class': 'w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 border border-gray-300 rounded-md shadow-sm'}),
             'comments': forms.Textarea(attrs={'rows': 3, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
             'remarks': forms.Textarea(attrs={'rows': 3, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),
             'final_companies': forms.Textarea(attrs={'rows': 2, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm'}),

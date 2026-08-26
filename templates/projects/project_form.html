@@ -116,17 +116,24 @@
           {{ form.updated_recommended_companies }}
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Plain BOQ (SharePoint URL)</label>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Plain BOQ (Upload File)</label>
           {{ form.plain_boq }}
           {% if form.instance.plain_boq %}
-            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.plain_boq }}" target="_blank" class="underline text-[#bfa12c]">Open SharePoint BOQ</a></span>
+            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.plain_boq.url }}" target="_blank" class="underline text-[#bfa12c]">Download/View Plain BOQ</a></span>
           {% endif %}
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Drawing / Design (SharePoint URL)</label>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Priced BOQ (Upload File)</label>
+          {{ form.priced_boq }}
+          {% if form.instance.priced_boq %}
+            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.priced_boq.url }}" target="_blank" class="underline text-[#bfa12c]">Download/View Priced BOQ</a></span>
+          {% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Drawing / Design (Upload File)</label>
           {{ form.drawing_design }}
           {% if form.instance.drawing_design %}
-            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.drawing_design }}" target="_blank" class="underline text-[#bfa12c]">Open SharePoint Drawing</a></span>
+            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.drawing_design.url }}" target="_blank" class="underline text-[#bfa12c]">Download/View Drawing</a></span>
           {% endif %}
         </div>
       </div>
@@ -175,10 +182,10 @@
           {{ form.batch_no_final_payment }}
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Award Letter & BOQ (SharePoint URL)</label>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Award Letter & BOQ (Upload File)</label>
           {{ form.award_letter_and_boq }}
           {% if form.instance.award_letter_and_boq %}
-            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.award_letter_and_boq }}" target="_blank" class="underline text-[#bfa12c]">Open SharePoint Award Letter</a></span>
+            <span class="text-xs text-gray-500 mt-1 block">Current: <a href="{{ form.instance.award_letter_and_boq.url }}" target="_blank" class="underline text-[#bfa12c]">Download/View Award Letter & BOQ</a></span>
           {% endif %}
         </div>
         

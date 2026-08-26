@@ -72,10 +72,11 @@ class Project(models.Model):
     part_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="Part Name", help_text="e.g. Phase 1, Phase 2, Part A")
     part_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=100.00, verbose_name="Part Percentage", help_text="e.g. 60.00 for 60%")
     
-    # --- Documents & Attachments (SharePoint URLs) ---
-    plain_boq = models.CharField(max_length=1000, blank=True, null=True, verbose_name="Plain BOQ (SharePoint Link)")
-    drawing_design = models.CharField(max_length=1000, blank=True, null=True, verbose_name="Drawing/Design (SharePoint Link)")
-    award_letter_and_boq = models.CharField(max_length=1000, blank=True, null=True, verbose_name="Award Letter & BOQ (SharePoint Link)")
+    # --- Documents & Attachments ---
+    plain_boq = models.FileField(upload_to='projects/boq/plain/', blank=True, null=True, verbose_name="Plain BOQ")
+    priced_boq = models.FileField(upload_to='projects/boq/priced/', blank=True, null=True, verbose_name="Priced BOQ")
+    drawing_design = models.FileField(upload_to='projects/drawings/', blank=True, null=True, verbose_name="Drawing/Design")
+    award_letter_and_boq = models.FileField(upload_to='projects/boq/awarded/', blank=True, null=True, verbose_name="Award Letter and BOQ")
 
     # --- Bidding / Pre-Award Phase Tracking ---
     final_companies = models.TextField(blank=True, null=True, verbose_name="Final Companies")
