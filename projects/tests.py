@@ -262,4 +262,92 @@ class ProjectRestructuringTests(TestCase):
         self.assertIn(pre_award_project, projects_combined)
         self.assertNotIn(self.parent_project, projects_combined)
 
+    def test_mda_short_form_conversion_on_save(self):
+        # Create project with long MDA string containing acronym in parentheses
+        p = Project.objects.create(
+            project_code="PRJ-NDE",
+            mda="NATIONAL DIRECTORATE OF EMPLOYMENT (NDE)",
+            project_name="Youth Training Program",
+            location="Niger",
+            category=self.category_const,
+            budget_amount=10000000.00
+        )
+        p.refresh_from_db()
+        # Verify the database column 'mda' itself contains the short form 'NDE'
+        self.assertEqual(p.mda, "NDE")
+        self.assertEqual(p.short_mda, "NDE")
+
+    def test_project_list_view_staff_filter(self):
+        self.client.login(username="staffuser", password="testpassword")
+
+        # Create another staff user
+        engineer = User.objects.create_user(
+            username="engineer_jane", 
+            first_name="Jane", 
+            last_name="Doe", 
+            password="testpassword"
+        )
+
+        # Project assigned to staff_user
+        proj_staff = Project.objects.create(
+            project_code="PRJ-ASSIGNED-1",
+            mda="Ministry of Works",
+            project_name="Highway Expansion",
+            location="Lagos",
+            category=self.category_const,
+            staff_assigned=self.staff_user,
+            budget_amount=10000000.00
+        )
+
+        # Project assigned to engineer
+        proj_engineer = Project.objects.create(
+            project_code="PRJ-ASSIGNED-2",
+            mda="Ministry of Power",
+            project_name="Solar Grid",
+            location="Kaduna",
+            category=self.category_power,
+            staff_assigned=engineer,
+            budget_amount=20000000.00
+        )
+
+        # Project with no assigned staff
+        proj_unassigned = Project.objects.create(
+            project_code="PRJ-UNASSIGNED",
+            mda="Ministry of Water",
+            project_name="Water Treatment Facility",
+            location="Enugu",
+            category=self.category_const,
+            staff_assigned=None,
+            budget_amount=15000000.00
+        )
+
+        url = reverse('projects:project_list')
+
+        # 1. Filter by staff user ID
+        response_staff = self.client.get(url, {'staff': self.staff_user.id})
+        self.assertEqual(response_staff.status_code, 200)
+        projects_staff = response_staff.context['projects']
+        self.assertIn(proj_staff, projects_staff)
+        self.assertNotIn(proj_engineer, projects_staff)
+        self.assertNotIn(proj_unassigned, projects_staff)
+
+        # 2. Filter by staff username or name
+        response_name = self.client.get(url, {'staff': 'engineer_jane'})
+        self.assertEqual(response_name.status_code, 200)
+        projects_name = response_name.context['projects']
+        self.assertIn(proj_engineer, projects_name)
+        self.assertNotIn(proj_staff, projects_name)
+        self.assertNotIn(proj_unassigned, projects_name)
+
+        # 3. Filter for unassigned projects
+        response_unassigned = self.client.get(url, {'staff': 'unassigned'})
+        self.assertEqual(response_unassigned.status_code, 200)
+        projects_unassigned = response_unassigned.context['projects']
+        self.assertIn(proj_unassigned, projects_unassigned)
+        self.assertIn(self.parent_project, projects_unassigned) # parent_project in setUp has staff_assigned=None
+        self.assertNotIn(proj_staff, projects_unassigned)
+        self.assertNotIn(proj_engineer, projects_unassigned)
+
+
+
 

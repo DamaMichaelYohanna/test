@@ -1,6 +1,24 @@
+import re
 from django.db import models
 from contractors.models import Subcontractor
 from django.contrib.auth.models import User
+
+def extract_short_mda(mda_val):
+    if not mda_val:
+        return ""
+    mda_str = str(mda_val).strip()
+    if 'HOUSING AND URBAN DEVELOPMENT' in mda_str.upper():
+        return 'FMHUD'
+    if 'NIGERIA STORED PRODUCTS RESEARCH' in mda_str.upper():
+        return 'NSPRI'
+    
+    matches = re.findall(r'\(([A-Za-z0-9\s\-]+)\)', mda_str)
+    if matches:
+        acronyms = [x.strip() for x in matches if len(x.strip()) <= 15 and 'SPECIAL' not in x.upper() and 'MINISTRY' not in x.upper()]
+        if acronyms:
+            return acronyms[0]
+        return matches[0].strip()
+    return mda_str
 
 class ProjectCategory(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Category Name")
@@ -152,6 +170,10 @@ class Project(models.Model):
         return self.execution_level_percentage
 
     def save(self, *args, **kwargs):
+        if self.mda:
+            short = extract_short_mda(self.mda)
+            if short:
+                self.mda = short
         if self.parent_project:
             self.project_code = self.parent_project.project_code
             self.mda = self.parent_project.mda
@@ -163,6 +185,11 @@ class Project(models.Model):
         ordering = ['-created_at']
         verbose_name = "Project"
         verbose_name_plural = "Projects"
+
+    @property
+    def short_mda(self):
+        """Return the MDA string stored in the mda column."""
+        return self.mda
 
     def __str__(self):
         return f"{self.project_code} - {self.mda} - {self.project_name}"

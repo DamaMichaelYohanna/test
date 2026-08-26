@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
@@ -28,11 +29,12 @@ class ProjectListView(LoginRequiredMixin, ListView):
     paginate_by = 30
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related('category')
+        qs = super().get_queryset().select_related('category', 'staff_assigned')
         q = self.request.GET.get('q', '').strip()
         year = self.request.GET.get('year', '').strip()
         mda = self.request.GET.get('mda', '').strip()
         category = self.request.GET.get('category', '').strip()
+        staff = self.request.GET.get('staff', '').strip()
         project_type = self.request.GET.get('project_type', '').strip()
         awarded = self.request.GET.get('awarded', '').strip().lower()
 
@@ -52,6 +54,17 @@ class ProjectListView(LoginRequiredMixin, ListView):
                     qs = qs.filter(Q(category__name__iexact='CONSTRUCTION') | Q(category__name__icontains='Civil'))
                 else:
                     qs = qs.filter(category__name__iexact=category)
+        if staff:
+            if staff.lower() == 'unassigned':
+                qs = qs.filter(staff_assigned__isnull=True)
+            elif staff.isdigit():
+                qs = qs.filter(staff_assigned_id=staff)
+            else:
+                qs = qs.filter(
+                    Q(staff_assigned__username__iexact=staff) |
+                    Q(staff_assigned__first_name__icontains=staff) |
+                    Q(staff_assigned__last_name__icontains=staff)
+                )
         if project_type:
             qs = qs.filter(project_type=project_type)
         if awarded in ['awarded', 'yes', '1', 'true']:
@@ -81,11 +94,33 @@ class ProjectListView(LoginRequiredMixin, ListView):
             else:
                 cat_display = selected_cat
 
+        selected_mda = self.request.GET.get('mda', '').strip()
+        selected_mda_short = ''
+        if selected_mda:
+            selected_mda_short = selected_mda.split('(')[-1].split(')')[0].strip() if ('(' in selected_mda and ')' in selected_mda) else selected_mda
+
+        selected_staff = self.request.GET.get('staff', '').strip()
+        staff_display = ''
+        if selected_staff:
+            if selected_staff.lower() == 'unassigned':
+                staff_display = 'Unassigned'
+            elif selected_staff.isdigit():
+                u = User.objects.filter(pk=selected_staff).first()
+                if u:
+                    staff_display = u.get_full_name() or u.username
+                else:
+                    staff_display = selected_staff
+            else:
+                staff_display = selected_staff
+
         context['q'] = self.request.GET.get('q', '')
         context['selected_year'] = self.request.GET.get('year', '')
-        context['selected_mda'] = self.request.GET.get('mda', '')
+        context['selected_mda'] = selected_mda
+        context['selected_mda_short'] = selected_mda_short
         context['selected_category'] = selected_cat
         context['selected_category_display'] = cat_display
+        context['selected_staff'] = selected_staff
+        context['selected_staff_display'] = staff_display
         context['selected_type'] = self.request.GET.get('project_type', '')
         context['selected_awarded'] = self.request.GET.get('awarded', '')
 
@@ -103,14 +138,22 @@ class ProjectListView(LoginRequiredMixin, ListView):
         else:
             context['page_range'] = [1]
 
-        # Build distinct filter option lists from the full table
+        # Build distinct filter option lists from the full table (short & full versions)
         context['year_choices'] = (
             Project.objects.dates('created_at', 'year', order='DESC')
         )
-        context['mda_choices'] = (
-            Project.objects.values_list('mda', flat=True).distinct().order_by('mda')
-        )
+        raw_mdas = Project.objects.values_list('mda', flat=True).distinct().order_by('mda')
+        mda_choices = []
+        seen_shorts = set()
+        for m in raw_mdas:
+            if m:
+                short = m.split('(')[-1].split(')')[0].strip() if ('(' in m and ')' in m) else m
+                if short not in seen_shorts:
+                    seen_shorts.add(short)
+                    mda_choices.append({'full': m, 'short': short})
+        context['mda_choices'] = mda_choices
         context['category_choices'] = ProjectCategory.objects.all().order_by('name')
+        context['staff_choices'] = User.objects.filter(is_active=True).order_by('first_name', 'username')
         context['type_choices'] = Project.PROJECT_TYPE_CHOICES
         return context
 
@@ -728,19 +771,20 @@ def export_project_expense_breakdown(request, pk):
 def export_projects_excel(request):
     """
     Generates an Excel spreadsheet (.xlsx) of projects matching the active filters
-    (search query 'q', year, mda/agency, category, project_type).
+    (search query 'q', year, mda/agency, category, staff, project_type).
     """
     import openpyxl
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from django.http import HttpResponse
 
-    qs = Project.objects.select_related('category').prefetch_related('fees', 'lifecycle_stages', 'unplanned_expenses', 'projectallocation_set').all()
+    qs = Project.objects.select_related('category', 'staff_assigned').prefetch_related('fees', 'lifecycle_stages', 'unplanned_expenses', 'projectallocation_set').all()
 
     # Apply same filtering logic as ProjectListView
     q = request.GET.get('q', '').strip()
     year = request.GET.get('year', '').strip()
     mda = request.GET.get('mda', '').strip()
     category = request.GET.get('category', '').strip()
+    staff = request.GET.get('staff', '').strip()
     project_type = request.GET.get('project_type', '').strip()
     awarded = request.GET.get('awarded', '').strip().lower()
 
@@ -758,6 +802,17 @@ def export_projects_excel(request):
                 qs = qs.filter(Q(category__name__iexact='CONSTRUCTION') | Q(category__name__icontains='Civil'))
             else:
                 qs = qs.filter(category__name__iexact=category)
+    if staff:
+        if staff.lower() == 'unassigned':
+            qs = qs.filter(staff_assigned__isnull=True)
+        elif staff.isdigit():
+            qs = qs.filter(staff_assigned_id=staff)
+        else:
+            qs = qs.filter(
+                Q(staff_assigned__username__iexact=staff) |
+                Q(staff_assigned__first_name__icontains=staff) |
+                Q(staff_assigned__last_name__icontains=staff)
+            )
     if project_type:
         qs = qs.filter(project_type=project_type)
     if awarded in ['awarded', 'yes', '1', 'true']:
@@ -795,7 +850,15 @@ def export_projects_excel(request):
     filter_info = []
     if year: filter_info.append(f"Year: {year}")
     if mda: filter_info.append(f"Agency/MDA: {mda}")
-    if category: filter_info.append(f"Category ID: {category}")
+    if category: filter_info.append(f"Category: {category}")
+    if staff:
+        if staff.lower() == 'unassigned':
+            filter_info.append("Staff: Unassigned")
+        elif staff.isdigit():
+            u = User.objects.filter(pk=staff).first()
+            filter_info.append(f"Staff: {u.get_full_name() or u.username}" if u else f"Staff ID: {staff}")
+        else:
+            filter_info.append(f"Staff: {staff}")
     if project_type: filter_info.append(f"Type: {project_type}")
     if awarded in ['awarded', 'yes', '1', 'true']: filter_info.append("Status: Awarded Projects")
     elif awarded in ['pre_award', 'no', '0', 'false']: filter_info.append("Status: Pre-Award Projects")
@@ -809,7 +872,7 @@ def export_projects_excel(request):
     # Table Headers
     headers = [
         "SN", "Project Code", "Project Name", "MDA / Agency", "Lot", "Location", 
-        "Category", "Project Type", "Execution Mode", "Completion %",
+        "Category", "Staff Assigned", "Project Type", "Execution Mode", "Completion %",
         "Budget Amount (NGN)", "Contract Amount (NGN)", "Total Fees (NGN)", 
         "Total Stage Costs (NGN)", "Unplanned Costs (NGN)", "Subcontractor Agreed (NGN)",
         "Consolidated Expenses (NGN)", "Net Projected Margin (NGN)", "Technical Status", "Payment Status"
@@ -820,7 +883,7 @@ def export_projects_excel(request):
         cell = ws.cell(row=hdr_row, column=c_idx)
         cell.font = header_font
         cell.fill = header_fill
-        cell.alignment = Alignment(horizontal="center" if c_idx in [1, 9, 10, 19, 20] else "left", vertical="center")
+        cell.alignment = Alignment(horizontal="center" if c_idx in [1, 10, 11, 20, 21] else "left", vertical="center")
 
     total_budget_sum = 0.0
     total_contract_sum = 0.0
@@ -830,6 +893,7 @@ def export_projects_excel(request):
 
     for idx, p in enumerate(qs, start=1):
         cat_name = p.category.name if p.category else "-"
+        staff_name = (p.staff_assigned.get_full_name() or p.staff_assigned.username) if p.staff_assigned else "Unassigned"
         p_type = p.get_project_type_display() if hasattr(p, 'get_project_type_display') else str(p.project_type or "-")
         e_mode = p.get_execution_mode_display() if hasattr(p, 'get_execution_mode_display') else str(p.execution_mode or "-")
         
@@ -849,8 +913,8 @@ def export_projects_excel(request):
         total_margin_sum += net_marg
 
         row_data = [
-            idx, p.project_code, p.project_name, p.mda, p.lot or "-", p.location or "-",
-            cat_name, p_type, e_mode, f"{p.execution_level_percentage}%",
+            idx, p.project_code, p.project_name, p.short_mda, p.lot or "-", p.location or "-",
+            cat_name, staff_name, p_type, e_mode, f"{p.execution_level_percentage}%",
             b_amt, c_amt, f_amt, s_amt, u_amt, sub_amt, tot_exp, net_marg,
             p.technical_status or "-", p.payment_status or "-"
         ]
@@ -858,13 +922,13 @@ def export_projects_excel(request):
         curr_row = ws.max_row
         
         # Formatting numbers
-        for num_col in range(11, 19):
+        for num_col in range(12, 20):
             ws.cell(row=curr_row, column=num_col).number_format = '₦#,##0.00'
 
     # Summary Row at Bottom
     ws.append([])
     summary_row = [
-        "TOTALS", "", "", f"Total Records: {qs.count()}", "", "", "", "", "", "",
+        "TOTALS", "", "", f"Total Records: {qs.count()}", "", "", "", "", "", "", "",
         total_budget_sum, total_contract_sum, total_fees_sum, "", "", "", total_expenses_sum, total_margin_sum, "", ""
     ]
     ws.append(summary_row)
@@ -873,7 +937,7 @@ def export_projects_excel(request):
         cell = ws.cell(row=sum_r, column=c_idx)
         cell.font = bold_font
         cell.fill = summary_fill
-        if c_idx in [11, 12, 13, 17, 18]:
+        if c_idx in [12, 13, 14, 18, 19]:
             cell.number_format = '₦#,##0.00'
 
     # Auto-fit column widths

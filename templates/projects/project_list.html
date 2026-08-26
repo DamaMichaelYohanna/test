@@ -65,13 +65,13 @@
     </div>
 
     <!-- MDA filter -->
-    <div class="w-full md:w-40 lg:w-44 flex-shrink-0">
+    <div class="w-full md:w-36 lg:w-40 flex-shrink-0">
       <select name="mda"
         class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50 truncate"
         title="Filter by MDA">
         <option value="">All MDAs</option>
         {% for m in mda_choices %}
-        <option value="{{ m }}" {% if selected_mda == m %}selected{% endif %} title="{{ m }}">{{ m|truncatechars:28 }}</option>
+        <option value="{{ m.short }}" {% if selected_mda == m.short or selected_mda == m.full %}selected{% endif %} title="{{ m.full }}">{{ m.short }}</option>
         {% endfor %}
       </select>
     </div>
@@ -83,6 +83,21 @@
         <option value="">All Categories</option>
         {% for c in category_choices %}
         <option value="{{ c.name }}" {% if selected_category == c.id|stringformat:"s" or selected_category|lower == c.name|lower %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Staff Assigned filter -->
+    <div class="w-full md:w-36 lg:w-40 flex-shrink-0">
+      <select name="staff"
+        class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#bfa12c] focus:border-[#bfa12c] bg-gray-50 truncate"
+        title="Filter by Assigned Staff">
+        <option value="">All Staff</option>
+        <option value="unassigned" {% if selected_staff == 'unassigned' %}selected{% endif %}>Unassigned</option>
+        {% for u in staff_choices %}
+        <option value="{{ u.id }}" {% if selected_staff == u.id|stringformat:"s" %}selected{% endif %}>
+          {{ u.get_full_name|default:u.username }}
+        </option>
         {% endfor %}
       </select>
     </div>
@@ -104,7 +119,7 @@
         class="bg-[#3e5052] hover:bg-[#2c3a3c] text-white px-4 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap flex-1 md:flex-none text-center">
         Apply
       </button>
-      {% if q or selected_year or selected_mda or selected_category or selected_type or selected_awarded %}
+      {% if q or selected_year or selected_mda or selected_category or selected_staff or selected_type or selected_awarded %}
       <a href="{% url 'projects:project_list' %}"
         class="bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap flex items-center justify-center flex-1 md:flex-none">
         <span class="material-symbols-outlined text-sm mr-1">close</span> Clear
@@ -129,10 +144,13 @@
       <span class="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full font-medium">Year: {{ selected_year }}</span>
       {% endif %}
       {% if selected_mda %}
-      <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-0.5 rounded-full font-medium">MDA: {{ selected_mda }}</span>
+      <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-0.5 rounded-full font-medium">MDA: {{ selected_mda_short|default:selected_mda|short_mda }}</span>
       {% endif %}
       {% if selected_category %}
       <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-medium">Category: {{ selected_category_display|default:selected_category }}</span>
+      {% endif %}
+      {% if selected_staff %}
+      <span class="bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 rounded-full font-medium">Staff: {{ selected_staff_display|default:selected_staff }}</span>
       {% endif %}
       {% if selected_awarded == 'awarded' or selected_awarded == 'yes' or selected_awarded == '1' or selected_awarded == 'true' %}
       <span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full font-medium">Status: Awarded</span>
@@ -149,9 +167,9 @@
         <tr>
           <th scope="col" class="px-6 py-4 text-left w-32">Code</th>
           <th scope="col" class="px-6 py-4 text-left w-2/5 min-w-[350px]">Project Name</th>
-          <th scope="col" class="px-6 py-4 text-left w-1/6 max-w-[200px]">MDA</th>
+          <th scope="col" class="px-6 py-4 text-left w-28">MDA</th>
           <th scope="col" class="px-6 py-4 text-left w-32">Category</th>
-          <th scope="col" class="px-6 py-4 text-left w-36">Current Phase</th>
+          <th scope="col" class="px-6 py-4 text-left w-40">Staff Assigned</th>
           <th scope="col" class="px-6 py-4 text-left w-36">Execution Level %</th>
           <th scope="col" class="px-6 py-4 text-center w-28">Actions</th>
         </tr>
@@ -168,7 +186,9 @@
             <div class="font-medium text-gray-900 leading-snug"><a href="{% url 'projects:project_detail' proj.pk %}"
                 class="hover:text-[#bfa12c]">{{ proj.project_name }}</a></div>
           </td>
-          <td class="px-6 py-4 w-1/6 max-w-[200px] text-gray-500 font-medium text-xs break-words" title="{{ proj.mda }}">{{ proj.mda }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-xs font-bold text-gray-800">
+            <span class="bg-slate-100 text-slate-800 px-2 py-0.5 rounded border border-slate-200 font-bold">{{ proj.mda }}</span>
+          </td>
           <td class="px-6 py-4 whitespace-nowrap text-xs font-semibold">
             {% if proj.category %}
             <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-medium">
@@ -178,8 +198,18 @@
             <span class="text-gray-400 font-normal">-</span>
             {% endif %}
           </td>
-          <td class="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900">
-            {{ proj.get_current_phase_display }}
+          <td class="px-6 py-4 whitespace-nowrap text-xs">
+            {% if proj.staff_assigned %}
+            <span class="inline-flex items-center gap-1.5 font-medium text-gray-800 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md">
+              <span class="material-symbols-outlined text-[15px] text-gray-500">person</span>
+              {{ proj.staff_assigned.get_full_name|default:proj.staff_assigned.username }}
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1 text-gray-400 italic">
+              <span class="material-symbols-outlined text-[15px] text-gray-300">person_off</span>
+              Unassigned
+            </span>
+            {% endif %}
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">

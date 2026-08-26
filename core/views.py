@@ -356,7 +356,14 @@ class DashboardView(ProjectRequiredMixin, TemplateView):
             set(Project.objects.dates('created_at', 'year').values_list('created_at__year', flat=True)),
             reverse=True
         )
-        mda_choices = [m for m in Project.objects.values_list('mda', flat=True).distinct().order_by('mda') if m]
+        raw_mda_list = [m for m in Project.objects.values_list('mda', flat=True).distinct().order_by('mda') if m]
+        mda_choices = []
+        seen_shorts = set()
+        for m in raw_mda_list:
+            short = m.split('(')[-1].split(')')[0].strip() if ('(' in m and ')' in m) else m
+            if short not in seen_shorts:
+                seen_shorts.add(short)
+                mda_choices.append({'full': m, 'short': short})
 
         # Category Monitoring Matrix (CONSTRUCTION, SUPPLY, EMPOWERMENT, POWER, TRAINING)
         monitoring_matrix = []

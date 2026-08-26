@@ -36,9 +36,9 @@
         <select name="mda" onchange="this.form.submit()"
           class="bg-white border border-slate-300 text-slate-800 text-sm rounded-lg focus:ring-[#bfa12c] focus:border-[#bfa12c] block px-3.5 py-2 cursor-pointer transition hover:border-slate-400 font-semibold shadow-xs max-w-[200px] truncate"
           title="Filter by Agency / MDA">
-          <option value="">ALL AGENCIES / MDAs</option>
+          <option value="">ALL MDAs</option>
           {% for m in mda_choices %}
-          <option value="{{ m }}" {% if selected_mda == m %}selected{% endif %} title="{{ m }}">{{ m|truncatechars:26 }}</option>
+          <option value="{{ m.short }}" {% if selected_mda == m.short or selected_mda == m.full %}selected{% endif %} title="{{ m.full }}">{{ m.short }}</option>
           {% endfor %}
         </select>
 
