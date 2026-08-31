@@ -279,6 +279,18 @@ class Project(models.Model):
         total_inflow = self.total_mobilization_received + self.total_final_payment_received
         return total_inflow - self.total_actual_cash_disbursed
 
+    @property
+    def pre_award_phase_comments(self):
+        return self.phase_comments.filter(phase='PRE_AWARD')
+
+    @property
+    def post_award_phase_comments(self):
+        return self.phase_comments.filter(phase='POST_AWARD')
+
+    @property
+    def execution_phase_comments(self):
+        return self.phase_comments.filter(phase='EXECUTION')
+
 class ProjectFee(models.Model):
     STATUS_CHOICES = [
         ('PENDING', 'Pending / Estimated'),
@@ -525,6 +537,7 @@ class ProjectActivityLog(models.Model):
         ('SUBCONTRACTOR', 'Subcontractor Allocated'),
         ('TRANCHE', 'Payment Tranche Disbursed'),
         ('MONITORING', 'Site Monitoring Logged'),
+        ('PHASE_COMMENT', 'Phase Comment Added'),
     ]
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='activity_logs')
@@ -543,4 +556,25 @@ class ProjectActivityLog(models.Model):
     def __str__(self):
         user_str = self.user.username if self.user else "System"
         return f"[{self.get_action_type_display()}] {self.project.project_code} by {user_str} on {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+
+class ProjectPhaseComment(models.Model):
+    """
+    Timestamped staff notes and comments for a specific project phase
+    (Pre-Award, Post-Award, or Execution).
+    """
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='phase_comments')
+    phase = models.CharField(max_length=20, choices=Project.PHASE_CHOICES, verbose_name="Phase")
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='phase_comments')
+    comment = models.TextField(verbose_name="Comment / Note")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Project Phase Comment"
+        verbose_name_plural = "Project Phase Comments"
+
+    def __str__(self):
+        author_str = self.author.username if self.author else "System"
+        return f"{self.project.project_code} [{self.get_phase_display()}] note by {author_str} on {self.created_at.strftime('%Y-%m-%d %H:%M')}"
 

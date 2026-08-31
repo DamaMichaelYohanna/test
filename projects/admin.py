@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import (
     Project, ProjectCategory, FeeType, ProjectFee, UnplannedExpense,
-    ProjectMonitoringLog, ProjectMonitoringImage, SubcontractorPaymentTranche
+    ProjectMonitoringLog, ProjectMonitoringImage, SubcontractorPaymentTranche,
+    ProjectPhaseComment
 )
 
 @admin.register(SubcontractorPaymentTranche)
@@ -69,3 +70,12 @@ class UnplannedExpenseAdmin(admin.ModelAdmin):
     search_fields = ('description', 'project__project_name', 'project__project_code')
     date_hierarchy = 'date_incurred'
     ordering = ('-date_incurred',)
+
+
+@admin.register(ProjectPhaseComment)
+class ProjectPhaseCommentAdmin(admin.ModelAdmin):
+    list_display = ('project', 'phase', 'author', 'created_at')
+    list_filter = ('phase', 'project', 'author')
+    search_fields = ('comment', 'project__project_code', 'project__project_name')
+    date_hierarchy = 'created_at'
+    ordering = ('-created_at',)

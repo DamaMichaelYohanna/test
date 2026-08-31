@@ -267,6 +267,47 @@
               {% endif %}
             </div>
           </div>
+
+          <!-- Phase 1 Notes & Comments -->
+          <div class="border-t border-gray-100 pt-5 mt-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-xs text-gray-500 uppercase font-bold tracking-wider flex items-center">
+                <span class="material-symbols-outlined text-base mr-1.5 text-[#bfa12c]">forum</span>
+                Phase 1: Pre-Award Notes & Comments
+              </div>
+              <span class="text-xs text-gray-400 font-semibold">({{ pre_award_comments_list|length }} notes)</span>
+            </div>
+
+            {% if pre_award_comments_list %}
+            <div class="space-y-2 mb-4">
+              {% for note in pre_award_comments_list %}
+              <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs">
+                <div class="flex items-center justify-between text-gray-500 mb-1">
+                  <span class="font-bold text-gray-800 flex items-center">
+                    <span class="material-symbols-outlined text-xs mr-1 text-gray-400">person</span>
+                    {{ note.author.username|default:"Staff" }}
+                  </span>
+                  <span class="text-[11px] font-mono text-gray-400">{{ note.created_at|date:"M d, Y H:i" }}</span>
+                </div>
+                <div class="text-gray-700 whitespace-pre-line leading-relaxed">{{ note.comment }}</div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-xs text-gray-400 italic mb-4">No notes logged for Pre-Award phase yet.</p>
+            {% endif %}
+
+            <form method="POST" action="{% url 'projects:add_phase_comment' project.pk %}" class="space-y-2">
+              {% csrf_token %}
+              <input type="hidden" name="phase" value="PRE_AWARD">
+              <textarea name="comment" rows="2" required placeholder="Note down any events, updates, or comments for Pre-Award phase..." class="w-full text-xs rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] p-2.5 bg-white"></textarea>
+              <div class="flex justify-end">
+                <button type="submit" class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-3 py-1 rounded-md text-xs font-semibold shadow-sm transition flex items-center">
+                  <span class="material-symbols-outlined text-xs mr-1">send</span> Post Pre-Award Note
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
 
@@ -405,6 +446,47 @@
               </table>
             </div>
           </div>
+
+          <!-- Phase 2 Notes & Comments -->
+          <div class="border-t border-gray-100 pt-5 mt-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-xs text-gray-500 uppercase font-bold tracking-wider flex items-center">
+                <span class="material-symbols-outlined text-base mr-1.5 text-[#bfa12c]">forum</span>
+                Phase 2: Post-Award Notes & Comments
+              </div>
+              <span class="text-xs text-gray-400 font-semibold">({{ post_award_comments_list|length }} notes)</span>
+            </div>
+
+            {% if post_award_comments_list %}
+            <div class="space-y-2 mb-4">
+              {% for note in post_award_comments_list %}
+              <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs">
+                <div class="flex items-center justify-between text-gray-500 mb-1">
+                  <span class="font-bold text-gray-800 flex items-center">
+                    <span class="material-symbols-outlined text-xs mr-1 text-gray-400">person</span>
+                    {{ note.author.username|default:"Staff" }}
+                  </span>
+                  <span class="text-[11px] font-mono text-gray-400">{{ note.created_at|date:"M d, Y H:i" }}</span>
+                </div>
+                <div class="text-gray-700 whitespace-pre-line leading-relaxed">{{ note.comment }}</div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-xs text-gray-400 italic mb-4">No notes logged for Post-Award phase yet.</p>
+            {% endif %}
+
+            <form method="POST" action="{% url 'projects:add_phase_comment' project.pk %}" class="space-y-2">
+              {% csrf_token %}
+              <input type="hidden" name="phase" value="POST_AWARD">
+              <textarea name="comment" rows="2" required placeholder="Note down any events, updates, or comments for Post-Award phase..." class="w-full text-xs rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] p-2.5 bg-white"></textarea>
+              <div class="flex justify-end">
+                <button type="submit" class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-3 py-1 rounded-md text-xs font-semibold shadow-sm transition flex items-center">
+                  <span class="material-symbols-outlined text-xs mr-1">send</span> Post Post-Award Note
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
 
@@ -451,6 +533,47 @@
             {% endif %}
           </div>
           {% endif %}
+
+          <!-- Phase 3 Notes & Comments -->
+          <div class="border-t border-gray-100 pt-5 mt-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-xs text-gray-500 uppercase font-bold tracking-wider flex items-center">
+                <span class="material-symbols-outlined text-base mr-1.5 text-[#bfa12c]">forum</span>
+                Phase 3: Execution Notes & Comments
+              </div>
+              <span class="text-xs text-gray-400 font-semibold">({{ execution_comments_list|length }} notes)</span>
+            </div>
+
+            {% if execution_comments_list %}
+            <div class="space-y-2 mb-4">
+              {% for note in execution_comments_list %}
+              <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs">
+                <div class="flex items-center justify-between text-gray-500 mb-1">
+                  <span class="font-bold text-gray-800 flex items-center">
+                    <span class="material-symbols-outlined text-xs mr-1 text-gray-400">person</span>
+                    {{ note.author.username|default:"Staff" }}
+                  </span>
+                  <span class="text-[11px] font-mono text-gray-400">{{ note.created_at|date:"M d, Y H:i" }}</span>
+                </div>
+                <div class="text-gray-700 whitespace-pre-line leading-relaxed">{{ note.comment }}</div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-xs text-gray-400 italic mb-4">No notes logged for Execution phase yet.</p>
+            {% endif %}
+
+            <form method="POST" action="{% url 'projects:add_phase_comment' project.pk %}" class="space-y-2">
+              {% csrf_token %}
+              <input type="hidden" name="phase" value="EXECUTION">
+              <textarea name="comment" rows="2" required placeholder="Note down any events, updates, or comments for Execution phase..." class="w-full text-xs rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] p-2.5 bg-white"></textarea>
+              <div class="flex justify-end">
+                <button type="submit" class="bg-[#bfa12c] hover:bg-[#a88d25] text-white px-3 py-1 rounded-md text-xs font-semibold shadow-sm transition flex items-center">
+                  <span class="material-symbols-outlined text-xs mr-1">send</span> Post Execution Note
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
 

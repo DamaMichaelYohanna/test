@@ -13,12 +13,13 @@ from core.permissions import Level2RequiredMixin, Level3RequiredMixin, Level4Req
 from .models import (
     Project, ProjectCategory, ProjectAllocation, ProjectLifecycleStage, 
     ProjectFee, FeeType, ProjectMonitoringLog, ProjectMonitoringImage,
-    SubcontractorPaymentTranche, ProjectActivityLog
+    SubcontractorPaymentTranche, ProjectActivityLog, ProjectPhaseComment
 )
 from .forms import (
     ProjectForm, ProjectAllocationForm, ProjectLifecycleStageForm, 
     ProjectFeeFormSet, ProjectCategoryForm, FeeTypeForm, ProjectMonitoringLogForm,
-    ProjectMonitoringLogGlobalForm, SubcontractorPaymentTrancheForm
+    ProjectMonitoringLogGlobalForm, SubcontractorPaymentTrancheForm,
+    ProjectPhaseCommentForm
 )
 from .utils import log_project_activity
 
@@ -343,8 +344,41 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
         # Fetch site monitoring logs and their images
         context['monitoring_logs'] = self.object.monitoring_logs.all().select_related('reported_by').prefetch_related('images')
         context['monitoring_form'] = ProjectMonitoringLogForm()
+        
+        # Fetch phase comments and form
+        phase_comments = list(self.object.phase_comments.select_related('author').all())
+        context['phase_comment_form'] = ProjectPhaseCommentForm()
+        context['pre_award_comments_list'] = [c for c in phase_comments if c.phase == 'PRE_AWARD']
+        context['post_award_comments_list'] = [c for c in phase_comments if c.phase == 'POST_AWARD']
+        context['execution_comments_list'] = [c for c in phase_comments if c.phase == 'EXECUTION']
+
         context['recent_activities'] = self.object.activity_logs.select_related('user').all()[:25]
         return context
+
+
+class AddPhaseCommentView(LoginRequiredMixin, View):
+    def post(self, request, project_pk):
+        project = get_object_or_404(Project, pk=project_pk)
+        form = ProjectPhaseCommentForm(request.POST)
+        if form.is_valid():
+            phase_comment = form.save(commit=False)
+            phase_comment.project = project
+            phase_comment.author = request.user
+            phase_comment.save()
+
+            phase_display = phase_comment.get_phase_display()
+            log_project_activity(
+                project=project,
+                user=request.user,
+                action_type='PHASE_COMMENT',
+                title=f"Comment added to {phase_display}",
+                description=f"Logged note under {phase_display}: {phase_comment.comment}"
+            )
+            messages.success(request, f"Comment logged for {phase_display}.")
+        else:
+            messages.error(request, "Failed to submit phase comment. Please provide valid text.")
+        
+        return redirect('projects:project_detail', pk=project.pk)
 
 class ProjectAllocationCreateView(Level3RequiredMixin, View):
     def post(self, request, project_pk):

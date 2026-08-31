@@ -3,7 +3,7 @@ from django.forms import inlineformset_factory
 from .models import (
     Project, ProjectCategory, ProjectAllocation, ProjectLifecycleStage, 
     ProjectFee, FeeType, ProjectMonitoringLog, ProjectMonitoringImage,
-    SubcontractorPaymentTranche
+    SubcontractorPaymentTranche, ProjectPhaseComment
 )
 
 class ProjectForm(forms.ModelForm):
@@ -129,4 +129,15 @@ class SubcontractorPaymentTrancheForm(forms.ModelForm):
             'payment_reference': forms.TextInput(attrs={'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm', 'placeholder': 'e.g., Transfer ID, bank transaction code'}),
             'notes': forms.Textarea(attrs={'rows': 2, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm', 'placeholder': 'Any supporting description...'}),
         }
+
+
+class ProjectPhaseCommentForm(forms.ModelForm):
+    class Meta:
+        model = ProjectPhaseComment
+        fields = ['phase', 'comment']
+        widgets = {
+            'phase': forms.Select(attrs={'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-1.5 px-2.5 text-xs font-semibold'}),
+            'comment': forms.Textarea(attrs={'rows': 2, 'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-[#bfa12c] focus:ring-[#bfa12c] py-2 px-3 text-sm', 'placeholder': 'Enter comment or update note for this phase...'}),
+        }
+
 

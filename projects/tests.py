@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.urls import reverse
-from .models import Project, ProjectCategory, FeeType, ProjectFee
+from .models import Project, ProjectCategory, FeeType, ProjectFee, ProjectPhaseComment
 
 class ProjectRestructuringTests(TestCase):
     def setUp(self):
@@ -347,6 +347,55 @@ class ProjectRestructuringTests(TestCase):
         self.assertIn(self.parent_project, projects_unassigned) # parent_project in setUp has staff_assigned=None
         self.assertNotIn(proj_staff, projects_unassigned)
         self.assertNotIn(proj_engineer, projects_unassigned)
+
+    def test_project_phase_comments(self):
+        self.client.login(username="staffuser", password="testpassword")
+
+        # 1. Post a comment to PRE_AWARD phase
+        url = reverse('projects:add_phase_comment', kwargs={'project_pk': self.parent_project.pk})
+        response = self.client.post(url, {
+            'phase': 'PRE_AWARD',
+            'comment': 'Tender journal purchased successfully.'
+        })
+        self.assertEqual(response.status_code, 302)
+
+        # Verify ProjectPhaseComment creation
+        pre_comments = self.parent_project.pre_award_phase_comments
+        self.assertEqual(pre_comments.count(), 1)
+        self.assertEqual(pre_comments.first().comment, 'Tender journal purchased successfully.')
+        self.assertEqual(pre_comments.first().author, self.staff_user)
+
+        # 2. Post a comment to POST_AWARD phase
+        self.client.post(url, {
+            'phase': 'POST_AWARD',
+            'comment': 'Award letter received from agency.'
+        })
+        post_comments = self.parent_project.post_award_phase_comments
+        self.assertEqual(post_comments.count(), 1)
+        self.assertEqual(post_comments.first().comment, 'Award letter received from agency.')
+
+        # 3. Post a comment to EXECUTION phase
+        self.client.post(url, {
+            'phase': 'EXECUTION',
+            'comment': 'Site handed over to sub-contractor.'
+        })
+        exec_comments = self.parent_project.execution_phase_comments
+        self.assertEqual(exec_comments.count(), 1)
+        self.assertEqual(exec_comments.first().comment, 'Site handed over to sub-contractor.')
+
+        # 4. Check Detail View rendering
+        detail_url = reverse('projects:project_detail', kwargs={'pk': self.parent_project.pk})
+        detail_resp = self.client.get(detail_url)
+        self.assertEqual(detail_resp.status_code, 200)
+        self.assertContains(detail_resp, 'Tender journal purchased successfully.')
+        self.assertContains(detail_resp, 'Award letter received from agency.')
+        self.assertContains(detail_resp, 'Site handed over to sub-contractor.')
+
+        # 5. Check ProjectActivityLog entry
+        activity_log = self.parent_project.activity_logs.filter(action_type='PHASE_COMMENT').first()
+        self.assertIsNotNone(activity_log)
+        self.assertEqual(activity_log.user, self.staff_user)
+
 
 
 
